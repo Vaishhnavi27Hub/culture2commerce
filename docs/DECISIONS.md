@@ -40,3 +40,6 @@ responses in memory for 30 minutes.
 
 ## D8. Project lives in a OneDrive folder
 Kept where the user created it. If file locking slows installs, we will document moving it.
+
+## D9. Versions pinned for Node 20.11
+Next.js 15, Vitest 3 and Vite 6. Newer Vite/Vitest majors need Node 20.19 or later.
