@@ -220,9 +220,9 @@
     {
       "id": "github",
       "title": "GitHub repository",
-      "status": "pending",
+      "status": "implemented",
       "tests": [],
-      "notes": "gh CLI not installed yet."
+      "notes": "Pushed main to https://github.com/Vaishhnavi27Hub/culture2commerce (private) on 13 Oct after a clean secret scan. Still to do by the user: description, topics, make public before submission."
     },
     {
       "id": "deploy",
