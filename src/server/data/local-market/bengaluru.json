@@ -1,0 +1,68 @@
+{
+  "_note": "ILLUSTRATIVE ESTIMATES written by Team VKY for planning demos. Not quotes, not survey data. Verify every fee and permit locally.",
+  "city": "Bengaluru",
+  "aliases": ["bengaluru", "bangalore"],
+  "suggestedLocalities": ["Indiranagar", "Koramangala", "Jayanagar"],
+  "permitNotes": [
+    "Inside an organised market or a private venue, the organiser's or owner's permission is usually what you need. Get it in writing.",
+    "Selling on a public footpath or road typically requires a street-vending certificate from the city corporation (BBMP).",
+    "Food and drink sales typically need an FSSAI basic registration, even for a weekend."
+  ],
+  "localities": {
+    "indiranagar": {
+      "name": "Indiranagar",
+      "aliases": ["indiranagar", "indira nagar"],
+      "stallFeePerDayInr": 1000,
+      "weekendFootfallPerDay": 900,
+      "venueOptions": [
+        { "type": "Weekend flea market stall", "description": "A table at a curated weekend market near 100 Feet Road or 12th Main.", "feePerDayInr": 1000 },
+        { "type": "Cafe corner pop-up", "description": "A corner inside an independent cafe, often for a flat fee or revenue share.", "feePerDayInr": 800 },
+        { "type": "Community room", "description": "A small bookable room for workshops or events.", "feePerDayInr": 1500 }
+      ]
+    },
+    "koramangala": {
+      "name": "Koramangala",
+      "aliases": ["koramangala"],
+      "stallFeePerDayInr": 950,
+      "weekendFootfallPerDay": 850,
+      "venueOptions": [
+        { "type": "Weekend flea market stall", "description": "A table at a weekend market around 5th or 6th Block.", "feePerDayInr": 950 },
+        { "type": "Cafe corner pop-up", "description": "A corner inside a cafe popular with students and young professionals.", "feePerDayInr": 750 },
+        { "type": "Co-working event space", "description": "A bookable common area for evening events.", "feePerDayInr": 1400 }
+      ]
+    },
+    "jayanagar": {
+      "name": "Jayanagar",
+      "aliases": ["jayanagar"],
+      "stallFeePerDayInr": 700,
+      "weekendFootfallPerDay": 700,
+      "venueOptions": [
+        { "type": "Shopping-street stall", "description": "A table at a weekend market near 4th Block.", "feePerDayInr": 700 },
+        { "type": "Bookshop or cafe corner", "description": "A corner inside a local bookshop or cafe.", "feePerDayInr": 600 },
+        { "type": "Community hall room", "description": "A small hall room for workshops.", "feePerDayInr": 1000 }
+      ]
+    },
+    "hsr layout": {
+      "name": "HSR Layout",
+      "aliases": ["hsr layout", "hsr"],
+      "stallFeePerDayInr": 800,
+      "weekendFootfallPerDay": 650,
+      "venueOptions": [
+        { "type": "Weekend flea market stall", "description": "A table at a weekend market around 27th Main.", "feePerDayInr": 800 },
+        { "type": "Cafe corner pop-up", "description": "A corner inside a cafe popular with startup teams.", "feePerDayInr": 700 },
+        { "type": "Apartment community event", "description": "A stall at a residents' weekend event.", "feePerDayInr": 500 }
+      ]
+    },
+    "malleshwaram": {
+      "name": "Malleshwaram",
+      "aliases": ["malleshwaram", "malleswaram"],
+      "stallFeePerDayInr": 650,
+      "weekendFootfallPerDay": 750,
+      "venueOptions": [
+        { "type": "Market-street stall", "description": "A table at a weekend market near Sampige Road.", "feePerDayInr": 650 },
+        { "type": "Cultural-centre corner", "description": "A table at a cultural centre during weekend programmes.", "feePerDayInr": 600 },
+        { "type": "Community hall room", "description": "A small hall room for workshops.", "feePerDayInr": 900 }
+      ]
+    }
+  }
+}

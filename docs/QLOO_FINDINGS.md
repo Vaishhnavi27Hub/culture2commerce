@@ -85,3 +85,22 @@ neighbourhood, coordinates, a primary genre and rich tags (ambience, audience, v
 - `filter.tag.types` given three comma-separated types returned only `urn:tag:genre:place`
   tags. To get music or brand-genre tags we make one call per tag type.
 - `npm run qloo:check` passed 3 of 3; `npm run test:live` passed 5 of 5.
+
+## 8. First full live run of Nisha's scenario (13 Oct)
+
+Command: `npm run nisha`. Result: completed in about 9 seconds with **30 live Qloo calls**
+(12 by the Local Researcher, 18 by the Cultural Opportunity Finder) and no fallbacks.
+
+- Anchor venues differed clearly: brewpubs and bars in Indiranagar and Koramangala; food,
+  a shopping complex and a book store in Jayanagar.
+- Distinctive vibe tags: Indiranagar "Special occasion, Stylish, Industrial, Trendy";
+  Koramangala "Modern, Trendy, Bustling"; Jayanagar "Convenience stop, Routine visit, Functional".
+- Top art-place affinities were between 0.90 and 0.97 in all three localities.
+- Coffee had the highest cultural fit everywhere (affinity about 0.97) but was rejected:
+  about 200% of the budget, with 20+ competitors within 2 km.
+- Thrift returned only **one** comparable place per locality and **zero** competitors within
+  2 km, so its confidence is Medium, not High.
+- Winner: art print pop-up in Jayanagar, 73.8/100, High confidence, narrowly ahead of
+  Indiranagar (72.2). The gap comes mostly from the lower estimated stall fee, not from taste.
+- The same run from the private snapshot (`QLOO_MODE=recorded`) gave identical scores with
+  confidence capped at Medium.

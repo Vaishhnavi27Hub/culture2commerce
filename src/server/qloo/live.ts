@@ -52,7 +52,8 @@ const requestBuilders: { [M in QlooMethodName]: (args: QlooMethods[M]["args"]) =
     endpoint: "/v2/insights",
     params: {
       "filter.type": PLACE,
-      "filter.location.query": `${a.locality}, ${a.city}`,
+      // When only a city is known, the caller passes it as the locality with an empty city.
+      "filter.location.query": a.city ? `${a.locality}, ${a.city}` : a.locality,
       take: String(a.take ?? 15),
     },
   }),

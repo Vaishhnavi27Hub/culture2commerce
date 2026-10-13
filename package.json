@@ -18,7 +18,8 @@
     "test:live": "vitest run --config vitest.live.config.ts",
     "qloo:check": "tsx scripts/qloo-check.ts",
     "qloo:record": "tsx scripts/qloo-record.ts",
-    "icons": "tsx scripts/generate-icons.ts"
+    "icons": "tsx scripts/generate-icons.ts",
+    "nisha": "tsx scripts/run-nisha.ts"
   },
   "dependencies": {
     "next": "^15.5.0",
