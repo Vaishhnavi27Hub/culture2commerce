@@ -132,7 +132,7 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
               const current = stage === s.id;
               return (
                 <li key={s.id}>
-                  <button
+                  <button suppressHydrationWarning
                     type="button"
                     disabled={!available[s.id]}
                     aria-current={current ? "step" : undefined}
@@ -207,7 +207,7 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
               <div role="alert" className="rounded-2xl border border-bad/30 bg-bad-soft p-4 text-bad">
                 <p className="font-semibold">The run could not finish.</p>
                 <p className="mt-1 text-sm">{error}</p>
-                <button type="button" onClick={() => go("input")} className="mt-3 rounded-xl bg-bad px-4 py-2 text-sm font-semibold text-white">
+                <button suppressHydrationWarning type="button" onClick={() => go("input")} className="mt-3 rounded-xl bg-bad px-4 py-2 text-sm font-semibold text-white">
                   Back to inputs
                 </button>
               </div>
@@ -225,7 +225,7 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
                   {result.message && <p className="mt-1 text-sm text-warn">{result.message}</p>}
                 </div>
                 {available.recommendation && (
-                  <button type="button" onClick={() => go("recommendation")} className="mt-3 inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-dark sm:mt-0 sm:w-auto">
+                  <button suppressHydrationWarning type="button" onClick={() => go("recommendation")} className="mt-3 inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-dark sm:mt-0 sm:w-auto">
                     See the recommendation <span aria-hidden="true">→</span>
                   </button>
                 )}

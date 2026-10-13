@@ -50,7 +50,7 @@ async function main() {
     const affinity = o.evidence.filter((e) => e.kind === "concept_affinity").map((e) => e.value?.toFixed(3)).join(",");
     console.log(
       `  ${String(o.rank).padStart(2)}. ${o.id.padEnd(28)} ${String(o.scores.final).padStart(5)} = ${o.scores.culturalFit} / ${o.scores.feasibility} / ${o.scores.riskAdjustment}` +
-        `  ${o.verdict.padEnd(10)} ₹${o.totalCostInr} (${o.budgetUsedPct}%)  units ${o.plannedUnits}  conf ${o.confidence.level}(${o.confidence.points})  aff[${affinity}]`,
+        `  ${o.verdict.padEnd(10)} ₹${o.totalCostInr} (${o.budgetUsedPct}%)  units ${o.plannedUnits}  lift ${o.culturalBreakdown.localityLift ?? "n/a"} (${o.culturalBreakdown.affinityScore}/${o.culturalBreakdown.liftScore}/${o.culturalBreakdown.resonanceScore})  conf ${o.confidence.level}(${o.confidence.points})  aff[${affinity}]`,
     );
   }
 
@@ -61,6 +61,11 @@ async function main() {
     console.log(`  Evidence (${winner.evidence.length}):`);
     for (const e of winner.evidence) console.log(`    [${e.source}] ${e.kind}: ${e.label}${e.value !== undefined ? ` = ${e.value}` : ""}`);
     console.log(`  Confidence ${winner.confidence.level}: ${winner.confidence.reasons.map((r) => `${r.effect === "up" ? "+" : r.effect === "cap" ? "cap" : "-"} ${r.text}`).join(" | ")}`);
+  }
+  if (result.counterfactual) {
+    const c = result.counterfactual;
+    console.log(`
+WITHOUT QLOO SIGNALS: winner would be ${c.winnerLabel ?? "none"} (${c.winnerScore ?? "-"}); winner changed: ${c.winnerChanged}; ${c.ranksChanged} of ${c.totalOptions} ranks differ`);
   }
   if (result.pilotPlan) {
     const p = result.pilotPlan;

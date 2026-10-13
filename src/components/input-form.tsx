@@ -157,7 +157,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
             A student in Bengaluru with ₹15,000 and two weekends, choosing between a thrift stall, art prints and a coffee pop-up.
           </p>
         </div>
-        <button
+        <button suppressHydrationWarning
           type="button"
           onClick={tryNisha}
           disabled={busy}
@@ -174,7 +174,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
             <label htmlFor={id("city")} className="text-sm font-semibold">
               City
             </label>
-            <input
+            <input suppressHydrationWarning
               id={id("city")}
               className={inputClass}
               value={form.city}
@@ -199,7 +199,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
                 { value: true, label: "Suggest for me" },
                 { value: false, label: "I’ll choose" },
               ].map((opt) => (
-                <button
+                <button suppressHydrationWarning
                   key={opt.label}
                   type="button"
                   aria-pressed={form.suggest === opt.value}
@@ -221,7 +221,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
                   {[...new Set([...suggestions, ...form.localities])].map((name) => {
                     const on = form.localities.includes(name);
                     return (
-                      <button
+                      <button suppressHydrationWarning
                         key={name}
                         type="button"
                         aria-pressed={on}
@@ -240,7 +240,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
                   <label htmlFor={id("custom-locality")} className="sr-only">
                     Add another locality
                   </label>
-                  <input
+                  <input suppressHydrationWarning
                     id={id("custom-locality")}
                     className={`${inputClass} mt-0`}
                     placeholder="Add another locality"
@@ -254,7 +254,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
                       }
                     }}
                   />
-                  <button
+                  <button suppressHydrationWarning
                     type="button"
                     onClick={addCustomLocality}
                     disabled={!form.customLocality.trim() || form.localities.length >= MAX_LOCALITIES}
@@ -277,7 +277,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
             <label htmlFor={id("budget")} className="text-sm font-semibold">
               Budget (₹)
             </label>
-            <input
+            <input suppressHydrationWarning
               id={id("budget")}
               className={inputClass}
               inputMode="numeric"
@@ -295,7 +295,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
             <label htmlFor={id("weekends")} className="text-sm font-semibold">
               Duration
             </label>
-            <select id={id("weekends")} className={inputClass} value={form.weekends} onChange={(e) => set("weekends", Number(e.target.value))}>
+            <select suppressHydrationWarning id={id("weekends")} className={inputClass} value={form.weekends} onChange={(e) => set("weekends", Number(e.target.value))}>
               {[1, 2, 3, 4, 6, 8].map((n) => (
                 <option key={n} value={n}>
                   {n} {n === 1 ? "weekend" : "weekends"} (Saturday and Sunday)
@@ -317,7 +317,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
                   form.risk === opt.value ? "border-brand bg-brand-soft" : "border-line bg-card hover:border-brand/50"
                 }`}
               >
-                <input
+                <input suppressHydrationWarning
                   type="radio"
                   name={id("risk")}
                   className="mt-1 accent-[var(--color-brand)]"
@@ -350,7 +350,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
                     on ? "border-brand bg-brand-soft" : "border-line bg-card hover:border-brand/50"
                   } ${!on && form.conceptIds.length >= MAX_CONCEPTS ? "opacity-50" : ""}`}
                 >
-                  <input
+                  <input suppressHydrationWarning
                     type="checkbox"
                     className="mt-1 h-4 w-4 accent-[var(--color-brand)]"
                     checked={on}
@@ -372,7 +372,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
           <label htmlFor={id("interests")} className="text-sm font-semibold">
             Your skills or interests <span className="font-normal text-muted">(optional)</span>
           </label>
-          <input
+          <input suppressHydrationWarning
             id={id("interests")}
             className={inputClass}
             placeholder="illustration, baking, hosting events"
@@ -398,7 +398,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
         </div>
       )}
 
-      <button
+      <button suppressHydrationWarning
         type="submit"
         disabled={busy}
         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-brand-dark disabled:opacity-60 sm:w-auto"

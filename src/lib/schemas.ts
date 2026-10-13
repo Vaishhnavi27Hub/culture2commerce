@@ -54,6 +54,7 @@ export const evidenceKindSchema = z.enum([
   "anchor_venue",
   "vibe_tag",
   "concept_affinity",
+  "locality_lift",
   "taste_tag",
   "brand",
   "demographic",
@@ -160,11 +161,16 @@ export type LocalResearchOutput = z.infer<typeof localResearchOutputSchema>;
 export const culturalBreakdownSchema = z.object({
   /** Mean raw Qloo affinity (0..1) of concept-type places for this locality's audience. */
   meanAffinity: z.number().optional(),
+  /** Mean affinity here minus the mean for the same concept in the other localities compared. */
+  localityLift: z.number().optional(),
   affinityPlaces: z.number(),
+  /** 0..1: how much the affinity signals count, given how many places support them. */
+  evidenceWeight: z.number(),
   affinityScore: z.number(),
-  tasteScore: z.number(),
+  liftScore: z.number(),
   resonanceScore: z.number(),
 });
+export type CulturalBreakdown = z.infer<typeof culturalBreakdownSchema>;
 
 export const opportunitySchema = z.object({
   conceptId: z.string(),
@@ -231,6 +237,7 @@ export const scoredOptionSchema = z.object({
     penaltyFactor: z.number(),
     final: z.number(),
   }),
+  culturalBreakdown: culturalBreakdownSchema,
   feasibilityBreakdown: z.object({
     budgetScore: z.number(),
     competitionScore: z.number(),
@@ -347,6 +354,20 @@ export const narrativeSchema = z.object({
 export type Narrative = z.infer<typeof narrativeSchema>;
 
 /** What a generic assistant could say with no cultural or local data: the "Without Qloo" side. */
+/** The same scoring re-run with Qloo signals removed, to show whether Qloo changed the answer. */
+export const counterfactualSchema = z.object({
+  winnerId: z.string().optional(),
+  winnerLabel: z.string().optional(),
+  winnerScore: z.number().optional(),
+  /** True when the recommendation differs from the one made with Qloo signals. */
+  winnerChanged: z.boolean(),
+  /** How many options sit at a different rank than they do with Qloo signals. */
+  ranksChanged: z.number(),
+  totalOptions: z.number(),
+  top: z.array(z.object({ id: z.string(), label: z.string(), score: z.number() })),
+});
+export type Counterfactual = z.infer<typeof counterfactualSchema>;
+
 export const baselineSchema = z.object({
   summary: z.string(),
   options: z.array(
@@ -405,6 +426,7 @@ export const runResultSchema = z.object({
   winnerId: z.string().optional(),
   pilotPlan: pilotPlanSchema.optional(),
   baseline: baselineSchema.optional(),
+  counterfactual: counterfactualSchema.optional(),
   narrative: narrativeSchema.optional(),
   qlooCallCounts: z.object({ live: z.number(), recorded: z.number(), sample: z.number() }),
   /** The overall Qloo data label for the run: the least trustworthy source that was used. */

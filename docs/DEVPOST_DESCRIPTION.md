@@ -49,7 +49,8 @@ locality's most popular places from the Insights API, then send those places bac
 - the place genres that audience over-indexes on,
 - cross-domain brand affinities,
 - demographic skews for the target audience,
-- existing competitors within 2 km, from tag and location filters.
+- existing competitors within 2 km, from tag and location filters,
+- a **locality lift**: how much more one area's audience likes a concept than the others compared.
 
 One run of the demo scenario makes 30 live Qloo calls across `/v2/insights` (places, tags,
 brands, demographics), with `/v2/tags` and `/search` used to verify tag and entity IDs.
@@ -83,10 +84,10 @@ any number that the scoring did not produce.
 ## Accomplishments
 
 - A complete product, from input to a tested verdict, that always runs: live, recorded or sample.
-- A recommendation that is non-obvious and explainable. In our live run, coffee had the
-  highest cultural fit and was still rejected on cost, and the winning locality was not the
-  trendiest one.
-- 126 automated tests plus an end-to-end browser test, none of which spend API quota.
+- A recommendation that Qloo actually decides. Every run is re-scored with Qloo's signals
+  removed; in our live demo that changes the pick from the cheapest locality to the one where
+  art places resonate most. Coffee had the highest cultural fit and was still rejected on cost.
+- 142 automated tests plus an end-to-end browser test, none of which spend API quota.
 
 ## What we learned
 

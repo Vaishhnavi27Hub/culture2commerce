@@ -39,14 +39,22 @@ export function ScoreBreakdown({ option, weights }: { option: ScoredOption; weig
       title: "Cultural fit",
       weight: weights.culturalFit,
       value: s.culturalFit,
-      formula: "0.60 × affinity + 0.25 × taste match + 0.15 × resonance",
+      formula: "0.45 × affinity + 0.35 × locality lift + 0.20 × resonance",
       note: affinity.length
         ? `Based on Qloo affinities such as ${affinity
             .slice(0, 2)
             .map((e) => `${e.label} (${(e.value as number).toFixed(2)})`)
             .join(" and ")}.`
         : "No Qloo affinity data was available, so a neutral value was used.",
-      parts: [] as { label: string; value: number }[],
+      parts: [
+        { label: "Affinity", value: option.culturalBreakdown.affinityScore },
+        { label: "Locality lift", value: option.culturalBreakdown.liftScore },
+        { label: "Resonance", value: option.culturalBreakdown.resonanceScore },
+      ] as { label: string; value: number }[],
+      extra:
+        option.culturalBreakdown.evidenceWeight < 1
+          ? `Only ${option.culturalBreakdown.affinityPlaces} comparable ${option.culturalBreakdown.affinityPlaces === 1 ? "place" : "places"} found, so affinity and lift are pulled towards neutral (weight ${option.culturalBreakdown.evidenceWeight}).`
+          : undefined,
     },
     {
       title: "Feasibility",
@@ -106,6 +114,7 @@ export function ScoreBreakdown({ option, weights }: { option: ScoredOption; weig
               </div>
             )}
             <p className="mt-3 text-xs">{g.note}</p>
+            {"extra" in g && g.extra && <p className="mt-1 text-xs text-warn">{g.extra}</p>}
           </div>
         ))}
       </div>
@@ -119,10 +128,10 @@ export function ScoreBreakdown({ option, weights }: { option: ScoredOption; weig
 
 const EVIDENCE_GROUPS: { kinds: Evidence["kind"][]; title: string; help: string; format: (e: Evidence) => string | undefined }[] = [
   {
-    kinds: ["concept_affinity"],
+    kinds: ["locality_lift", "concept_affinity"],
     title: "Similar places this audience already likes",
-    help: "Qloo affinity (0 to 1) between existing places of this type and the people who visit the area’s anchor venues.",
-    format: (e) => (e.value !== undefined ? `affinity ${e.value.toFixed(2)}` : undefined),
+    help: "Qloo affinity (0 to 1) between existing places of this type and the people who visit the area’s anchor venues. Lift compares this area with the others.",
+    format: (e) => (e.value === undefined ? undefined : e.kind === "locality_lift" ? `lift ${e.value >= 0 ? "+" : ""}${e.value.toFixed(3)}` : `affinity ${e.value.toFixed(2)}`),
   },
   {
     kinds: ["taste_tag"],

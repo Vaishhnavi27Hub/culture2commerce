@@ -35,28 +35,42 @@ export function affinityToScore(affinity: number): number {
 }
 
 export const NEUTRAL_SCORE = 50;
-/** Score used when a concept does not appear among the audience's top over-indexed genres. */
-export const TASTE_ABSENT_SCORE = 40;
+/** A lift of this much raw affinity over the other localities scores 100; the same deficit scores 0. */
+export const LIFT_FULL_SCALE = 0.04;
+/** Affinity signals count fully once this many comparable places support them. */
+export const FULL_EVIDENCE_PLACES = 5;
 export const RESONANCE_FULL_MATCHES = 4;
 
 export interface CulturalInputs {
   /** Mean raw affinity of concept-type places for the locality's audience; undefined if no data. */
   meanAffinity: number | undefined;
-  /** Best raw affinity among taste tags that match the concept; undefined if none matched. */
-  tasteAffinity: number | undefined;
-  /** How many brand, vibe and venue signals match the concept's keywords. */
+  /** How many comparable places that mean is based on. */
+  affinityPlaces: number;
+  /** Mean affinity here minus the mean in the other localities compared; undefined if none. */
+  localityLift: number | undefined;
+  /** How many taste-tag, brand, vibe and venue signals match the concept's keywords. */
   resonanceMatches: number;
 }
 
+/**
+ * cultural_fit = 0.45·affinity + 0.35·locality lift + 0.20·resonance
+ *
+ * Both affinity terms are pulled towards neutral (50) when few places support them, so one
+ * lucky match cannot dominate: score = 50 + (raw − 50) × min(1, places / 5).
+ */
 export function culturalFit(inputs: CulturalInputs) {
-  const affinityScore = inputs.meanAffinity === undefined ? NEUTRAL_SCORE : affinityToScore(inputs.meanAffinity);
-  const tasteScore = inputs.tasteAffinity === undefined ? TASTE_ABSENT_SCORE : affinityToScore(inputs.tasteAffinity);
+  const evidenceWeight = Math.min(1, inputs.affinityPlaces / FULL_EVIDENCE_PLACES);
+  const shrink = (raw: number) => round1(NEUTRAL_SCORE + (raw - NEUTRAL_SCORE) * evidenceWeight);
+  const affinityScore = inputs.meanAffinity === undefined ? NEUTRAL_SCORE : shrink(affinityToScore(inputs.meanAffinity));
+  const liftScore =
+    inputs.localityLift === undefined ? NEUTRAL_SCORE : shrink(clamp(50 + (inputs.localityLift / LIFT_FULL_SCALE) * 50));
   const resonanceScore = round1(clamp((inputs.resonanceMatches / RESONANCE_FULL_MATCHES) * 100));
   return {
+    evidenceWeight: round1(evidenceWeight * 100) / 100,
     affinityScore,
-    tasteScore,
+    liftScore,
     resonanceScore,
-    culturalFit: round1(0.6 * affinityScore + 0.25 * tasteScore + 0.15 * resonanceScore),
+    culturalFit: round1(0.45 * affinityScore + 0.35 * liftScore + 0.2 * resonanceScore),
   };
 }
 
@@ -69,10 +83,14 @@ export const REJECT_RATIO = 1.25;
 export const DOWNGRADE_PENALTY = 0.85;
 export const REJECT_PENALTY = 0.5;
 
-/** 100 while the plan uses up to 60% of the budget, 60 at exactly the budget, 0 at 130% or more. */
+/**
+ * 100 while the plan leaves at least a 15% buffer, 60 at exactly the budget, 0 at 130% or more.
+ * Spending less than 85% earns nothing extra: a cheaper plan is not a better plan, and this
+ * keeps small differences between cost estimates from deciding the ranking.
+ */
 export function budgetScore(costToBudgetRatio: number): number {
-  if (costToBudgetRatio <= 0.6) return 100;
-  if (costToBudgetRatio <= 1) return round1(100 - ((costToBudgetRatio - 0.6) / 0.4) * 40);
+  if (costToBudgetRatio <= 0.85) return 100;
+  if (costToBudgetRatio <= 1) return round1(100 - ((costToBudgetRatio - 0.85) / 0.15) * 40);
   return round1(clamp(60 - ((costToBudgetRatio - 1) / 0.3) * 60));
 }
 

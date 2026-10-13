@@ -105,3 +105,39 @@ On 13 Oct the default model returned HTTP 503 ("high demand") and took 34 s befo
 to templates. The client now tries `gemini-3.1-flash-lite` immediately when the default model is
 overloaded, missing or slower than 10 s. A 429 is still retried with backoff on the same model;
 a rejected key (401/403) stops at once. A model set explicitly in `LLM_MODEL` gets no fallback.
+
+## D22. Scoring reworked so Qloo decides the answer (supersedes the cultural-fit and budget parts of D10)
+**Why.** An ablation on 13 Oct showed that with Nisha's default inputs the top pick was the
+same with or without Qloo's cultural signals: estimated stall fees decided the locality. That
+fails the hackathon's own test ("if your submission would work the same without Qloo, you're
+building the wrong thing").
+
+**What changed.**
+- `cultural_fit = 0.45·affinity + 0.35·locality lift + 0.20·resonance`.
+  - **Locality lift** is new: the concept's mean affinity with this locality's audience minus its
+    mean in the other localities compared. ±0.04 maps to 100 / 0, with 0 at 50. It answers
+    "where", and only Qloo can supply it. With a single locality it is neutral (50).
+  - The old "taste match" term is gone. It looked for the concept among the audience's top 50
+    place genres, which are almost all food, so it penalised every non-food idea equally.
+    Matching taste tags now count towards resonance and are still shown as evidence.
+  - **Evidence shrinkage:** affinity and lift are pulled towards 50 when fewer than 5 comparable
+    places support them (`50 + (raw − 50) × places/5`), so one lucky match cannot dominate.
+- **Budget score** is 100 up to 85% of budget (was 60%). A cheaper plan is not a better plan, and
+  this stops small differences between cost estimates from deciding the ranking.
+- **Demand:** cultural fit now shifts expected sales by ±35% (was ±20%). This is an assumption.
+- **Counterfactual:** every run re-scores the options with neutral cultural fit and no competitor
+  data, and the app states whether Qloo changed the pick. It says so honestly when it did not.
+
+**Result (live, Nisha).** With Qloo: art print pop-up in Koramangala, 78.1. Without Qloo's
+signals: art print pop-up in Jayanagar. 4 of 9 rankings differ.
+
+**Guard.** `tests/integration/qloo-matters.test.ts` fails if the recommendation stops following
+the cultural signals.
+
+## D23. Form controls ignore attributes added by browser extensions
+Password managers add attributes such as `fdprocessedid` before React loads, which triggered a
+hydration warning in development. Inputs, selects and buttons on the first screen now carry
+`suppressHydrationWarning`. It affects attributes on those elements only.
+
+## D24. The e2e test builds into `.next-e2e`
+So `npm run test:e2e` works while `npm run dev` is open (both used to lock `.next`).

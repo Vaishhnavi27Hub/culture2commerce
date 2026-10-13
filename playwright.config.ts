@@ -18,6 +18,6 @@ export default defineConfig({
     url: `http://localhost:${PORT}/api/meta`,
     timeout: 180_000,
     reuseExistingServer: false,
-    env: { QLOO_MODE: "recorded", QLOO_API_KEY: "", LLM_PROVIDER: "none", C2C_DISABLE_SNAPSHOT: "true", ENABLE_DEV_PAGE: "true" },
+    env: { QLOO_MODE: "recorded", QLOO_API_KEY: "", LLM_PROVIDER: "none", C2C_DISABLE_SNAPSHOT: "true", C2C_DIST_DIR: ".next-e2e", ENABLE_DEV_PAGE: "true" },
   },
 });
