@@ -127,53 +127,65 @@
     {
       "id": "ui-input",
       "title": "Input screen with Nisha example",
-      "status": "implemented",
-      "tests": [],
-      "notes": "Form with validation, locality chips, suggest-for-me, Try Nisha one-click. Exercised by hand in the browser; automated e2e pending."
+      "status": "tested",
+      "tests": [
+        "tests/e2e/nisha.spec.ts"
+      ],
+      "notes": "Covered by the Playwright smoke test on sample data; also exercised by hand in live mode."
     },
     {
       "id": "ui-pipeline",
       "title": "Live agent workflow view",
-      "status": "implemented",
-      "tests": [],
-      "notes": "Live status per agent from the NDJSON stream; expandable cards with inputs, outputs, notes, Qloo calls, sources; data-flow strip. Seen working live (30 calls)."
+      "status": "tested",
+      "tests": [
+        "tests/e2e/nisha.spec.ts"
+      ],
+      "notes": "Covered by the Playwright smoke test on sample data; also exercised by hand in live mode."
     },
     {
       "id": "ui-recommendation",
       "title": "Recommendation, scores, confidence, evidence trail",
-      "status": "implemented",
-      "tests": [],
-      "notes": "Winner card (concept, locality, audience, pilot), score formula with weights and sub-scores, confidence reasons, evidence trail with source badges, ranked options with rejection reasons."
+      "status": "tested",
+      "tests": [
+        "tests/e2e/nisha.spec.ts"
+      ],
+      "notes": "Covered by the Playwright smoke test on sample data; also exercised by hand in live mode."
     },
     {
       "id": "ui-with-without-qloo",
       "title": "With vs Without Qloo comparison",
-      "status": "implemented",
-      "tests": [],
-      "notes": "Side-by-side or toggled panel: generic pros and cons vs the grounded pick with signals."
+      "status": "tested",
+      "tests": [
+        "tests/e2e/nisha.spec.ts"
+      ],
+      "notes": "Covered by the Playwright smoke test on sample data; also exercised by hand in live mode."
     },
     {
       "id": "ui-locality-compare",
       "title": "Locality comparison",
-      "status": "implemented",
-      "tests": [],
-      "notes": "Per-locality cards (best idea, anchors, distinctive vibe, stall fee) and a concept-by-locality score table."
+      "status": "tested",
+      "tests": [
+        "tests/e2e/nisha.spec.ts"
+      ],
+      "notes": "Covered by the Playwright smoke test on sample data; also exercised by hand in live mode."
     },
     {
       "id": "ui-pilot-plan",
       "title": "Pilot plan with Markdown, print and JSON export",
-      "status": "implemented",
-      "tests": [],
-      "notes": "Plan sections, Markdown download, print to PDF, JSON trace download."
+      "status": "tested",
+      "tests": [
+        "tests/e2e/nisha.spec.ts"
+      ],
+      "notes": "Covered by the Playwright smoke test on sample data; also exercised by hand in live mode."
     },
     {
       "id": "ui-pilot-results",
       "title": "Pilot results: predicted vs actual with verdict",
-      "status": "implemented",
+      "status": "tested",
       "tests": [
-        "tests/unit/pilot.test.ts"
+        "tests/e2e/nisha.spec.ts"
       ],
-      "notes": "Predicted vs actual table and continue/pivot/stop verdict; stored in the run JSON. Verdict logic unit-tested; form exercised by hand."
+      "notes": "Covered by the Playwright smoke test on sample data; also exercised by hand in live mode."
     },
     {
       "id": "branding",
@@ -185,23 +197,25 @@
     {
       "id": "dev-page",
       "title": "/dev status page",
-      "status": "pending",
+      "status": "implemented",
       "tests": [],
-      "notes": ""
+      "notes": "Renders features.json, the latest npm test summary and the last qloo:check. 404 in production unless ENABLE_DEV_PAGE=true. Not linked from the app (asserted in e2e)."
     },
     {
       "id": "docs",
       "title": "README, demo script, video script, Devpost description",
-      "status": "pending",
+      "status": "implemented",
       "tests": [],
-      "notes": ""
+      "notes": "README, architecture.svg, DEMO_SCRIPT, VIDEO_SCRIPT, DEVPOST_DESCRIPTION, screenshots from the e2e run."
     },
     {
       "id": "e2e",
       "title": "Playwright smoke test",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "tested",
+      "tests": [
+        "tests/e2e/nisha.spec.ts"
+      ],
+      "notes": "1 of 1 passed: full Nisha flow, rejection reasons, export download, pilot verdict, /dev page."
     },
     {
       "id": "github",

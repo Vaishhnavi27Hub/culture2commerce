@@ -5,58 +5,68 @@ To resume in a new session, say: **"continue from PROGRESS.md"**.
 ## Current state
 
 - **Date:** 13 Oct 2026
-- **Last completed phase:** Phase 7 (run API with streaming)
-- **Next phase:** Phase 8 (frontend screens)
+- **Last completed phase:** Phase 11 (full verification)
+- **Next phase:** Phase 12 (GitHub). **Blocked on the user:** install or log in to the GitHub CLI, or create an empty repository on github.com.
+- **After that:** Phase 13 (Vercel deployment), which needs the user's confirmation and login.
 
 ## Features by status
 
 See `docs/features.json` (single source of truth; `node scripts/progress.mjs list` prints it).
 
-- Tested: scaffold, qloo-live-client, qloo-fallback, all four agents, orchestrator, scoring-confidence, llm-layer, api-run-stream
-- Implemented: env-setup, qloo-discovery, qloo-scripts
-- Pending: all UI features, branding, dev-page, docs, e2e, github, deploy
+- Tested (automated tests passed): scaffold, qloo-live-client, qloo-fallback, all four agents, orchestrator, scoring-confidence, llm-layer, api-run-stream, e2e, and all seven UI features (via the Playwright smoke test)
+- Implemented (checked by hand or by running): env-setup, qloo-discovery, qloo-scripts, branding, dev-page, docs
+- Pending: github, deploy
 
-## Checks run
+## Checks run (latest results, all on 13 Oct 2026)
 
-| Date | Command | Result |
-|---|---|---|
-| 13 Oct | `git check-ignore -v .env.local` | Ignored by `.gitignore` rule `.env.*` |
-| 13 Oct | 29 manual probe calls to the live Qloo API | All HTTP 200 except two deliberate `take=300` tests (HTTP 400) |
-| 13 Oct | `npm run build` | Pass (Next.js 15.5.27), last run in Phase 3 |
-| 13 Oct | `npm run lint` | Pass (exit 0), re-run after Phase 7 |
-| 13 Oct | `npm run typecheck` | Pass (exit 0), re-run after Phase 7 |
-| 13 Oct | `npm test` | Pass: 10 files, 126 of 126 tests (no network), after Phase 7 |
-| 13 Oct | `npm run qloo:check` | Pass 3 of 3 live calls (about 0.3 to 1.0 s each) |
-| 13 Oct | `npm run test:live` | Pass: 5 of 5 live tests |
-| 13 Oct | `npm run qloo:record` | Wrote private snapshot `.qloo-cache/snapshot.json` (90 calls, git-ignored) |
-| 13 Oct | `npm run nisha` (live) | Completed in about 9 s, 30 live calls, winner: art print pop-up in Jayanagar (73.8, High confidence) |
-| 13 Oct | `QLOO_MODE=recorded npm run nisha` | Completed from the snapshot, 30 recorded calls, same scores, confidence Medium |
-| 13 Oct | `npm run nisha -- sample` | Completed on bundled sample data, confidence Low |
+| Command | Result |
+|---|---|
+| `npm run lint` | Pass (exit 0, no warnings) |
+| `npm run typecheck` | Pass (exit 0) |
+| `npm test` | Pass: 10 files, 126 of 126 tests, no network |
+| `npm run test:e2e` | Pass: 1 of 1 (Playwright, Chromium, full Nisha flow on sample data, about 25 s) |
+| `npm run qloo:check` | Pass: 3 of 3 live calls (295 to 1,242 ms) |
+| `npm run test:live` | Pass: 5 of 5 live tests (run in Phase 4) |
+| `npm run build` with `QLOO_API_KEY` empty and `LLM_PROVIDER=none` | Pass (Next.js 15.5.27) |
+| `npm run nisha` (live) | Completed in 9.0 s, 30 live calls, no fallbacks. Winner: art print pop-up in Jayanagar, 72.6/100, High confidence |
+| `QLOO_MODE=recorded npm run nisha` | Completed from the private snapshot, 30 recorded calls, confidence Medium (run in Phase 5) |
+| `npm run nisha -- sample` | Completed on bundled sample data, confidence Low |
+| `npm run qloo:record` | Wrote `.qloo-cache/snapshot.json` (90 calls, git-ignored) |
+| Browser, live mode (by hand) | Nisha flow streamed all four agents live with 30 live calls; recommendation, pilot plan and results form worked; no console errors |
+| Browser, 375 px wide (by hand) | No horizontal overflow on any of the four screens |
+| Secret scan | Key absent from every commit, from `.next/static` and from the snapshot; `.env.local`, `.qloo-cache/` and `.dev-status/` are untracked |
 
 ## Live Qloo status
 
 Working with the key in `.env.local`. Limits: 10,000 calls per month, 5 per second, `take` max 50.
-About 250 calls used so far (9,753 remaining). One full Nisha run costs 30 calls; repeats within
+About 310 calls used so far (9,690 remaining). One full Nisha run costs 30 calls; repeats within
 30 minutes are served from the in-memory cache.
 
 ## LLM status
 
 Off (`LLM_PROVIDER=none`, no key). The LLM layer is covered by 17 tests with a mocked provider.
-**No real Gemini call has been made yet**; that needs a free key in `.env.local`.
+**No real Gemini call has been made**; that needs a free key in `.env.local` (steps in the README).
 
-## Known issues
+## Known issues and honest caveats
 
-- `gh` (GitHub CLI) and Vercel CLI are not installed. Needed in Phase 12 (or use the websites).
-- The parent folder `C:\Users\vaish` is a git repository; the project has its own, see DECISIONS D1.
-- Node is 20.11.1; npm prints an EBADENGINE warning for one ESLint sub-package (wants 20.19+). Lint still passes. Vitest is pinned to v3 / Vite 6 for the same reason.
-- `filter.tag.types` with several comma-separated types returned only `genre:place` tags in the live test; cross-domain taste tags would need one call per tag type.
-- The top four options in the live Nisha run are within 3 points of each other; the winner leads mainly on a lower estimated stall fee, not on taste.
-- Thrift has thin Qloo data in Bengaluru (one comparable place, no competitors found within 2 km), reflected as Medium confidence.
-- The project is inside OneDrive; watch for slow or locked `node_modules`.
-- Qloo terms forbid committing response data, so bundled fallback data is illustrative, see DECISIONS D2.
-- Git Bash on this machine mangles here-documents that contain apostrophes; write files with the editor instead.
+- **Not done:** GitHub repository and push (Phase 12), Vercel deployment (Phase 13), a real Gemini call.
+- `gh` (GitHub CLI) and Vercel CLI are not installed.
+- The top options in the live Nisha run are within about 2 points of each other. The winner leads mainly on a lower *estimated* stall fee, not on taste. The app shows this as a "narrow lead" in the confidence reasons.
+- Thrift has thin Qloo data in Bengaluru (one comparable place, no competitors within 2 km), shown as Medium confidence.
+- Some Qloo evidence names are long listing titles (for example a shop name followed by keywords). They are shown as returned.
+- All costs, footfall, venue types and permit notes are illustrative estimates, not verified.
+- README screenshots show sample data (venues marked "(sample)") on purpose, to avoid publishing Qloo response data.
+- The fallback for a public repository is hand-written sample data, not recorded Qloo fixtures (DECISIONS D2).
+- `filter.tag.types` with several types returned only `genre:place` tags; cross-domain taste tags are not used yet.
+- Live results can change between runs as Qloo data changes; scores in the docs are from 13 Oct.
+- Node is 20.11.1; npm prints EBADENGINE warnings for some dev packages that prefer 20.19+. Everything runs.
+- The parent folder `C:\Users\vaish` is itself a git repository (untouched); the project has its own.
+- The project is inside OneDrive; no problems so far.
+- Git Bash on this machine mangles here-documents containing apostrophes; write files with the editor.
+- The in-memory rate limit and run storage reset on each serverless cold start on Vercel.
 
 ## Next steps
 
-1. Phase 8: frontend screens (input, live workflow, recommendation, pilot plan, pilot results).
-2. Phase 9 onwards: branding, /dev page, docs, full verification, GitHub, deployment prep.
+1. Phase 12: create the GitHub repository (private first) and push. Needs the user to authenticate.
+2. Phase 13: deploy to Vercel Hobby after the user confirms; add `QLOO_API_KEY` in the dashboard; verify the live URL.
+3. Before submission: make the repository public, record the video, fill the links in `docs/DEVPOST_DESCRIPTION.md`.

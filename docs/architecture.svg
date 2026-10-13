@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 520" width="980" height="520" role="img" aria-label="Culture2Commerce architecture">
+  <title>Culture2Commerce architecture</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#14122b"/>
+    </marker>
+    <style>
+      text { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; fill: #14122b; }
+      .t { font-size: 15px; font-weight: 700; }
+      .s { font-size: 12px; fill: #595770; }
+      .box { fill: #ffffff; stroke: #14122b; stroke-width: 1.5; }
+      .agent { fill: #efebff; stroke: #5b3df5; stroke-width: 1.5; }
+      .data { fill: #fff0e8; stroke: #b8460f; stroke-width: 1.5; }
+      .line { stroke: #14122b; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #595770; stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="980" height="520" fill="#fbfaf7"/>
+
+  <rect class="box" x="20" y="30" width="170" height="70" rx="10"/>
+  <text class="t" x="105" y="60" text-anchor="middle">Browser UI</text>
+  <text class="s" x="105" y="80" text-anchor="middle">input, live workflow, results</text>
+
+  <rect class="box" x="250" y="30" width="170" height="70" rx="10"/>
+  <text class="t" x="335" y="60" text-anchor="middle">POST /api/run</text>
+  <text class="s" x="335" y="80" text-anchor="middle">validates, streams NDJSON</text>
+
+  <rect class="box" x="480" y="30" width="480" height="70" rx="10"/>
+  <text class="t" x="720" y="60" text-anchor="middle">Orchestrator</text>
+  <text class="s" x="720" y="80" text-anchor="middle">runs agents in order, emits events, isolates failures</text>
+
+  <path class="line" d="M190 55 H250"/>
+  <path class="dash" d="M250 80 H190"/>
+  <path class="line" d="M420 55 H480"/>
+  <path class="dash" d="M480 80 H420"/>
+
+  <rect class="agent" x="20" y="170" width="215" height="92" rx="10"/>
+  <text class="t" x="127" y="198" text-anchor="middle">1 Local Researcher</text>
+  <text class="s" x="127" y="218" text-anchor="middle">anchor venues, vibe tags,</text>
+  <text class="s" x="127" y="234" text-anchor="middle">competitors, stall fees</text>
+
+  <rect class="agent" x="262" y="170" width="215" height="92" rx="10"/>
+  <text class="t" x="369" y="198" text-anchor="middle">2 Cultural Opportunity Finder</text>
+  <text class="s" x="369" y="218" text-anchor="middle">concept affinity, taste tags,</text>
+  <text class="s" x="369" y="234" text-anchor="middle">brands, demographics</text>
+
+  <rect class="agent" x="504" y="170" width="215" height="92" rx="10"/>
+  <text class="t" x="611" y="198" text-anchor="middle">3 Feasibility Critic</text>
+  <text class="s" x="611" y="218" text-anchor="middle">costs, verdicts, scoring,</text>
+  <text class="s" x="611" y="234" text-anchor="middle">confidence, ranking</text>
+
+  <rect class="agent" x="746" y="170" width="215" height="92" rx="10"/>
+  <text class="t" x="853" y="198" text-anchor="middle">4 Pilot Planner</text>
+  <text class="s" x="853" y="218" text-anchor="middle">quantities, schedule, budget,</text>
+  <text class="s" x="853" y="234" text-anchor="middle">continue / pivot / stop rule</text>
+
+  <path class="line" d="M235 216 H262"/>
+  <path class="line" d="M477 216 H504"/>
+  <path class="line" d="M719 216 H746"/>
+  <path class="line" d="M560 100 V135 H127 V170"/>
+  <path class="line" d="M853 262 V290 H975 V65 H960"/>
+
+  <rect class="data" x="80" y="340" width="330" height="150" rx="10"/>
+  <text class="t" x="245" y="366" text-anchor="middle">QlooClient (one interface)</text>
+  <text class="s" x="245" y="390" text-anchor="middle">1. Live Qloo API: /search, /v2/tags, /v2/insights</text>
+  <text class="s" x="245" y="410" text-anchor="middle">timeout, retry, 4 calls/s throttle, cache, Zod</text>
+  <text class="s" x="245" y="434" text-anchor="middle">2. Private recorded snapshot (git-ignored)</text>
+  <text class="s" x="245" y="458" text-anchor="middle">3. Bundled sample data (illustrative, not Qloo)</text>
+  <text class="s" x="245" y="478" text-anchor="middle">per-call fallback, every value labelled with its source</text>
+
+  <rect class="data" x="470" y="340" width="230" height="150" rx="10"/>
+  <text class="t" x="585" y="366" text-anchor="middle">Local market estimates</text>
+  <text class="s" x="585" y="390" text-anchor="middle">stall fees, footfall, venues,</text>
+  <text class="s" x="585" y="408" text-anchor="middle">permit notes, concept costs</text>
+  <text class="s" x="585" y="434" text-anchor="middle">curated JSON, labelled</text>
+  <text class="s" x="585" y="452" text-anchor="middle">"illustrative estimate"</text>
+
+  <rect class="data" x="750" y="340" width="210" height="150" rx="10"/>
+  <text class="t" x="855" y="366" text-anchor="middle">LLM (optional)</text>
+  <text class="s" x="855" y="390" text-anchor="middle">Gemini free tier</text>
+  <text class="s" x="855" y="408" text-anchor="middle">wording only, number guard</text>
+  <text class="s" x="855" y="434" text-anchor="middle">default: templates,</text>
+  <text class="s" x="855" y="452" text-anchor="middle">no LLM needed</text>
+
+  <path class="line" d="M127 262 V340"/>
+  <path class="line" d="M340 262 V340"/>
+  <path class="line" d="M180 262 V310 H520 V340"/>
+  <path class="line" d="M611 262 V340"/>
+  <path class="line" d="M800 262 V310 H660 V340"/>
+  <path class="dash" d="M880 262 V340"/>
+</svg>
