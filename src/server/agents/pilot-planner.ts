@@ -80,7 +80,7 @@ export const pilotPlanner: Agent<PilotPlanInput, PilotPlan> = async ({ option, p
   for (let w = 1; w <= weekends; w++) {
     schedule.push({
       when: `Weekend ${w}: Saturday`,
-      tasks: ["Set up 45 minutes early", "Count people who stop at the stall (tally marks are enough)", "Note which items sell first"],
+      tasks: ["Set up 45 minutes early", "Estimate footfall: count passers-by for 10 minutes each hour and multiply by 6", "Note which items sell first"],
     });
     schedule.push({
       when: `Weekend ${w}: Sunday`,
@@ -133,6 +133,7 @@ export const pilotPlanner: Agent<PilotPlanInput, PilotPlan> = async ({ option, p
     successMetrics,
     rule,
     predicted: { units: option.plannedUnits, revenueInr: option.projectedRevenueInr, footfall, source: "estimate" },
-    permitNotes: [...profile.market.permitNotes, ...(concept.licenceNote ? [concept.licenceNote] : [])],
+    // Food-safety notes are only relevant to concepts that need a food licence.
+    permitNotes: profile.market.permitNotes.filter((n) => concept.licenceInr > 0 || !/food/i.test(n)),
   } satisfies PilotPlan);
 };
