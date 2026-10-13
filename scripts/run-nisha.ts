@@ -6,6 +6,7 @@
  */
 import { NISHA_EXAMPLE } from "../src/lib/nisha";
 import { readServerEnv } from "../src/server/env";
+import { getNarrator, resolveLlmConfig } from "../src/server/llm/client";
 import { runPipeline } from "../src/server/orchestrator";
 import { createQlooClient } from "../src/server/qloo";
 import { getLastQlooQuota } from "../src/server/qloo/live";
@@ -20,7 +21,11 @@ async function main() {
     : createQlooClient({ env });
 
   const started = Date.now();
-  const result = await runPipeline(NISHA_EXAMPLE, { qloo });
+  // The LLM is used only if LLM_PROVIDER and LLM_API_KEY are set; it never changes scores.
+  const narrate = getNarrator(env);
+  const llm = resolveLlmConfig(env);
+  console.log(llm ? `LLM: on (${llm.provider}, model ${llm.model})` : "LLM: off (template text)");
+  const result = await runPipeline(NISHA_EXAMPLE, { qloo, ...(narrate ? { narrate } : {}) });
   const seconds = ((Date.now() - started) / 1000).toFixed(1);
 
   console.log(`\nRun ${result.status} in ${seconds}s | Qloo data: ${result.qlooSource} | calls: live ${result.qlooCallCounts.live}, recorded ${result.qlooCallCounts.recorded}, sample ${result.qlooCallCounts.sample}`);
@@ -63,7 +68,11 @@ async function main() {
     console.log(`  ${p.rule.continueIf}\n  ${p.rule.pivotIf}\n  ${p.rule.stopIf}`);
     console.log(`  Predicted: ${p.predicted.units} units, ₹${p.predicted.revenueInr}, footfall ${p.predicted.footfall}`);
   }
-  if (result.narrative) console.log(`\nNARRATIVE [${result.narrative.source}]: ${result.narrative.headline}\n  ${result.narrative.whyThis}`);
+  if (result.narrative) {
+    const n = result.narrative;
+    console.log(`\nNARRATIVE [${n.source}]: ${n.headline}\n  WHY: ${n.whyThis}\n  PITCH: ${n.pilotPitch}`);
+    if (n.note) console.log(`  NOTE: ${n.note}`);
+  }
 
   const fallbacks = result.agents.flatMap((a) => a.qlooCalls).filter((c) => c.fallbackReason);
   if (fallbacks.length) console.log(`\n${fallbacks.length} calls used a fallback, e.g. ${fallbacks[0]?.fallbackReason}`);

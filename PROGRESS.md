@@ -7,7 +7,7 @@ To resume in a new session, say: **"continue from PROGRESS.md"**.
 - **Date:** 13 Oct 2026
 - **Last completed phase:** Phase 12 (GitHub): `main` pushed to https://github.com/Vaishhnavi27Hub/culture2commerce (private)
 - **Next phase:** Phase 13 (Vercel deployment). Needs the user's confirmation and login.
-- **Waiting on the user:** optional Gemini key in `.env.local` for one real LLM test; repo description and topics; make the repo public before submission.
+- **Waiting on the user:** team review; then deployment. Repo description and topics; make the repo public before submission.
 
 ## Features by status
 
@@ -24,7 +24,7 @@ See `docs/features.json` (single source of truth; `node scripts/progress.mjs lis
 |---|---|
 | `npm run lint` | Pass (exit 0, no warnings) |
 | `npm run typecheck` | Pass (exit 0) |
-| `npm test` | Pass: 10 files, 126 of 126 tests, no network |
+| `npm test` | Pass: 10 files, 130 of 130 tests, no network |
 | `npm run test:e2e` | Pass: 1 of 1 (Playwright, Chromium, full Nisha flow on sample data, about 25 s) |
 | `npm run qloo:check` | Pass: 3 of 3 live calls (295 to 1,242 ms) |
 | `npm run test:live` | Pass: 5 of 5 live tests (run in Phase 4) |
@@ -45,12 +45,16 @@ About 310 calls used so far (9,690 remaining). One full Nisha run costs 30 calls
 
 ## LLM status
 
-Off (`LLM_PROVIDER=none`, no key). The LLM layer is covered by 17 tests with a mocked provider.
-**No real Gemini call has been made**; that needs a free key in `.env.local` (steps in the README).
+On in `.env.local` (`LLM_PROVIDER=gemini`, free-tier key). **One real Gemini call succeeded on 13 Oct**:
+`QLOO_MODE=recorded npm run nisha` returned an LLM-written narrative in 11.8 s with every number
+unchanged (it passed the number guard). An earlier attempt got HTTP 503 from `gemini-3.5-flash-lite`
+(overloaded, 34 s) and correctly fell back to template text; the client now fails over to
+`gemini-3.1-flash-lite` and uses a 10 s timeout. 21 LLM tests run against a mocked provider.
 
 ## Known issues and honest caveats
 
-- **Not done:** Vercel deployment (Phase 13), a real Gemini call, making the repository public.
+- **Not done:** Vercel deployment (Phase 13, deferred by the user until the team has reviewed), making the repository public.
+- Gemini free-tier models can be slow or overloaded; with the LLM on, a run can take up to about 12 s longer. Template text is used if both models fail.
 - `gh` (GitHub CLI) and Vercel CLI are not installed.
 - The top options in the live Nisha run are within about 2 points of each other. The winner leads mainly on a lower *estimated* stall fee, not on taste. The app shows this as a "narrow lead" in the confidence reasons.
 - Thrift has thin Qloo data in Bengaluru (one comparable place, no competitors within 2 km), shown as Medium confidence.
