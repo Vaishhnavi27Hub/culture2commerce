@@ -9,6 +9,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/live/**/*.test.ts"],
+    setupFiles: ["tests/live/setup.ts"],
     testTimeout: 30_000,
   },
 });

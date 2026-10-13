@@ -78,3 +78,10 @@ neighbourhood, coordinates, a primary genre and rich tags (ambience, audience, v
 
 - Best tag set for thrift, art prints, board games and workshops.
 - Whether `filter.location.radius` behaves the same with `filter.location.query`.
+
+## 7. Phase 4 follow-up (live tests, 13 Oct)
+
+- `operator.filter.tags=union` with two tag IDs returns results (coffee shop OR cafe).
+- `filter.tag.types` given three comma-separated types returned only `urn:tag:genre:place`
+  tags. To get music or brand-genre tags we make one call per tag type.
+- `npm run qloo:check` passed 3 of 3; `npm run test:live` passed 5 of 5.
