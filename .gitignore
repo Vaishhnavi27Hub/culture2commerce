@@ -1,0 +1,53 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# next.js / build output
+.next/
+out/
+build/
+dist/
+next-env.d.ts
+*.tsbuildinfo
+
+# secrets: ignore every env file except the placeholder example
+.env
+.env.*
+!.env.example
+
+# Qloo's own documentation (their copyright; linked from the README instead)
+qloo-docs/
+
+# testing
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# local dev status written by scripts (shown on /dev)
+.dev-status/
+
+# vercel
+.vercel/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# private Qloo snapshots written by npm run qloo:record (must never be published)
+.qloo-cache/

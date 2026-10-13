@@ -1,0 +1,32 @@
+{
+  "updated": "2026-10-13",
+  "features": [
+    { "id": "env-setup", "title": "Environment, secrets and git setup", "status": "implemented", "tests": [], "notes": "Verified .env.local is git-ignored." },
+    { "id": "qloo-discovery", "title": "Qloo API discovery and India reality check", "status": "implemented", "tests": [], "notes": "29 live probe calls; see docs/QLOO_FINDINGS.md." },
+    { "id": "scaffold", "title": "Next.js + TypeScript + Tailwind scaffold with lint, typecheck, Vitest", "status": "pending", "tests": [], "notes": "" },
+    { "id": "qloo-live-client", "title": "Live Qloo client (timeout, retry, throttle, cache, Zod)", "status": "pending", "tests": [], "notes": "" },
+    { "id": "qloo-fallback", "title": "Recorded snapshot and bundled sample fallback with source labels", "status": "pending", "tests": [], "notes": "" },
+    { "id": "qloo-scripts", "title": "qloo:check and qloo:record scripts", "status": "pending", "tests": [], "notes": "" },
+    { "id": "agent-local-researcher", "title": "Agent 1: Local Researcher", "status": "pending", "tests": [], "notes": "" },
+    { "id": "agent-cultural-finder", "title": "Agent 2: Cultural Opportunity Finder", "status": "pending", "tests": [], "notes": "" },
+    { "id": "agent-feasibility-critic", "title": "Agent 3: Feasibility Critic", "status": "pending", "tests": [], "notes": "" },
+    { "id": "agent-pilot-planner", "title": "Agent 4: Pilot Planner", "status": "pending", "tests": [], "notes": "" },
+    { "id": "orchestrator", "title": "Orchestrator with events and error isolation", "status": "pending", "tests": [], "notes": "" },
+    { "id": "scoring-confidence", "title": "Deterministic scoring and confidence level", "status": "pending", "tests": [], "notes": "" },
+    { "id": "llm-layer", "title": "Optional free LLM layer with template fallback", "status": "pending", "tests": [], "notes": "" },
+    { "id": "api-run-stream", "title": "Run API with streaming events", "status": "pending", "tests": [], "notes": "" },
+    { "id": "ui-input", "title": "Input screen with Nisha example", "status": "pending", "tests": [], "notes": "" },
+    { "id": "ui-pipeline", "title": "Live agent workflow view", "status": "pending", "tests": [], "notes": "" },
+    { "id": "ui-recommendation", "title": "Recommendation, scores, confidence, evidence trail", "status": "pending", "tests": [], "notes": "" },
+    { "id": "ui-with-without-qloo", "title": "With vs Without Qloo comparison", "status": "pending", "tests": [], "notes": "" },
+    { "id": "ui-locality-compare", "title": "Locality comparison", "status": "pending", "tests": [], "notes": "" },
+    { "id": "ui-pilot-plan", "title": "Pilot plan with Markdown, print and JSON export", "status": "pending", "tests": [], "notes": "" },
+    { "id": "ui-pilot-results", "title": "Pilot results: predicted vs actual with verdict", "status": "pending", "tests": [], "notes": "" },
+    { "id": "branding", "title": "Logo assets, icons and brand tokens", "status": "pending", "tests": [], "notes": "" },
+    { "id": "dev-page", "title": "/dev status page", "status": "pending", "tests": [], "notes": "" },
+    { "id": "docs", "title": "README, demo script, video script, Devpost description", "status": "pending", "tests": [], "notes": "" },
+    { "id": "e2e", "title": "Playwright smoke test", "status": "pending", "tests": [], "notes": "" },
+    { "id": "github", "title": "GitHub repository", "status": "pending", "tests": [], "notes": "gh CLI not installed yet." },
+    { "id": "deploy", "title": "Vercel deployment", "status": "pending", "tests": [], "notes": "" }
+  ]
+}
