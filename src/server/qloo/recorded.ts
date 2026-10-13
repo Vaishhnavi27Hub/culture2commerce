@@ -106,6 +106,8 @@ export function bindAll(call: GenericCall): QlooClient {
 
 /** Loads the private snapshot if one exists and is valid. Never throws. */
 export function loadSnapshotFromDisk(rootDir: string = process.cwd()): QlooSnapshot | undefined {
+  // C2C_DISABLE_SNAPSHOT=true forces the bundled sample data even if a snapshot exists.
+  if (process.env.C2C_DISABLE_SNAPSHOT === "true") return undefined;
   try {
     const file = path.join(rootDir, SNAPSHOT_RELATIVE_PATH);
     if (!fs.existsSync(file)) return undefined;
