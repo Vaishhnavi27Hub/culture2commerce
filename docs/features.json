@@ -127,58 +127,60 @@
     {
       "id": "ui-input",
       "title": "Input screen with Nisha example",
-      "status": "pending",
+      "status": "implemented",
       "tests": [],
-      "notes": ""
+      "notes": "Form with validation, locality chips, suggest-for-me, Try Nisha one-click. Exercised by hand in the browser; automated e2e pending."
     },
     {
       "id": "ui-pipeline",
       "title": "Live agent workflow view",
-      "status": "pending",
+      "status": "implemented",
       "tests": [],
-      "notes": ""
+      "notes": "Live status per agent from the NDJSON stream; expandable cards with inputs, outputs, notes, Qloo calls, sources; data-flow strip. Seen working live (30 calls)."
     },
     {
       "id": "ui-recommendation",
       "title": "Recommendation, scores, confidence, evidence trail",
-      "status": "pending",
+      "status": "implemented",
       "tests": [],
-      "notes": ""
+      "notes": "Winner card (concept, locality, audience, pilot), score formula with weights and sub-scores, confidence reasons, evidence trail with source badges, ranked options with rejection reasons."
     },
     {
       "id": "ui-with-without-qloo",
       "title": "With vs Without Qloo comparison",
-      "status": "pending",
+      "status": "implemented",
       "tests": [],
-      "notes": ""
+      "notes": "Side-by-side or toggled panel: generic pros and cons vs the grounded pick with signals."
     },
     {
       "id": "ui-locality-compare",
       "title": "Locality comparison",
-      "status": "pending",
+      "status": "implemented",
       "tests": [],
-      "notes": ""
+      "notes": "Per-locality cards (best idea, anchors, distinctive vibe, stall fee) and a concept-by-locality score table."
     },
     {
       "id": "ui-pilot-plan",
       "title": "Pilot plan with Markdown, print and JSON export",
-      "status": "pending",
+      "status": "implemented",
       "tests": [],
-      "notes": ""
+      "notes": "Plan sections, Markdown download, print to PDF, JSON trace download."
     },
     {
       "id": "ui-pilot-results",
       "title": "Pilot results: predicted vs actual with verdict",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "implemented",
+      "tests": [
+        "tests/unit/pilot.test.ts"
+      ],
+      "notes": "Predicted vs actual table and continue/pivot/stop verdict; stored in the run JSON. Verdict logic unit-tested; form exercised by hand."
     },
     {
       "id": "branding",
       "title": "Logo assets, icons and brand tokens",
-      "status": "pending",
+      "status": "implemented",
       "tests": [],
-      "notes": ""
+      "notes": "Seven hand-written SVGs (mark, VKY, full, dark variants, favicon), favicon.ico, apple icon, social card via npm run icons. Checked visually at 16, 32 and 256 px."
     },
     {
       "id": "dev-page",
