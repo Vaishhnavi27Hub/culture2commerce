@@ -8,6 +8,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts", "tests/contract/**/*.test.ts"],
+    // The JSON summary feeds the /dev page.
+    reporters: ["default", ["json", { outputFile: ".dev-status/test-results.json" }]],
     // The normal test run must never reach the real Qloo API or an LLM.
     env: { QLOO_API_KEY: "", QLOO_MODE: "recorded", LLM_PROVIDER: "none", LLM_API_KEY: "" },
   },
