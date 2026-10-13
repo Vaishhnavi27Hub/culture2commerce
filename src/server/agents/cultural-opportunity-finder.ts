@@ -56,7 +56,6 @@ export function summariseDemographics(skews: DemographicSkew[]): { ageBands: str
 }
 
 export function describeAudience(profile: LocalityProfile, demo: ReturnType<typeof summariseDemographics>): string {
-  const vibes = profile.vibeTags.slice(0, 2).map((v) => v.name.toLowerCase());
   const who = demo.ageBands.length ? `People aged ${demo.ageBands.join(" and ")}` : "People";
   // Short venue names only; long listing-style names read badly in a sentence.
   const names = profile.anchors
@@ -64,8 +63,7 @@ export function describeAudience(profile: LocalityProfile, demo: ReturnType<type
     .filter((n) => n.length <= 32)
     .slice(0, 2);
   const where = names.length ? ` who go to ${profile.name} places like ${names.join(" and ")}` : ` who spend time in ${profile.name}`;
-  const vibe = vibes.length ? `, drawn to ${vibes.join(" and ")} spots` : "";
-  return `${who}${where}${vibe}`;
+  return `${who}${where}`;
 }
 
 interface LocalitySignals {
@@ -120,7 +118,10 @@ async function assess(
       context: { locality: profile.name, city: ctx.input.city },
     });
     sources.push(r.source);
-    const scored = r.data.filter((p) => p.affinity !== undefined).sort((a, b) => (b.affinity ?? 0) - (a.affinity ?? 0));
+    // Drop places Qloo files under the concept's tags but that are clearly something else
+    // (for example a tattoo studio tagged as an art studio).
+    const offTopic = (text: string) => (concept.excludeKeywords ?? []).some((x) => text.toLowerCase().includes(x));
+    const scored = r.data.filter((p) => p.affinity !== undefined && !offTopic(`${p.name} ${p.genre ?? ""}`)).sort((a, b) => (b.affinity ?? 0) - (a.affinity ?? 0));
     affinityPlaces = scored.length;
     const top = scored.slice(0, AFFINITY_TOP_N);
     const m = mean(top.map((p) => p.affinity as number));
