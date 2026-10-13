@@ -101,7 +101,7 @@ async function assess(
   signals: LocalitySignals,
   ctx: AgentContext,
   warnings: string[],
-): Promise<Opportunity> {
+): Promise<Assessment> {
   const sources: QlooSource[] = [profile.qlooSource];
   const evidence: Evidence[] = [];
   const anchorIds = profile.anchors.map((a) => a.id);
@@ -109,6 +109,7 @@ async function assess(
   // 1. Core signal: affinity of concept-type places to the anchors' audience.
   let meanAffinity: number | undefined;
   let affinityPlaces = 0;
+  let affinitySource: QlooSource | undefined;
   try {
     const r = await ctx.qloo.getAudienceAffinity({
       anchorIds,
@@ -118,6 +119,7 @@ async function assess(
       context: { locality: profile.name, city: ctx.input.city },
     });
     sources.push(r.source);
+    affinitySource = r.source;
     // Drop places Qloo files under the concept's tags but that are clearly something else
     // (for example a tattoo studio tagged as an art studio).
     const offTopic = (text: string) => (concept.excludeKeywords ?? []).some((x) => text.toLowerCase().includes(x));
@@ -141,7 +143,6 @@ async function assess(
 
   // 2. Supporting signal: does the concept show up in the audience's over-indexed genres?
   const matchedTags = (signals.tasteTags?.data ?? []).filter((t) => matchesAny(t.name, concept.keywords, concept.excludeKeywords));
-  const tasteAffinity = matchedTags.length ? Math.max(...matchedTags.map((t) => t.affinity)) : undefined;
   if (signals.tasteTags) sources.push(signals.tasteTags.source);
   for (const t of matchedTags.slice(0, 3)) {
     evidence.push({
@@ -206,15 +207,66 @@ async function assess(
   }
   const targetAudience = describeAudience(profile, demo);
 
-  const fit = culturalFit({
+  return {
+    concept,
+    profile,
     meanAffinity,
-    tasteAffinity,
-    resonanceMatches: matchedBrands.length + matchedVibes.length + matchedAnchors.length,
-  });
+    affinityPlaces,
+    affinitySource,
+    resonanceMatches: matchedTags.length + matchedBrands.length + matchedVibes.length + matchedAnchors.length,
+    targetAudience,
+    evidence,
+    sources: uniq(sources),
+  };
+}
 
+/** What is known about one concept in one locality before localities are compared. */
+interface Assessment {
+  concept: Concept;
+  profile: LocalityProfile;
+  meanAffinity: number | undefined;
+  affinityPlaces: number;
+  affinitySource: QlooSource | undefined;
+  resonanceMatches: number;
+  targetAudience: string;
+  evidence: Evidence[];
+  sources: QlooSource[];
+}
+
+/**
+ * Locality lift: how much more this area's audience likes the concept than the audiences
+ * of the other areas being compared. This is the signal that answers "where", and it can
+ * only come from Qloo. Undefined when there is nothing to compare against.
+ */
+export function localityLift(own: number | undefined, others: (number | undefined)[]): number | undefined {
+  const known = others.filter((v): v is number => v !== undefined);
+  if (own === undefined || known.length === 0) return undefined;
+  return round3(own - (mean(known) as number));
+}
+
+function finalise(a: Assessment, all: Assessment[]): Opportunity {
+  const { concept, profile, meanAffinity, affinityPlaces } = a;
+  const peers = all.filter((x) => x.concept.id === concept.id && x.profile.name !== profile.name);
+  const lift = localityLift(meanAffinity, peers.map((p) => p.meanAffinity));
+  const fit = culturalFit({ meanAffinity, affinityPlaces, localityLift: lift, resonanceMatches: a.resonanceMatches });
+
+  const evidence = [...a.evidence];
+  if (lift !== undefined && meanAffinity !== undefined && a.affinitySource) {
+    const peerMean = round3(meanAffinity - lift);
+    evidence.unshift({
+      kind: "locality_lift",
+      label: `${lift >= 0 ? "+" : ""}${lift.toFixed(3)} versus the other areas compared`,
+      detail: `${concept.label} places average ${meanAffinity.toFixed(3)} affinity with the ${profile.name} audience, against ${peerMean.toFixed(3)} for ${peers.map((p) => p.profile.name).join(" and ")}`,
+      value: lift,
+      source: a.affinitySource,
+    });
+  }
+
+  const liftText =
+    lift === undefined ? "" : lift >= 0.005 ? `, ${lift.toFixed(3)} above the other areas compared` : lift <= -0.005 ? `, ${Math.abs(lift).toFixed(3)} below the other areas compared` : ", about the same as the other areas compared";
   const hypothesis =
     meanAffinity !== undefined
-      ? `${targetAudience} already respond to similar places (mean Qloo affinity ${meanAffinity.toFixed(2)} across ${Math.min(affinityPlaces, AFFINITY_TOP_N)} places), so ${article(concept.label)} ${concept.label.toLowerCase()} in ${profile.name} is a testable bet.`
+      ? `${a.targetAudience} already respond to similar places (mean Qloo affinity ${meanAffinity.toFixed(3)} across ${Math.min(affinityPlaces, AFFINITY_TOP_N)} ${affinityPlaces === 1 ? "place" : "places"}${liftText}), so ${article(concept.label)} ${concept.label.toLowerCase()} in ${profile.name} is a testable bet.`
       : `No affinity data was available for ${concept.label.toLowerCase()} in ${profile.name}, so this option is scored neutrally.`;
 
   return {
@@ -223,15 +275,17 @@ async function assess(
     culturalFit: fit.culturalFit,
     breakdown: {
       ...(meanAffinity !== undefined ? { meanAffinity } : {}),
+      ...(lift !== undefined ? { localityLift: lift } : {}),
       affinityPlaces,
+      evidenceWeight: fit.evidenceWeight,
       affinityScore: fit.affinityScore,
-      tasteScore: fit.tasteScore,
+      liftScore: fit.liftScore,
       resonanceScore: fit.resonanceScore,
     },
-    targetAudience,
+    targetAudience: a.targetAudience,
     hypothesis,
     evidence,
-    qlooSources: uniq(sources),
+    qlooSources: a.sources,
   };
 }
 
@@ -245,7 +299,17 @@ export const culturalOpportunityFinder: Agent<LocalResearchOutput, CulturalOutpu
       return Promise.all(ctx.concepts.map((concept) => assess(concept, profile, signals, ctx, warnings)));
     }),
   );
-  const opportunities = perLocality.flat();
+  // Second pass: compare localities with each other to get the lift for every concept.
+  const assessments = perLocality.flat();
+  const opportunities = assessments.map((a) => finalise(a, assessments));
+  for (const concept of ctx.concepts) {
+    const best = opportunities
+      .filter((o) => o.conceptId === concept.id && o.breakdown.localityLift !== undefined)
+      .sort((x, y) => (y.breakdown.localityLift ?? 0) - (x.breakdown.localityLift ?? 0))[0];
+    if (best && (best.breakdown.localityLift ?? 0) > 0) {
+      ctx.note(`${concept.label}: strongest pull in ${best.locality} (+${(best.breakdown.localityLift ?? 0).toFixed(3)} affinity versus the other areas)`);
+    }
+  }
   const degraded = opportunities.every((o) => o.breakdown.meanAffinity === undefined);
   if (degraded) warnings.push("No Qloo affinity data was available; cultural fit is neutral for every option.");
   return culturalOutputSchema.parse({ opportunities, degraded, warnings });
@@ -258,7 +322,7 @@ export function neutralOpportunities(local: LocalResearchOutput, concepts: Conce
       conceptId: concept.id,
       locality: profile.name,
       culturalFit: NEUTRAL_SCORE,
-      breakdown: { affinityPlaces: 0, affinityScore: NEUTRAL_SCORE, tasteScore: NEUTRAL_SCORE, resonanceScore: NEUTRAL_SCORE },
+      breakdown: { affinityPlaces: 0, evidenceWeight: 0, affinityScore: NEUTRAL_SCORE, liftScore: NEUTRAL_SCORE, resonanceScore: NEUTRAL_SCORE },
       targetAudience: `People who spend time in ${profile.name}`,
       hypothesis: `Cultural analysis was unavailable, so ${concept.label.toLowerCase()} in ${profile.name} is scored neutrally.`,
       evidence: [],

@@ -33,21 +33,45 @@ describe("cultural fit", () => {
     expect(affinityToScore(1)).toBe(100);
   });
 
-  it("rises with affinity and with supporting signals", () => {
-    const base = culturalFit({ meanAffinity: 0.9, tasteAffinity: undefined, resonanceMatches: 0 }).culturalFit;
-    expect(culturalFit({ meanAffinity: 0.95, tasteAffinity: undefined, resonanceMatches: 0 }).culturalFit).toBeGreaterThan(base);
-    expect(culturalFit({ meanAffinity: 0.9, tasteAffinity: 0.95, resonanceMatches: 0 }).culturalFit).toBeGreaterThan(base);
-    expect(culturalFit({ meanAffinity: 0.9, tasteAffinity: undefined, resonanceMatches: 3 }).culturalFit).toBeGreaterThan(base);
+  const base = { meanAffinity: 0.9, affinityPlaces: 8, localityLift: 0, resonanceMatches: 0 };
+
+  it("rises with affinity, with locality lift and with supporting signals", () => {
+    const fit = culturalFit(base).culturalFit;
+    expect(culturalFit({ ...base, meanAffinity: 0.95 }).culturalFit).toBeGreaterThan(fit);
+    expect(culturalFit({ ...base, localityLift: 0.02 }).culturalFit).toBeGreaterThan(fit);
+    expect(culturalFit({ ...base, localityLift: -0.02 }).culturalFit).toBeLessThan(fit);
+    expect(culturalFit({ ...base, resonanceMatches: 3 }).culturalFit).toBeGreaterThan(fit);
   });
 
-  it("uses a neutral affinity score when Qloo returned nothing", () => {
-    expect(culturalFit({ meanAffinity: undefined, tasteAffinity: undefined, resonanceMatches: 0 }).affinityScore).toBe(50);
+  it("maps locality lift to 0..100 around a neutral 50", () => {
+    expect(culturalFit({ ...base, localityLift: 0 }).liftScore).toBe(50);
+    expect(culturalFit({ ...base, localityLift: 0.04 }).liftScore).toBe(100);
+    expect(culturalFit({ ...base, localityLift: 0.2 }).liftScore).toBe(100);
+    expect(culturalFit({ ...base, localityLift: -0.04 }).liftScore).toBe(0);
+    expect(culturalFit({ ...base, localityLift: undefined }).liftScore).toBe(50);
+  });
+
+  it("pulls affinity signals towards neutral when few places support them", () => {
+    const strong = culturalFit({ ...base, meanAffinity: 0.98, localityLift: 0.04, affinityPlaces: 5 });
+    const thin = culturalFit({ ...base, meanAffinity: 0.98, localityLift: 0.04, affinityPlaces: 1 });
+    expect(strong.affinityScore).toBe(100);
+    expect(thin.affinityScore).toBe(60);
+    expect(thin.liftScore).toBe(60);
+    expect(thin.evidenceWeight).toBe(0.2);
+    expect(thin.culturalFit).toBeLessThan(strong.culturalFit);
+  });
+
+  it("uses neutral scores when Qloo returned nothing", () => {
+    const none = culturalFit({ meanAffinity: undefined, affinityPlaces: 0, localityLift: undefined, resonanceMatches: 0 });
+    expect(none.affinityScore).toBe(50);
+    expect(none.liftScore).toBe(50);
   });
 });
 
 describe("feasibility", () => {
   it("budget score has the documented breakpoints and never increases with cost", () => {
     expect(budgetScore(0.5)).toBe(100);
+    expect(budgetScore(0.85)).toBe(100);
     expect(budgetScore(1)).toBe(60);
     expect(budgetScore(1.3)).toBe(0);
     expect(budgetScore(2)).toBe(0);

@@ -39,6 +39,9 @@ export interface FeasibilityInput {
 export const CONTINGENCY_RATE = 0.08;
 export const REFERENCE_FOOTFALL = 800;
 export const DAYS_PER_WEEKEND = 2;
+/** Expected sales multiplier at cultural fit 0 and 100. */
+export const FIT_DEMAND_MIN = 0.65;
+export const FIT_DEMAND_MAX = 1.35;
 
 export interface CostModel {
   costs: CostLine[];
@@ -56,8 +59,8 @@ export interface CostModel {
 export function buildCostModel(concept: Concept, profile: LocalityProfile, culturalFitScore: number, weekends: number): CostModel {
   const days = weekends * DAYS_PER_WEEKEND;
   const footfallFactor = clamp(profile.market.weekendFootfallPerDay / REFERENCE_FOOTFALL, 0.6, 1.3);
-  // Cultural fit shifts expected sales by up to 20% either way.
-  const fitFactor = 0.8 + 0.4 * (culturalFitScore / 100);
+  // Cultural fit shifts expected sales by up to 35% either way (an assumption, shown in the UI).
+  const fitFactor = FIT_DEMAND_MIN + (FIT_DEMAND_MAX - FIT_DEMAND_MIN) * (culturalFitScore / 100);
   const plannedUnits = Math.max(1, Math.round(concept.baseUnitsPerDay * footfallFactor * fitFactor * days));
   const stockUnits = Math.ceil(plannedUnits * concept.stockMultiplier);
 
@@ -207,6 +210,7 @@ export const feasibilityCritic: Agent<FeasibilityInput, FeasibilityOutput> = asy
       verdict,
       verdictReasons,
       scores: { ...scores, ...final },
+      culturalBreakdown: opportunity.breakdown,
       feasibilityBreakdown: {
         budgetScore: feas.budgetScore,
         competitionScore: feas.competitionScore,

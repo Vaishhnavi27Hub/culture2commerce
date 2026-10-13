@@ -7,6 +7,7 @@ import {
   type AgentEvent,
   type AgentName,
   type AgentTrace,
+  type Counterfactual,
   type CulturalOutput,
   type DataSource,
   type FeasibilityOutput,
@@ -190,6 +191,7 @@ export async function runPipeline(rawInput: unknown, options: RunOptions = {}): 
   let feasible: FeasibilityOutput | undefined;
   let pilotPlan: PilotPlan | undefined;
   let narrative: Narrative | undefined;
+  let counterfactual: Counterfactual | undefined;
 
   const conceptNames = concepts.map((c) => c.label.toLowerCase()).join(", ");
 
@@ -248,6 +250,26 @@ export async function runPipeline(rawInput: unknown, options: RunOptions = {}): 
         message = "The Feasibility Critic failed, so no recommendation could be made.";
         skip("Pilot Planner", "Skipped because the Feasibility Critic failed.");
       } else {
+        // Counterfactual: the same scoring with Qloo's signals removed (neutral cultural fit,
+        // no competitor data). Shows honestly whether Qloo changed the answer.
+        try {
+          const blind = await agents.feasibilityCritic(
+            { local: { ...local, localities: local.localities.map((l) => ({ ...l, competitors: [] })) }, cultural: neutralOpportunities(local, concepts) },
+            { qloo, input, concepts, note: () => {} },
+          );
+          const blindWinner = blind.options.find((o) => o.id === blind.winnerId);
+          const realRank = new Map(feasible.options.map((o) => [o.id, o.rank]));
+          counterfactual = {
+            ...(blindWinner ? { winnerId: blindWinner.id, winnerLabel: `${blindWinner.conceptLabel} in ${blindWinner.locality}`, winnerScore: blindWinner.scores.final } : {}),
+            winnerChanged: blind.winnerId !== feasible.winnerId,
+            ranksChanged: blind.options.filter((o) => realRank.get(o.id) !== o.rank).length,
+            totalOptions: blind.options.length,
+            top: blind.options.slice(0, 3).map((o) => ({ id: o.id, label: `${o.conceptLabel} in ${o.locality}`, score: o.scores.final })),
+          };
+        } catch {
+          counterfactual = undefined;
+        }
+
         const winner = feasible.options.find((o) => o.id === feasible!.winnerId);
         const profile = winner ? local.localities.find((l) => l.name === winner.locality) : undefined;
         if (!winner || !profile) {
@@ -320,6 +342,7 @@ export async function runPipeline(rawInput: unknown, options: RunOptions = {}): 
     ...(pilotPlan ? { pilotPlan } : {}),
     ...(concepts.length ? { baseline: buildBaseline(concepts, input.city) } : {}),
     ...(narrative ? { narrative } : {}),
+    ...(counterfactual ? { counterfactual } : {}),
     qlooCallCounts,
     qlooSource,
     disclaimer: DISCLAIMER,

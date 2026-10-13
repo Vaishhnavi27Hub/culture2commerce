@@ -17,6 +17,9 @@ export function WithWithoutQloo({ result, winner }: { result: RunResult; winner:
   const signals = winner.evidence.filter((e) => ["concept_affinity", "taste_tag", "brand"].includes(e.kind) && !e.detail?.includes("shown for context")).slice(0, 5);
   const rejected = result.options.filter((o) => o.verdict !== "accepted").filter((o, i, all) => all.findIndex((x) => x.conceptId === o.conceptId) === i);
   const qlooLabel = result.qlooSource === "sample" ? "With cultural data (sample)" : "With Qloo";
+  const cf = result.counterfactual;
+  // On sample data the signals are illustrative, so the app must not credit Qloo for them.
+  const signalOwner = result.qlooSource === "sample" ? "Cultural signals (sample data)" : "Qloo";
 
   return (
     <section aria-labelledby="compare-heading">
@@ -26,6 +29,13 @@ export function WithWithoutQloo({ result, winner }: { result: RunResult; winner:
             Without Qloo vs With Qloo
           </h3>
           <p className="mt-1 text-sm text-muted">The same question, answered with and without cultural and local evidence.</p>
+          {cf && (
+            <p className={`mt-2 inline-block rounded-xl px-3 py-1.5 text-sm font-semibold ${cf.winnerChanged ? "bg-leaf-soft text-leaf" : "bg-warn-soft text-warn"}`}>
+              {cf.winnerChanged
+                ? `${signalOwner} changed the answer: without them the same scoring picks ${cf.winnerLabel ?? "nothing"}.`
+                : `Same top pick either way for these inputs. ${signalOwner} moved ${cf.ranksChanged} of ${cf.totalOptions} rankings and supplied the audience and evidence.`}
+            </p>
+          )}
         </div>
         <div className="no-print inline-flex rounded-xl border border-line bg-card p-1" role="group" aria-label="Choose which answer to show">
           {(
@@ -72,6 +82,22 @@ export function WithWithoutQloo({ result, winner }: { result: RunResult; winner:
             <p className="mt-3 rounded-xl border border-dashed border-line p-3 text-sm text-muted">
               Verdict: “It depends.” No concept, no locality, no audience, no plan.
             </p>
+            {cf && cf.top.length > 0 && (
+              <div className="mt-3 rounded-xl bg-paper p-3 text-sm">
+                <p className="font-semibold">If we score it anyway, using costs alone</p>
+                <p className="mt-0.5 text-xs text-muted">The same formulas with cultural fit set to neutral and no competitor data.</p>
+                <ol className="mt-1.5 space-y-1">
+                  {cf.top.map((o, i) => (
+                    <li key={o.id} className="flex items-baseline justify-between gap-3">
+                      <span>
+                        {i + 1}. {o.label}
+                      </span>
+                      <span className="shrink-0 font-semibold tabular-nums">{o.score}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </div>
         )}
 
