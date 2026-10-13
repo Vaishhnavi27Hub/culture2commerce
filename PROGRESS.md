@@ -5,9 +5,9 @@ To resume in a new session, say: **"continue from PROGRESS.md"**.
 ## Current state
 
 - **Date:** 13 Oct 2026
-- **Last completed phase:** Phase 11 (full verification)
-- **Next phase:** Phase 12 (GitHub). **Blocked on the user:** install or log in to the GitHub CLI, or create an empty repository on github.com.
-- **After that:** Phase 13 (Vercel deployment), which needs the user's confirmation and login.
+- **Last completed phase:** Phase 12 (GitHub): `main` pushed to https://github.com/Vaishhnavi27Hub/culture2commerce (private)
+- **Next phase:** Phase 13 (Vercel deployment). Needs the user's confirmation and login.
+- **Waiting on the user:** optional Gemini key in `.env.local` for one real LLM test; repo description and topics; make the repo public before submission.
 
 ## Features by status
 
@@ -15,7 +15,8 @@ See `docs/features.json` (single source of truth; `node scripts/progress.mjs lis
 
 - Tested (automated tests passed): scaffold, qloo-live-client, qloo-fallback, all four agents, orchestrator, scoring-confidence, llm-layer, api-run-stream, e2e, and all seven UI features (via the Playwright smoke test)
 - Implemented (checked by hand or by running): env-setup, qloo-discovery, qloo-scripts, branding, dev-page, docs
-- Pending: github, deploy
+- Implemented: github (pushed, private)
+- Pending: deploy
 
 ## Checks run (latest results, all on 13 Oct 2026)
 
@@ -49,7 +50,7 @@ Off (`LLM_PROVIDER=none`, no key). The LLM layer is covered by 17 tests with a m
 
 ## Known issues and honest caveats
 
-- **Not done:** GitHub repository and push (Phase 12), Vercel deployment (Phase 13), a real Gemini call.
+- **Not done:** Vercel deployment (Phase 13), a real Gemini call, making the repository public.
 - `gh` (GitHub CLI) and Vercel CLI are not installed.
 - The top options in the live Nisha run are within about 2 points of each other. The winner leads mainly on a lower *estimated* stall fee, not on taste. The app shows this as a "narrow lead" in the confidence reasons.
 - Thrift has thin Qloo data in Bengaluru (one comparable place, no competitors within 2 km), shown as Medium confidence.
@@ -67,6 +68,5 @@ Off (`LLM_PROVIDER=none`, no key). The LLM layer is covered by 17 tests with a m
 
 ## Next steps
 
-1. Phase 12: create the GitHub repository (private first) and push. Needs the user to authenticate.
-2. Phase 13: deploy to Vercel Hobby after the user confirms; add `QLOO_API_KEY` in the dashboard; verify the live URL.
-3. Before submission: make the repository public, record the video, fill the links in `docs/DEVPOST_DESCRIPTION.md`.
+1. Phase 13: deploy to Vercel Hobby after the user confirms; add `QLOO_API_KEY` in the dashboard; verify the live URL.
+2. Before submission: make the repository public, record the video, fill the links in `docs/DEVPOST_DESCRIPTION.md`.
