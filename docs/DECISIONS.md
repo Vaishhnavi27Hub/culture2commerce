@@ -82,3 +82,20 @@ and a cost model the agents would have to guess.
 ## D16. Keyword matching is word-start based with excludes
 "art" must not match "party" or "Martial arts school"; "design" was removed because it matched
 "Designer clothing store".
+
+## D17. LLM: Gemini free tier, wording only
+Verified on 13 Oct 2026 from ai.google.dev: OpenAI-compatible base URL
+`https://generativelanguage.googleapis.com/v1beta/openai/` (path `chat/completions`, bearer key)
+and free-tier model `gemini-3.5-flash-lite`. One call per run, cached. The reply is validated
+with Zod and discarded if it contains any number not present in the computed facts or drops the
+recommended locality. Only aggregate facts are sent (city, concept, scores); no personal data.
+
+## D18. Streaming format is NDJSON over fetch, not EventSource
+The run needs a POST body, which EventSource cannot send. `POST /api/run` returns
+newline-delimited JSON: one message per agent event, then the result. `?stream=0` returns plain JSON.
+
+## D19. Per-client rate limit on the run endpoint
+12 runs per 10 minutes per IP (in memory), to protect the shared Qloo quota on a public deployment.
+
+## D20. Line endings
+`.gitattributes` normalises text files to LF to avoid CRLF warnings on Windows.
