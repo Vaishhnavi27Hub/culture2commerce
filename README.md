@@ -166,7 +166,7 @@ data. Any OpenAI-compatible provider works with `LLM_PROVIDER=openai_compatible`
 | Command | What it does | Calls Qloo? |
 |---|---|---|
 | `npm run dev` | Start the app | When you run a scenario |
-| `npm test` | Unit, contract and integration tests (126) | No |
+| `npm test` | Unit, contract and integration tests (130) | No |
 | `npm run test:e2e` | Playwright smoke test of the full Nisha flow | No |
 | `npm run test:live` | A handful of real API tests | Yes, about 6 calls |
 | `npm run qloo:check` | Three live calls with pass/fail and latency | Yes, 3 calls |

@@ -69,7 +69,14 @@ describe("LLM configuration", () => {
       apiKey: "k",
       baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/",
       model: "gemini-3.5-flash-lite",
+      fallbackModels: ["gemini-3.1-flash-lite"],
     });
+  });
+
+  it("respects a model the user chose and adds no fallback to it", () => {
+    const chosen = resolveLlmConfig(readServerEnv({ LLM_PROVIDER: "gemini", LLM_API_KEY: "k", LLM_MODEL: "gemini-3.8-flash" }));
+    expect(chosen?.model).toBe("gemini-3.8-flash");
+    expect(chosen?.fallbackModels).toBeUndefined();
   });
 
   it("needs a base URL and model for other OpenAI-compatible providers", () => {
@@ -127,6 +134,30 @@ describe("narrator", () => {
     const err = await createNarrator(config, { fetchImpl, sleep: noSleep })(facts).catch((e: Error) => e);
     expect((err as Error).message).toBe("The LLM rate limit was reached (HTTP 429)");
     expect(calls).toHaveLength(3);
+  });
+
+  it("switches to the fallback model at once when the first is overloaded (HTTP 503), without waiting", async () => {
+    const sleeps: number[] = [];
+    const { fetchImpl, calls } = mockLlm((i) => (i === 0 ? new Response("{}", { status: 503 }) : chat(JSON.stringify(good))));
+    const narrate = createNarrator({ ...config, fallbackModels: ["gemini-3.1-flash-lite"] }, { fetchImpl, sleep: async (ms) => void sleeps.push(ms) });
+    const narrative = await narrate(facts);
+    expect(narrative.source).toBe("llm");
+    expect(calls.map((c) => JSON.parse(c.body).model)).toEqual([GEMINI_DEFAULT_MODEL, "gemini-3.1-flash-lite"]);
+    expect(sleeps).toEqual([]);
+  });
+
+  it("reports the last failure when every model is unavailable", async () => {
+    const { fetchImpl, calls } = mockLlm(() => new Response("{}", { status: 503 }));
+    const narrate = createNarrator({ ...config, fallbackModels: ["gemini-3.1-flash-lite"] }, { fetchImpl, sleep: noSleep });
+    await expect(narrate(facts)).rejects.toThrow("The LLM responded with HTTP 503");
+    expect(calls).toHaveLength(2);
+  });
+
+  it("stops immediately when the key is rejected", async () => {
+    const { fetchImpl, calls } = mockLlm(() => new Response("{}", { status: 401 }));
+    const narrate = createNarrator({ ...config, fallbackModels: ["gemini-3.1-flash-lite"] }, { fetchImpl, sleep: noSleep });
+    await expect(narrate(facts)).rejects.toThrow("The LLM rejected the API key (HTTP 401)");
+    expect(calls).toHaveLength(1);
   });
 
   it.each([
