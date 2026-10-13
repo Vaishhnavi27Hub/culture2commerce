@@ -23,13 +23,14 @@ async function main() {
     return;
   }
   const snapshot = emptySnapshot();
-  const live = createLiveQlooClient({ apiKey: env.qlooApiKey, baseUrl: env.qlooApiUrl, cacheTtlMs: 0 });
+  // The in-memory cache stays on so calls shared between runs are made only once.
+  const live = createLiveQlooClient({ apiKey: env.qlooApiKey, baseUrl: env.qlooApiUrl });
   const client = createRecordingQlooClient(live, snapshot);
 
   try {
     await recordScenario(client);
   } catch (err) {
-    console.log(`Recording stopped early: ${err instanceof QlooError ? err.message : "unexpected error"}`);
+    console.log(`Recording stopped early: ${err instanceof QlooError || err instanceof Error ? err.message : "unexpected error"}`);
     process.exitCode = 1;
   }
 

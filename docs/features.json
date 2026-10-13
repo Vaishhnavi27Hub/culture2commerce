@@ -49,49 +49,62 @@
       "title": "qloo:check and qloo:record scripts",
       "status": "implemented",
       "tests": [],
-      "notes": "qloo:check passed 3/3 live; qloo:record wrote a private snapshot. Record scenario is extended in Phase 5."
+      "notes": "qloo:check passed 3/3 live; qloo:record replays 4 agent runs (90 calls) into the private snapshot; npm run nisha prints a run summary."
     },
     {
       "id": "agent-local-researcher",
       "title": "Agent 1: Local Researcher",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "tested",
+      "tests": [
+        "tests/unit/agents.test.ts"
+      ],
+      "notes": "Anchor venues, distinctive vibe tags, competitors, market estimates."
     },
     {
       "id": "agent-cultural-finder",
       "title": "Agent 2: Cultural Opportunity Finder",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "tested",
+      "tests": [
+        "tests/unit/agents.test.ts"
+      ],
+      "notes": "Concept affinity, taste tags, brands, demographics; neutral fallback."
     },
     {
       "id": "agent-feasibility-critic",
       "title": "Agent 3: Feasibility Critic",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "tested",
+      "tests": [
+        "tests/unit/agents.test.ts"
+      ],
+      "notes": "Cost model, verdicts with reasons, ranking, confidence."
     },
     {
       "id": "agent-pilot-planner",
       "title": "Agent 4: Pilot Planner",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "tested",
+      "tests": [
+        "tests/unit/agents.test.ts"
+      ],
+      "notes": "Quantities, prices, schedule, budget, continue/pivot/stop rule."
     },
     {
       "id": "orchestrator",
       "title": "Orchestrator with events and error isolation",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "tested",
+      "tests": [
+        "tests/integration/nisha.test.ts"
+      ],
+      "notes": "15 integration tests incl. 5 failure scenarios and a simulated mid-run 429."
     },
     {
       "id": "scoring-confidence",
       "title": "Deterministic scoring and confidence level",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "tested",
+      "tests": [
+        "tests/unit/scoring.test.ts",
+        "tests/unit/pilot.test.ts"
+      ],
+      "notes": "Deterministic; fallback data never yields High."
     },
     {
       "id": "llm-layer",
