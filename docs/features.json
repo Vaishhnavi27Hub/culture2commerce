@@ -27,23 +27,29 @@
     {
       "id": "qloo-live-client",
       "title": "Live Qloo client (timeout, retry, throttle, cache, Zod)",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "tested",
+      "tests": [
+        "tests/unit/qloo-live.test.ts",
+        "tests/live/qloo-live.test.ts"
+      ],
+      "notes": "10 unit tests with mocked fetch; 5 live tests passed on 13 Oct."
     },
     {
       "id": "qloo-fallback",
       "title": "Recorded snapshot and bundled sample fallback with source labels",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "tested",
+      "tests": [
+        "tests/unit/qloo-fallback.test.ts",
+        "tests/contract/qloo-contract.test.ts"
+      ],
+      "notes": "Chain: live, private recorded snapshot, bundled sample. 8 fallback + 18 contract tests."
     },
     {
       "id": "qloo-scripts",
       "title": "qloo:check and qloo:record scripts",
-      "status": "pending",
+      "status": "implemented",
       "tests": [],
-      "notes": ""
+      "notes": "qloo:check passed 3/3 live; qloo:record wrote a private snapshot. Record scenario is extended in Phase 5."
     },
     {
       "id": "agent-local-researcher",
