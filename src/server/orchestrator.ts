@@ -265,8 +265,9 @@ export async function runPipeline(rawInput: unknown, options: RunOptions = {}): 
               if (options.narrate) {
                 try {
                   narrative = await options.narrate(facts);
-                } catch {
-                  narrative = { ...narrative, note: "The LLM was unavailable, so template text is shown." };
+                } catch (err) {
+                  const why = err instanceof Error && err.name === "LlmError" ? err.message : "The LLM was unavailable";
+                  narrative = { ...narrative, note: `${why}. Showing template text instead.` };
                 }
               }
               narrativeSource = narrative.source;

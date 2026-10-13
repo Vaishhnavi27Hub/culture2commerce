@@ -143,7 +143,7 @@ describe("Nisha's scenario on fallback data", () => {
     });
     expect(broken.result.status).toBe("completed");
     expect(broken.result.narrative?.source).toBe("template");
-    expect(broken.result.narrative?.note).toMatch(/template text/);
+    expect(broken.result.narrative?.note).toMatch(/template text/i);
     expect(broken.result.options.map((o) => o.scores)).toEqual(polished.result.options.map((o) => o.scores));
   });
 });

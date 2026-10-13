@@ -109,16 +109,20 @@
     {
       "id": "llm-layer",
       "title": "Optional free LLM layer with template fallback",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "tested",
+      "tests": [
+        "tests/unit/llm.test.ts"
+      ],
+      "notes": "Gemini free tier via OpenAI-compatible endpoint (gemini-3.5-flash-lite). Wording only; number guard; template fallback. Tested with mocked fetch only: no Gemini key is set, so no real LLM call has been made."
     },
     {
       "id": "api-run-stream",
       "title": "Run API with streaming events",
-      "status": "pending",
-      "tests": [],
-      "notes": ""
+      "status": "tested",
+      "tests": [
+        "tests/integration/api.test.ts"
+      ],
+      "notes": "POST /api/run streams NDJSON events then the result; ?stream=0 for plain JSON; validation, body limit, per-client rate limit; GET /api/run/[id], GET /api/meta."
     },
     {
       "id": "ui-input",

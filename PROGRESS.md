@@ -5,16 +5,16 @@ To resume in a new session, say: **"continue from PROGRESS.md"**.
 ## Current state
 
 - **Date:** 13 Oct 2026
-- **Last completed phase:** Phase 5 (agents, orchestrator, scoring, confidence)
-- **Next phase:** Phase 6 (optional LLM layer), then Phase 7 (run API with streaming)
+- **Last completed phase:** Phase 7 (run API with streaming)
+- **Next phase:** Phase 8 (frontend screens)
 
 ## Features by status
 
 See `docs/features.json` (single source of truth; `node scripts/progress.mjs list` prints it).
 
-- Tested: scaffold, qloo-live-client, qloo-fallback, all four agents, orchestrator, scoring-confidence
+- Tested: scaffold, qloo-live-client, qloo-fallback, all four agents, orchestrator, scoring-confidence, llm-layer, api-run-stream
 - Implemented: env-setup, qloo-discovery, qloo-scripts
-- Pending: llm-layer, api-run-stream, all UI features, branding, dev-page, docs, e2e, github, deploy
+- Pending: all UI features, branding, dev-page, docs, e2e, github, deploy
 
 ## Checks run
 
@@ -23,9 +23,9 @@ See `docs/features.json` (single source of truth; `node scripts/progress.mjs lis
 | 13 Oct | `git check-ignore -v .env.local` | Ignored by `.gitignore` rule `.env.*` |
 | 13 Oct | 29 manual probe calls to the live Qloo API | All HTTP 200 except two deliberate `take=300` tests (HTTP 400) |
 | 13 Oct | `npm run build` | Pass (Next.js 15.5.27), last run in Phase 3 |
-| 13 Oct | `npm run lint` | Pass (exit 0), re-run after Phase 5 |
-| 13 Oct | `npm run typecheck` | Pass (exit 0), re-run after Phase 5 |
-| 13 Oct | `npm test` | Pass: 8 files, 97 of 97 tests (no network) |
+| 13 Oct | `npm run lint` | Pass (exit 0), re-run after Phase 7 |
+| 13 Oct | `npm run typecheck` | Pass (exit 0), re-run after Phase 7 |
+| 13 Oct | `npm test` | Pass: 10 files, 126 of 126 tests (no network), after Phase 7 |
 | 13 Oct | `npm run qloo:check` | Pass 3 of 3 live calls (about 0.3 to 1.0 s each) |
 | 13 Oct | `npm run test:live` | Pass: 5 of 5 live tests |
 | 13 Oct | `npm run qloo:record` | Wrote private snapshot `.qloo-cache/snapshot.json` (90 calls, git-ignored) |
@@ -38,6 +38,11 @@ See `docs/features.json` (single source of truth; `node scripts/progress.mjs lis
 Working with the key in `.env.local`. Limits: 10,000 calls per month, 5 per second, `take` max 50.
 About 250 calls used so far (9,753 remaining). One full Nisha run costs 30 calls; repeats within
 30 minutes are served from the in-memory cache.
+
+## LLM status
+
+Off (`LLM_PROVIDER=none`, no key). The LLM layer is covered by 17 tests with a mocked provider.
+**No real Gemini call has been made yet**; that needs a free key in `.env.local`.
 
 ## Known issues
 
@@ -53,7 +58,5 @@ About 250 calls used so far (9,753 remaining). One full Nisha run costs 30 calls
 
 ## Next steps
 
-1. Phase 6: LLM layer (Gemini free tier, optional, wording only).
-2. Phase 7: streaming run API with input validation.
-3. Phase 8: frontend screens (input, live workflow, recommendation, pilot plan, pilot results).
-4. Phase 9 onwards: branding, /dev page, docs, full verification, GitHub, deployment prep.
+1. Phase 8: frontend screens (input, live workflow, recommendation, pilot plan, pilot results).
+2. Phase 9 onwards: branding, /dev page, docs, full verification, GitHub, deployment prep.
