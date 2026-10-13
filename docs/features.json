@@ -102,9 +102,10 @@
       "status": "tested",
       "tests": [
         "tests/unit/scoring.test.ts",
-        "tests/unit/pilot.test.ts"
+        "tests/unit/pilot.test.ts",
+        "tests/integration/qloo-matters.test.ts"
       ],
-      "notes": "Deterministic; fallback data never yields High."
+      "notes": "Reworked in D22: locality lift, evidence shrinkage, flatter budget score, without-Qloo counterfactual. Guarded by qloo-matters tests."
     },
     {
       "id": "llm-layer",

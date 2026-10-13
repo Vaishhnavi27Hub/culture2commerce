@@ -24,12 +24,12 @@ See `docs/features.json` (single source of truth; `node scripts/progress.mjs lis
 |---|---|
 | `npm run lint` | Pass (exit 0, no warnings) |
 | `npm run typecheck` | Pass (exit 0) |
-| `npm test` | Pass: 10 files, 130 of 130 tests, no network |
-| `npm run test:e2e` | Pass: 1 of 1 (Playwright, Chromium, full Nisha flow on sample data, about 25 s) |
+| `npm test` | Pass: 11 files, 142 of 142 tests, no network (after the scoring rework, D22) |
+| `npm run test:e2e` | Pass: 1 of 1, re-run after D22 (now builds into `.next-e2e`, so it works while `npm run dev` is open) |
 | `npm run qloo:check` | Pass: 3 of 3 live calls (295 to 1,242 ms) |
 | `npm run test:live` | Pass: 5 of 5 live tests (run in Phase 4) |
 | `npm run build` with `QLOO_API_KEY` empty and `LLM_PROVIDER=none` | Pass (Next.js 15.5.27) |
-| `npm run nisha` (live) | Completed in 9.0 s, 30 live calls, no fallbacks. Winner: art print pop-up in Jayanagar, 72.6/100, High confidence |
+| `npm run nisha` (live, after D22) | Completed in 9.0 s, 30 live calls, no fallbacks. Winner: art print pop-up in Koramangala, 78.1/100, High confidence. Without Qloo signals the pick would be Jayanagar; 4 of 9 ranks differ |
 | `QLOO_MODE=recorded npm run nisha` | Completed from the private snapshot, 30 recorded calls, confidence Medium (run in Phase 5) |
 | `npm run nisha -- sample` | Completed on bundled sample data, confidence Low |
 | `npm run qloo:record` | Wrote `.qloo-cache/snapshot.json` (90 calls, git-ignored) |
@@ -56,7 +56,9 @@ unchanged (it passed the number guard). An earlier attempt got HTTP 503 from `ge
 - **Not done:** Vercel deployment (Phase 13, deferred by the user until the team has reviewed), making the repository public.
 - Gemini free-tier models can be slow or overloaded; with the LLM on, a run can take up to about 12 s longer. Template text is used if both models fail.
 - `gh` (GitHub CLI) and Vercel CLI are not installed.
-- The top options in the live Nisha run are within about 2 points of each other. The winner leads mainly on a lower *estimated* stall fee, not on taste. The app shows this as a "narrow lead" in the confidence reasons.
+- **Fixed (D22):** the pick used to be the same with or without Qloo. Qloo now decides the locality, and every run reports a without-Qloo counterfactual.
+- Still true: the lead is narrow (about 2 points) and locality lifts are small in absolute terms (hundredths of an affinity point). The app shows the raw values.
+- After D22: lint, typecheck, unit tests, e2e, build and one live run were re-run. `test:live` and `qloo:check` were not (the Qloo client itself did not change). The changed screens were rendered by the e2e test without errors but not inspected by hand.
 - Thrift has thin Qloo data in Bengaluru (one comparable place, no competitors within 2 km), shown as Medium confidence.
 - Some Qloo evidence names are long listing titles (for example a shop name followed by keywords). They are shown as returned.
 - All costs, footfall, venue types and permit notes are illustrative estimates, not verified.

@@ -104,3 +104,26 @@ Command: `npm run nisha`. Result: completed in about 9 seconds with **30 live Ql
   Indiranagar (72.2). The gap comes mostly from the lower estimated stall fee, not from taste.
 - The same run from the private snapshot (`QLOO_MODE=recorded`) gave identical scores with
   confidence capped at Medium.
+
+## 9. Does Qloo change the answer? (ablation, 13 Oct)
+
+**Before the fix.** Re-running Nisha with cultural fit forced to neutral gave the *same* winner
+(art prints in Jayanagar) at low risk. Qloo only changed the winner at "bold" risk. The locality
+was being decided by estimated stall fees.
+
+**After the fix (DECISIONS D22), live run, 30 calls:**
+
+| Rank | With Qloo signals | Score | Locality lift |
+|---|---|---|---|
+| 1 | Art print pop-up in Koramangala | 78.1 | +0.021 |
+| 2 | Art print pop-up in Indiranagar | 76.0 | +0.009 |
+| 3 | Thrift clothing stall in Jayanagar | 71.1 | +0.052 (one place only, so shrunk) |
+| 4 | Art print pop-up in Jayanagar | 69.7 | -0.029 |
+
+Without Qloo signals the same scoring picks art prints in Jayanagar (68.5), and 4 of 9 rankings
+differ. So Qloo now decides *where*: art places resonate more with the Koramangala and
+Indiranagar audiences than with the Jayanagar one.
+
+**Honest limits.** The lifts are small in absolute terms (hundredths of an affinity point), the
+lead over the runner-up is about 2 points, and thrift still rests on a single comparable place.
+The app shows the raw lift values and its confidence reasons rather than hiding this.

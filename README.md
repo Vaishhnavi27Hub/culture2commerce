@@ -90,7 +90,14 @@ final = w1 · cultural_fit + w2 · feasibility + w3 · risk_adjustment
 ```
 
 Scores are deterministic and shown in the app with their weights and sub-scores. No language
-model takes part in any number, ranking or decision. The app never shows an "accuracy"
+model takes part in any number, ranking or decision.
+
+**Would it work the same without Qloo? No, and the app checks this on every run.** Cultural
+fit is built from Qloo affinities, including a *locality lift*: how much more one area's
+audience likes a concept than the other areas compared. Each run is also re-scored with Qloo's
+signals removed, and the app states whether the pick changed. In the live demo scenario Qloo
+moves the recommendation from Jayanagar (cheapest stall) to Koramangala (strongest pull for
+art). A dedicated test file fails if the recommendation stops following the cultural signals. The app never shows an "accuracy"
 figure; it shows a **confidence level** (High, Medium or Low) computed from data quality,
 with the reasons listed. Details: [docs/DECISIONS.md](docs/DECISIONS.md).
 
@@ -166,7 +173,7 @@ data. Any OpenAI-compatible provider works with `LLM_PROVIDER=openai_compatible`
 | Command | What it does | Calls Qloo? |
 |---|---|---|
 | `npm run dev` | Start the app | When you run a scenario |
-| `npm test` | Unit, contract and integration tests (130) | No |
+| `npm test` | Unit, contract and integration tests (142) | No |
 | `npm run test:e2e` | Playwright smoke test of the full Nisha flow | No |
 | `npm run test:live` | A handful of real API tests | Yes, about 6 calls |
 | `npm run qloo:check` | Three live calls with pass/fail and latency | Yes, 3 calls |
