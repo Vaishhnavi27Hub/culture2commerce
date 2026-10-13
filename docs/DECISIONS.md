@@ -99,3 +99,9 @@ newline-delimited JSON: one message per agent event, then the result. `?stream=0
 
 ## D20. Line endings
 `.gitattributes` normalises text files to LF to avoid CRLF warnings on Windows.
+
+## D21. LLM model failover (added after the first real Gemini call)
+On 13 Oct the default model returned HTTP 503 ("high demand") and took 34 s before falling back
+to templates. The client now tries `gemini-3.1-flash-lite` immediately when the default model is
+overloaded, missing or slower than 10 s. A 429 is still retried with backoff on the same model;
+a rejected key (401/403) stops at once. A model set explicitly in `LLM_MODEL` gets no fallback.

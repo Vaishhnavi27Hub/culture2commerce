@@ -20,6 +20,8 @@ import { templateNarrative, type NarrativeFacts } from "./templates";
  */
 export const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/";
 export const GEMINI_DEFAULT_MODEL = "gemini-3.5-flash-lite";
+/** Tried when the default model is overloaded or slow. Also on the free tier. */
+export const GEMINI_FALLBACK_MODELS = ["gemini-3.1-flash-lite"];
 
 export class LlmError extends Error {
   constructor(message: string) {
@@ -33,6 +35,8 @@ export interface LlmConfig {
   apiKey: string;
   baseUrl: string;
   model: string;
+  /** Other models to try, in order, if `model` is unavailable, overloaded or too slow. */
+  fallbackModels?: string[];
 }
 
 /** Returns the LLM settings, or undefined when the LLM is switched off or not fully configured. */
@@ -44,6 +48,8 @@ export function resolveLlmConfig(env: ServerEnv = readServerEnv()): LlmConfig | 
       apiKey: env.llmApiKey,
       baseUrl: env.llmBaseUrl || GEMINI_BASE_URL,
       model: env.llmModel || GEMINI_DEFAULT_MODEL,
+      // Only when the default is in use: a model the user chose is respected as is.
+      ...(env.llmModel ? {} : { fallbackModels: GEMINI_FALLBACK_MODELS }),
     };
   }
   if (!env.llmBaseUrl || !env.llmModel) return undefined;
@@ -109,7 +115,7 @@ const SYSTEM_PROMPT =
 export function createNarrator(config: LlmConfig, options: NarratorOptions = {}) {
   const {
     fetchImpl = fetch,
-    timeoutMs = 15_000,
+    timeoutMs = 10_000,
     maxRetries = 2,
     sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
   } = options;
@@ -122,43 +128,53 @@ export function createNarrator(config: LlmConfig, options: NarratorOptions = {})
     if (hit) return hit;
 
     const url = new URL("chat/completions", config.baseUrl.endsWith("/") ? config.baseUrl : `${config.baseUrl}/`);
-    const body = JSON.stringify({
-      model: config.model,
-      temperature: 0.4,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `FACTS:\n${JSON.stringify(facts)}\n\nDRAFT:\n${JSON.stringify({ headline: draft.headline, whyThis: draft.whyThis, pilotPitch: draft.pilotPitch })}` },
-      ],
-    });
+    const messages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: `FACTS:
+${JSON.stringify(facts)}
 
+DRAFT:
+${JSON.stringify({ headline: draft.headline, whyThis: draft.whyThis, pilotPitch: draft.pilotPitch })}` },
+    ];
+
+    // Try each model in turn. A rate limit (429) is retried with backoff on the same model;
+    // an overloaded, missing or slow model is skipped straight away so a run never stalls.
     let content: string | undefined;
     let lastError = new LlmError("The LLM could not be reached");
-    for (let attempt = 0; attempt <= maxRetries && content === undefined; attempt++) {
-      if (attempt > 0) await sleep(1000 * 2 ** (attempt - 1));
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const res = await fetchImpl(url, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
-          body,
-          signal: controller.signal,
-        });
-        if (res.ok) {
-          const parsed = chatResponseSchema.safeParse(await res.json().catch(() => undefined));
-          if (!parsed.success) throw new LlmError("The LLM returned an unexpected response");
-          content = parsed.data.choices[0]?.message.content ?? "";
-        } else if (res.status === 429 || res.status >= 500) {
-          lastError = new LlmError(res.status === 429 ? "The LLM rate limit was reached (HTTP 429)" : `The LLM responded with HTTP ${res.status}`);
-        } else {
-          throw new LlmError(`The LLM responded with HTTP ${res.status}`);
+    models: for (const model of [config.model, ...(config.fallbackModels ?? [])]) {
+      const body = JSON.stringify({ model, temperature: 0.4, messages });
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (attempt > 0) await sleep(1000 * 2 ** (attempt - 1));
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetchImpl(url, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
+            body,
+            signal: controller.signal,
+          });
+          if (res.ok) {
+            const parsed = chatResponseSchema.safeParse(await res.json().catch(() => undefined));
+            if (!parsed.success) throw new LlmError("The LLM returned an unexpected response");
+            content = parsed.data.choices[0]?.message.content ?? "";
+            break models;
+          }
+          if (res.status === 401 || res.status === 403) throw new LlmError(`The LLM rejected the API key (HTTP ${res.status})`);
+          if (res.status === 429) {
+            lastError = new LlmError("The LLM rate limit was reached (HTTP 429)");
+            continue; // back off, then retry this model
+          }
+          lastError = new LlmError(`The LLM responded with HTTP ${res.status}`);
+          continue models;
+        } catch (err) {
+          if (err instanceof LlmError) throw err;
+          // Deliberately generic so no request detail (including the key) can leak.
+          lastError = new LlmError(err instanceof Error && err.name === "AbortError" ? "The LLM timed out" : "The LLM could not be reached");
+          continue models;
+        } finally {
+          clearTimeout(timer);
         }
-      } catch (err) {
-        if (err instanceof LlmError) throw err;
-        // Deliberately generic so no request detail (including the key) can leak.
-        lastError = new LlmError(err instanceof Error && err.name === "AbortError" ? "The LLM timed out" : "The LLM could not be reached");
-      } finally {
-        clearTimeout(timer);
       }
     }
     if (content === undefined) throw lastError;
