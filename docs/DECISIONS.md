@@ -43,3 +43,42 @@ Kept where the user created it. If file locking slows installs, we will document
 
 ## D9. Versions pinned for Node 20.11
 Next.js 15, Vitest 3 and Vite 6. Newer Vite/Vitest majors need Node 20.19 or later.
+
+## D10. Scoring formulas (all in `src/server/scoring.ts`)
+- `cultural_fit = 0.60·affinity + 0.25·taste + 0.15·resonance`
+  - affinity: mean raw Qloo affinity of the top 5 concept-type places for the locality's anchor
+    audience, rescaled linearly from 0.70..0.98 to 0..100 (the raw value is always shown).
+  - taste: best affinity among the audience's top 50 over-indexed place genres that match the
+    concept; 40 if none match.
+  - resonance: matching brand, vibe-tag and anchor-venue signals; 4 or more = 100.
+- `feasibility = 0.50·budget + 0.20·competition + 0.15·logistics + 0.15·permits`
+- `risk_adjustment = 0.40·recoverability + 0.40·break-even + 0.20·skill match`
+- `final = w1·cultural_fit + w2·feasibility + w3·risk_adjustment`, weights by risk preference:
+  low 0.40/0.35/0.25, medium 0.45/0.35/0.20, high 0.55/0.30/0.15.
+
+## D11. Verdicts
+Cost above 100% of budget: downgraded (final × 0.85). Above 125%: rejected (final × 0.5, always
+ranked last, never the winner). The reason names the two largest cost lines.
+
+## D12. Confidence is a points system about data quality
+Live Qloo data +3 (recorded +1, sample 0), locality-level +2, 5 or more comparable places +1,
+a second agreeing signal +1, competitors observed +1, lead of 3 or more points +1, costs are
+estimates -1 (generic estimates -2). 7 or more = High, 4 to 6 = Medium, otherwise Low.
+Hard caps: any recorded data caps at Medium; any sample or neutral data forces Low.
+
+## D13. Continue rule = running costs recovered
+"Continue" when revenue covers the pilot's running cost (total minus reusable equipment);
+"pivot" at half of that; otherwise "stop". This matches the reference example in the brief.
+
+## D14. Vibe tags are ranked by distinctiveness
+Raw tag counts were dominated by generic tags ("City center", "Walkable") in every locality.
+Tags are now ranked by how much more common they are in one locality than in the others compared.
+
+## D15. Fixed concept catalogue
+Seven concepts with verified Qloo tag IDs and illustrative cost models
+(`src/server/data/concepts.ts`). Free-text concepts are not supported: without verified tags
+and a cost model the agents would have to guess.
+
+## D16. Keyword matching is word-start based with excludes
+"art" must not match "party" or "Martial arts school"; "design" was removed because it matched
+"Designer clothing store".

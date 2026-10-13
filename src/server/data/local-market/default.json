@@ -1,0 +1,15 @@
+{
+  "_note": "ILLUSTRATIVE ESTIMATES written by Team VKY. Generic defaults used when a city or locality has no specific entry. Verify every fee and permit locally.",
+  "stallFeePerDayInr": 850,
+  "weekendFootfallPerDay": 700,
+  "venueOptions": [
+    { "type": "Weekend market stall", "description": "A table at a weekend flea or makers' market.", "feePerDayInr": 850 },
+    { "type": "Cafe corner pop-up", "description": "A corner inside an independent cafe, often for a flat fee or revenue share.", "feePerDayInr": 700 },
+    { "type": "Community room", "description": "A small bookable room for workshops or events.", "feePerDayInr": 1200 }
+  ],
+  "permitNotes": [
+    "Inside an organised market or a private venue, the organiser's or owner's permission is usually what you need. Get it in writing.",
+    "Selling on public land typically requires a street-vending permit from the local municipal body.",
+    "Food and drink sales typically need an FSSAI basic registration, even for a weekend."
+  ]
+}
