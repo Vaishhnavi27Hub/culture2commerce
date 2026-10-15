@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-13",
+  "updated": "2026-10-15",
   "features": [
     {
       "id": "env-setup",
@@ -217,6 +217,103 @@
         "tests/e2e/nisha.spec.ts"
       ],
       "notes": "1 of 1 passed: full Nisha flow, rejection reasons, export download, pilot verdict, /dev page."
+    },
+    {
+      "id": "launch-modes",
+      "title": "Launch modes: on my own, with an existing business, show me both",
+      "status": "tested",
+      "tests": [
+        "tests/integration/partner-mode.test.ts",
+        "tests/e2e/nisha.spec.ts"
+      ],
+      "notes": "Same four agents; mode decides extra steps and plans."
+    },
+    {
+      "id": "neighbourhood-discovery",
+      "title": "Qloo heatmap neighbourhood discovery (replaces fixed locality list)",
+      "status": "tested",
+      "tests": [
+        "tests/unit/agents.test.ts",
+        "tests/unit/partners.test.ts"
+      ],
+      "notes": "Admin areas filtered; fallback labelled. Verified live on 15 Oct."
+    },
+    {
+      "id": "product-description",
+      "title": "Product description matched to Qloo tags",
+      "status": "tested",
+      "tests": [
+        "tests/unit/partners.test.ts",
+        "tests/integration/partner-mode.test.ts"
+      ],
+      "notes": "Up to 3 tag lookups; synonyms such as eggless to Egg free."
+    },
+    {
+      "id": "admired-business",
+      "title": "Business you admire as a reference audience",
+      "status": "tested",
+      "tests": [
+        "tests/integration/partner-mode.test.ts"
+      ],
+      "notes": "Matched, ambiguous, not in city, not found, failed; results filtered by city."
+    },
+    {
+      "id": "partner-discovery",
+      "title": "Similar, complementary and host partner discovery with scoring",
+      "status": "tested",
+      "tests": [
+        "tests/unit/partners.test.ts",
+        "tests/integration/partner-mode.test.ts"
+      ],
+      "notes": "Unsuitable venue types filtered; chain branches flagged; hosts never claim footfall."
+    },
+    {
+      "id": "collab-models",
+      "title": "Collaboration models with adjustable assumptions",
+      "status": "tested",
+      "tests": [
+        "tests/unit/partners.test.ts",
+        "tests/integration/partner-mode.test.ts"
+      ],
+      "notes": "Consignment, counter, workshop, wholesale; shared calculator for server and browser."
+    },
+    {
+      "id": "solo-vs-partner",
+      "title": "Solo vs partnership comparison",
+      "status": "tested",
+      "tests": [
+        "tests/unit/partners.test.ts",
+        "tests/integration/partner-mode.test.ts"
+      ],
+      "notes": "Recommendation follows scores; tie goes to the cheaper start."
+    },
+    {
+      "id": "price-positioning",
+      "title": "Price positioning from Qloo venue price levels and costs",
+      "status": "tested",
+      "tests": [
+        "tests/unit/partners.test.ts"
+      ],
+      "notes": "Venue price level is not treated as a product price."
+    },
+    {
+      "id": "outreach",
+      "title": "Partnership outreach messages (email and short)",
+      "status": "tested",
+      "tests": [
+        "tests/unit/partners.test.ts",
+        "tests/e2e/nisha.spec.ts"
+      ],
+      "notes": "Templates; editable and copyable; never sent by the app."
+    },
+    {
+      "id": "call-budget",
+      "title": "Per-run Qloo call budget",
+      "status": "tested",
+      "tests": [
+        "tests/integration/partner-mode.test.ts"
+      ],
+      "notes": "QLOO_RUN_CALL_BUDGET, default 70."
     },
     {
       "id": "github",

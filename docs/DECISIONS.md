@@ -141,3 +141,58 @@ hydration warning in development. Inputs, selects and buttons on the first scree
 
 ## D24. The e2e test builds into `.next-e2e`
 So `npm run test:e2e` works while `npm run dev` is open (both used to lock `.next`).
+
+## D25. Launch modes reuse the same four agents
+Solo, partner and both are one pipeline with mode-dependent steps, not three apps. Solo-mode
+output is unchanged (guarded by tests); the partner work only runs when asked for.
+
+## D26. Neighbourhoods come from Qloo's heatmap
+"Suggest for me" used to return a fixed list (always Indiranagar, Koramangala, Jayanagar for
+Bengaluru, and the whole city elsewhere). It now asks Qloo's `urn:heatmap` output for the
+localities most associated with the idea's audience, drops administrative areas (city, zones,
+districts), and analyses the top three. The fixed list is only a labelled fallback when Qloo
+returns nothing. Heatmap affinity is shown as cultural affinity, never as demand or footfall.
+
+## D27. One idea drives partner discovery
+With several ideas selected, partner search uses the idea that best matches the product
+description (or the first idea). Searching partners for every idea would triple Qloo calls.
+
+## D28. Partner discovery uses three searches per locality, two of them new
+1. Similar businesses: the existing competitor search (no extra call).
+2. Complementary businesses: places in the locality ranked by affinity with the crowd of the
+   area's similar businesses (`signal.interests.entities`), classified by venue type.
+3. Hosts: the same signal restricted to mall, food court, co-working and community tags.
+Venue types are classified per idea (`collab-profiles.ts`); clearly unsuitable types
+(butchers, pharmacies, hotels, banks and so on) are dropped. Chain branches ("Brand - Area")
+get a risk note and a small fit penalty because decisions are usually central.
+
+## D29. Partner fit
+- Similar: 0.45 audience affinity + 0.35 product similarity + 0.20 reputation.
+- Complementary: 0.55 audience + 0.25 reputation + 0.20 category fit (lower if it already sells the product).
+- Host: 0.45 audience + 0.35 potential visibility (popularity percentile and descriptive tags) + 0.20 reputation.
+Up to six of each type are shown, plus the best two found through the admired business.
+
+## D30. Collaboration costs are example assumptions the user can change
+Consignment commission 25%, wholesale discount 40%, workshop venue share 30%, counter fee 60% of
+the local stall estimate. The same pure function computes them on the server and in the browser
+calculator. An option is rejected above 125% of budget or when each sale loses money, and
+downgraded above 100% of budget or when it cannot break even within the pilot. Food ideas
+always include the user's own registration, because a partner's licence does not cover them.
+
+## D31. Price positioning
+Qloo venue price levels (1 to 4) of the relevant local venues set a tier (budget, mid,
+premium) that scales the idea's reference price, never below a cost floor with a 50% margin.
+Venue price levels are described as typical spend at those venues, not product prices.
+
+## D32. Solo vs partnership recommendation
+Compares the solo winner's final score with the best collaboration option's score; within 3
+points the cheaper start wins. Whichever side is unavailable loses. Reasons are shown.
+
+## D33. Outreach messages are templates
+Deterministic email and short-message templates with placeholders for the user's name and
+contact. They never invent a contact person or claim interest, and the app never sends them.
+The optional LLM is not used for them, to keep partner-facing text predictable.
+
+## D34. Per-run Qloo call budget
+`QLOO_RUN_CALL_BUDGET` (default 70) caps calls per run; refused calls are reported as a warning
+and agents continue with what they have.

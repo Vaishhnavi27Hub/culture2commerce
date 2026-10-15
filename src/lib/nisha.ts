@@ -15,3 +15,17 @@ export const NISHA_EXAMPLE: RunInput = {
   riskPreference: "low",
   launchMode: "solo",
 };
+
+/** The partnership demo: homemade brownies with no stall budget, compared with going solo. */
+export const BROWNIE_EXAMPLE: RunInput = {
+  city: "Bengaluru",
+  localities: [],
+  budgetInr: 10_000,
+  weekends: 2,
+  interests: ["baking"],
+  conceptIds: ["baked-goods"],
+  riskPreference: "low",
+  launchMode: "both",
+  productDescription: "I make eggless brownies, vegan cupcakes and homemade plum cakes.",
+  admiredBusiness: "Lamara Patisserie",
+};

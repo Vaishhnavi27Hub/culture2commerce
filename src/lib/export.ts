@@ -1,6 +1,6 @@
 import { DISCLAIMER, TEAM_CREDIT } from "./brand";
 import { inr } from "./format";
-import type { PilotPlan, RunResult } from "./schemas";
+import type { PartnerPlan, PilotPlan, RunResult } from "./schemas";
 
 /** Renders the pilot plan as Markdown for download. */
 export function planToMarkdown(plan: PilotPlan, result?: Pick<RunResult, "narrative" | "qlooSource" | "options" | "winnerId" | "pilotResults">): string {
@@ -82,3 +82,26 @@ export function downloadText(filename: string, text: string, mime: string): void
 }
 
 export const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+/** Renders the partner pilot as Markdown for download. */
+export function partnerPlanToMarkdown(plan: PartnerPlan): string {
+  const lines: string[] = [`# ${plan.title}`, "", `**Product:** ${plan.product}  `, `**Format:** ${plan.modelLabel}  `, `**Upfront:** ${inr(plan.upfrontInr)} of a ${inr(plan.budgetInr)} budget`, ""];
+  lines.push("## Shortlisted partners (worth contacting, not confirmed)", "");
+  plan.shortlist.forEach((s, i) => lines.push(`${i + 1}. **${s.name}** (${s.partnerType}, ${s.locality}): ${s.model}. ${s.why}`));
+  lines.push("", "## Budget (example assumptions)", "", "| Item | Amount | Note |", "|---|---:|---|");
+  for (const b of plan.budget) lines.push(`| ${b.item} | ${inr(b.amountInr)} | ${b.note ?? ""} |`);
+  lines.push(`| **Total** | **${inr(plan.upfrontInr)}** | |`, "", "## Timeline", "");
+  for (const t of plan.timeline) {
+    lines.push(`**${t.when}**`, "");
+    for (const task of t.tasks) lines.push(`- ${task}`);
+    lines.push("");
+  }
+  lines.push("## Success metrics", "");
+  for (const m of plan.successMetrics) lines.push(`- **${m.metric}:** ${m.target}`);
+  lines.push("", "## Decision rule", "", `- **Continue:** ${plan.rule.continueIf}`, `- **Pivot:** ${plan.rule.pivotIf}`, `- **Stop:** ${plan.rule.stopIf}`, "", "## Before you start", "");
+  for (const v of [...plan.validationSteps, ...plan.compliance]) lines.push(`- ${v}`);
+  const first = plan.shortlist[0];
+  if (first) lines.push("", `## Draft message to ${first.name}`, "", "```", `Subject: ${first.outreach.email.subject}`, "", first.outreach.email.body, "```");
+  lines.push("", "---", "", `_${DISCLAIMER}_`, "", `_Made with Culture2Commerce. ${TEAM_CREDIT}._`, "");
+  return lines.join("\n");
+}

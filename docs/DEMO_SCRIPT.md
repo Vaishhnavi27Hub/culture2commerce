@@ -21,6 +21,18 @@ live data can change.
 | 2:35 | Click **See the pilot plan**. | "Quantities, prices, a schedule, a budget, and a rule: sell this many prints or make this much, and continue. Otherwise pivot or stop." |
 | 2:50 | Enter results in **Report pilot results** and click **Get verdict**. | "After the pilot she reports what happened and gets predicted versus actual, and a verdict. From cultural signal to a tested business idea." |
 
+## Optional extra minute: the partner example
+
+| Do | Say |
+|---|---|
+| Back on the first screen, click **Try the partner example**. | "Now a harder case: homemade brownies, ₹10,000, and no money for a stall." |
+| Show **Solo vs partnership**. | "No stall fits the budget, so the app recommends starting with an existing business, and says why." |
+| Show **Where your idea's audience is**. | "Qloo's heatmap picked these neighbourhoods for a bakery audience, not a fixed list." |
+| Filter **Potential partners**; open a complementary café and a host. | "Cafés whose crowd likes the local bakeries but which don't bake. Malls and food courts are labelled as potential visibility, because Qloo has no visitor counts." |
+| Point at a place marked **Like the business you admire**. | "Found by using Lamara Patisserie's crowd as the signal." |
+| Change the commission in **Collaboration options**. | "Every term is an assumption you can change, and the break-even updates." |
+| Open the partner pilot; switch to **WhatsApp / DM**. | "And a message to send. The app never sends anything itself." |
+
 ## If something goes wrong
 
 - **Badge says recorded or sample:** "The live API is unavailable right now, so the app has

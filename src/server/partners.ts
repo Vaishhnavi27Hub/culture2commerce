@@ -290,9 +290,10 @@ export function buildCollabOptions(partners: PartnerCandidate[], ctx: OptionCont
       } else {
         reasons.push(`Fits the budget: about ₹${r.upfrontInr.toLocaleString("en-IN")} upfront (${r.budgetUsedPct}%).`);
       }
-      if (verdict !== "rejected" && r.breakevenUnits !== undefined && r.breakevenUnits > r.units * 1.5) {
+      if (verdict !== "rejected" && r.breakevenUnits !== undefined && r.breakevenUnits > r.units) {
         verdict = "downgraded";
-        reasons.push(`Unlikely to break even in the pilot: needs ${r.breakevenUnits} sales against about ${r.units} expected.`);
+        const licence = inputs.licenceInr > 0 ? ` (costs include a one-time ₹${inputs.licenceInr.toLocaleString("en-IN")} registration you keep afterwards)` : "";
+        reasons.push(`Does not break even within the pilot: needs ${r.breakevenUnits} sales against about ${r.units} expected${licence}.`);
       }
       const finance = 0.5 * budgetScore(ratio) + 0.5 * breakevenScoreOf(r.breakevenUnits, r.units);
       const practicality = COLLAB_MODEL_INFO[model].simplicity - (partner.partnerType === "similar" ? 20 : 0);
