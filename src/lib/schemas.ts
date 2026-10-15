@@ -26,6 +26,10 @@ export const riskPreferenceSchema = z.enum(["low", "medium", "high"]);
 export type RiskPreference = z.infer<typeof riskPreferenceSchema>;
 
 export const confidenceLevelSchema = z.enum(["High", "Medium", "Low"]);
+
+/** How the user wants to start: their own stall, with an existing business, or compare both. */
+export const launchModeSchema = z.enum(["solo", "partner", "both"]);
+export type LaunchMode = z.infer<typeof launchModeSchema>;
 export type ConfidenceLevel = z.infer<typeof confidenceLevelSchema>;
 
 // ---------------------------------------------------------------------------
@@ -43,6 +47,11 @@ export const runInputSchema = z.object({
   interests: z.array(shortText).max(8).default([]),
   conceptIds: z.array(z.string().min(1).max(40)).min(1).max(5),
   riskPreference: riskPreferenceSchema.default("low"),
+  launchMode: launchModeSchema.default("solo"),
+  /** The user's product in their own words, e.g. "eggless brownies and vegan cupcakes". */
+  productDescription: z.string().trim().max(300).optional(),
+  /** A business whose crowd and atmosphere the user likes, e.g. "Lamara Patisserie". */
+  admiredBusiness: z.string().trim().max(80).optional(),
 });
 export type RunInput = z.infer<typeof runInputSchema>;
 
@@ -97,6 +106,9 @@ export const venueSummarySchema = z.object({
   rating: z.number().optional(),
   neighborhood: z.string().optional(),
   distanceM: z.number().optional(),
+  /** Qloo venue price level, 1 (budget) to 4 (premium). */
+  priceLevel: z.number().optional(),
+  costDescription: z.string().optional(),
   tags: z.array(z.string()),
 });
 export type VenueSummary = z.infer<typeof venueSummarySchema>;
@@ -147,9 +159,66 @@ export const localityProfileSchema = z.object({
 });
 export type LocalityProfile = z.infer<typeof localityProfileSchema>;
 
+export const qlooSourceLabelSchema = z.enum(["live", "recorded", "sample"]);
+
+/** A neighbourhood Qloo's heatmap associated with the idea's audience. */
+export const neighbourhoodCandidateSchema = z.object({
+  name: z.string(),
+  rank: z.number(),
+  /** Qloo heatmap affinity (0..1) for the idea's audience. Not a measure of demand or footfall. */
+  affinity: z.number(),
+  conceptLabels: z.array(z.string()),
+  selected: z.boolean(),
+  source: qlooSourceLabelSchema,
+});
+export type NeighbourhoodCandidate = z.infer<typeof neighbourhoodCandidateSchema>;
+
+export const partnerTypeSchema = z.enum(["similar", "complementary", "host"]);
+export type PartnerType = z.infer<typeof partnerTypeSchema>;
+
+/** A business found by the Local Researcher, before scoring. Every field comes from Qloo. */
+export const partnerLeadSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  genre: z.string().optional(),
+  partnerType: partnerTypeSchema,
+  locality: z.string(),
+  neighborhood: z.string().optional(),
+  address: z.string().optional(),
+  rating: z.number().optional(),
+  priceLevel: z.number().optional(),
+  costDescription: z.string().optional(),
+  popularity: z.number().optional(),
+  /** Qloo affinity to the audience used as the signal; absent when the search had no signal. */
+  affinity: z.number().optional(),
+  distanceM: z.number().optional(),
+  tags: z.array(z.string()),
+  /** What the affinity was measured against, in plain words. */
+  signalNote: z.string().optional(),
+  viaAdmired: z.boolean(),
+  source: qlooSourceLabelSchema,
+});
+export type PartnerLead = z.infer<typeof partnerLeadSchema>;
+
+export const admiredResolutionSchema = z.object({
+  query: z.string(),
+  status: z.enum(["matched", "ambiguous", "not_in_city", "not_found", "failed"]),
+  match: z.object({ id: z.string(), name: z.string(), neighborhood: z.string().optional(), genre: z.string().optional() }).optional(),
+  alternatives: z.array(z.string()),
+  note: z.string(),
+});
+export type AdmiredResolution = z.infer<typeof admiredResolutionSchema>;
+
 export const localResearchOutputSchema = z.object({
   localities: z.array(localityProfileSchema).min(1),
   suggestedByAgent: z.boolean(),
+  /** How the localities were chosen when the user asked for suggestions. */
+  localitySource: z.enum(["user", "qloo_heatmap", "curated_fallback", "city_only"]),
+  neighbourhoods: z.array(neighbourhoodCandidateSchema),
+  /** The idea used for partner discovery (null in solo mode). */
+  partnerConceptId: z.string().optional(),
+  partnerLeads: z.array(partnerLeadSchema),
+  admired: admiredResolutionSchema.optional(),
   warnings: z.array(z.string()),
 });
 export type LocalResearchOutput = z.infer<typeof localResearchOutputSchema>;
@@ -184,8 +253,35 @@ export const opportunitySchema = z.object({
 });
 export type Opportunity = z.infer<typeof opportunitySchema>;
 
+/** A scored potential partner. A recommendation to contact, never a confirmed willing partner. */
+export const partnerCandidateSchema = partnerLeadSchema.extend({
+  fitScore: z.number(),
+  audienceScore: z.number(),
+  /** Similar: how closely they resemble your product. Complementary: how well their category suits it. Host: visibility. */
+  secondaryScore: z.number(),
+  secondaryLabel: z.string(),
+  reputationScore: z.number(),
+  productMatches: z.array(z.string()),
+  reasons: z.array(z.string()),
+  risks: z.array(z.string()),
+  suggestedModel: z.enum(["consignment", "counter", "workshop", "wholesale"]),
+  verifySteps: z.array(z.string()),
+});
+export type PartnerCandidate = z.infer<typeof partnerCandidateSchema>;
+
+export const productProfileSchema = z.object({
+  description: z.string().optional(),
+  terms: z.array(z.string()),
+  /** Qloo tags matched to the product words. */
+  tags: z.array(z.object({ name: z.string(), type: z.string() })),
+  source: z.enum(["user", "default"]),
+});
+export type ProductProfile = z.infer<typeof productProfileSchema>;
+
 export const culturalOutputSchema = z.object({
   opportunities: z.array(opportunitySchema).min(1),
+  partners: z.array(partnerCandidateSchema).default([]),
+  productProfile: productProfileSchema.optional(),
   /** True when Qloo affinities could not be computed and neutral scores were used. */
   degraded: z.boolean(),
   warnings: z.array(z.string()),
@@ -267,10 +363,118 @@ export const scoredOptionSchema = z.object({
 });
 export type ScoredOption = z.infer<typeof scoredOptionSchema>;
 
+export const collabCostLineSchema = z.object({ item: z.string(), amountInr: z.number(), note: z.string().optional() });
+
+export const collabAssumptionsSchema = z.object({
+  commissionPct: z.number(),
+  wholesaleDiscountPct: z.number(),
+  workshopVenueSharePct: z.number(),
+  counterFeePerDayInr: z.number(),
+  unitsPerDay: z.number(),
+  wholesaleUnitsPerWeek: z.number(),
+  unitPriceInr: z.number(),
+  seatsPerSession: z.number(),
+});
+
+/** Everything needed to recompute a collaboration model in the browser with changed assumptions. */
+export const collabInputsSchema = z.object({
+  model: z.enum(["consignment", "counter", "workshop", "wholesale"]),
+  weekends: z.number(),
+  budgetInr: z.number(),
+  unitCostInr: z.number(),
+  packagingPerUnitInr: z.number(),
+  stockMultiplier: z.number(),
+  counterSetupInr: z.number(),
+  shelfSetupInr: z.number(),
+  logisticsPerTripInr: z.number(),
+  licenceInr: z.number(),
+  workshop: z.object({ priceInr: z.number(), costPerSeatInr: z.number() }).optional(),
+  assumptions: collabAssumptionsSchema,
+});
+
+export const collabOptionSchema = z.object({
+  id: z.string(),
+  partnerId: z.string(),
+  partnerName: z.string(),
+  partnerType: partnerTypeSchema,
+  model: z.enum(["consignment", "counter", "workshop", "wholesale"]),
+  label: z.string(),
+  inputs: collabInputsSchema,
+  units: z.number(),
+  costs: z.array(collabCostLineSchema),
+  upfrontInr: z.number(),
+  grossRevenueInr: z.number(),
+  partnerShareInr: z.number(),
+  netRevenueInr: z.number(),
+  profitInr: z.number(),
+  breakevenUnits: z.number().optional(),
+  budgetUsedPct: z.number(),
+  verdict: verdictSchema,
+  reasons: z.array(z.string()),
+  requirements: z.array(z.string()),
+  risks: z.array(z.string()),
+  score: z.number(),
+});
+export type CollabOption = z.infer<typeof collabOptionSchema>;
+
+export const partnerStrategySchema = z.object({
+  status: z.enum(["ready", "no_partners", "none_affordable"]),
+  conceptId: z.string(),
+  conceptLabel: z.string(),
+  options: z.array(collabOptionSchema),
+  bestOptionId: z.string().optional(),
+  message: z.string(),
+});
+export type PartnerStrategy = z.infer<typeof partnerStrategySchema>;
+
+export const pricingSchema = z.object({
+  conceptId: z.string(),
+  locality: z.string(),
+  tier: z.enum(["budget", "mid", "premium", "unknown"]),
+  medianLevel: z.number().optional(),
+  venuesUsed: z.number(),
+  floorInr: z.number(),
+  rangeInr: z.tuple([z.number(), z.number()]),
+  suggestedInr: z.number(),
+  unitCostInr: z.number(),
+  packagingPerUnitInr: z.number(),
+  explanation: z.array(z.string()),
+  source: z.enum(["live", "recorded", "sample", "estimate"]),
+});
+export type Pricing = z.infer<typeof pricingSchema>;
+
+export const strategySideSchema = z.object({
+  title: z.string(),
+  available: z.boolean(),
+  score: z.number(),
+  upfrontInr: z.number(),
+  operatingNote: z.string(),
+  financialRisk: z.enum(["Low", "Medium", "High"]),
+  setupComplexity: z.enum(["Low", "Medium", "High"]),
+  permissions: z.array(z.string()),
+  audienceRelevance: z.string(),
+  thirdPartyDependence: z.enum(["Low", "Medium", "High"]),
+  timeToLaunch: z.string(),
+  advantages: z.array(z.string()),
+  disadvantages: z.array(z.string()),
+  budgetFit: z.string(),
+});
+
+export const strategyComparisonSchema = z.object({
+  solo: strategySideSchema,
+  partner: strategySideSchema,
+  recommended: z.enum(["solo", "partner", "none"]),
+  reasons: z.array(z.string()),
+});
+export type StrategyComparison = z.infer<typeof strategyComparisonSchema>;
+
 export const feasibilityOutputSchema = z.object({
   weights: weightsSchema,
   options: z.array(scoredOptionSchema).min(1),
   winnerId: z.string().optional(),
+  partnerStrategy: partnerStrategySchema.optional(),
+  comparison: strategyComparisonSchema.optional(),
+  pricing: pricingSchema.optional(),
   warnings: z.array(z.string()),
 });
 export type FeasibilityOutput = z.infer<typeof feasibilityOutputSchema>;
@@ -319,6 +523,35 @@ export const pilotPlanSchema = z.object({
   permitNotes: z.array(z.string()),
 });
 export type PilotPlan = z.infer<typeof pilotPlanSchema>;
+
+/** A pilot run through an existing business. */
+export const partnerPlanSchema = z.object({
+  title: z.string(),
+  conceptLabel: z.string(),
+  product: z.string(),
+  model: z.enum(["consignment", "counter", "workshop", "wholesale"]),
+  modelLabel: z.string(),
+  shortlist: z.array(
+    z.object({
+      partnerId: z.string(),
+      name: z.string(),
+      partnerType: partnerTypeSchema,
+      locality: z.string(),
+      model: z.string(),
+      why: z.string(),
+      outreach: z.object({ email: z.object({ subject: z.string(), body: z.string() }), short: z.string() }),
+    }),
+  ),
+  budget: z.array(collabCostLineSchema),
+  upfrontInr: z.number(),
+  budgetInr: z.number(),
+  timeline: z.array(z.object({ when: z.string(), tasks: z.array(z.string()) })),
+  successMetrics: z.array(z.object({ metric: z.string(), target: z.string() })),
+  rule: z.object({ continueIf: z.string(), pivotIf: z.string(), stopIf: z.string() }),
+  validationSteps: z.array(z.string()),
+  compliance: z.array(z.string()),
+});
+export type PartnerPlan = z.infer<typeof partnerPlanSchema>;
 
 // ---------------------------------------------------------------------------
 // Pilot results (predicted vs actual)
@@ -421,6 +654,15 @@ export const runResultSchema = z.object({
   input: runInputSchema,
   agents: z.array(agentTraceSchema),
   localities: z.array(localityProfileSchema),
+  localitySource: z.enum(["user", "qloo_heatmap", "curated_fallback", "city_only"]).optional(),
+  neighbourhoods: z.array(neighbourhoodCandidateSchema).default([]),
+  partners: z.array(partnerCandidateSchema).default([]),
+  admired: admiredResolutionSchema.optional(),
+  productProfile: productProfileSchema.optional(),
+  partnerStrategy: partnerStrategySchema.optional(),
+  comparison: strategyComparisonSchema.optional(),
+  pricing: pricingSchema.optional(),
+  partnerPlan: partnerPlanSchema.optional(),
   options: z.array(scoredOptionSchema),
   weights: weightsSchema.optional(),
   winnerId: z.string().optional(),

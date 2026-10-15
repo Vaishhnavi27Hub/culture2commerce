@@ -103,6 +103,15 @@ export const RAW = {
       ],
     },
   },
+  heatmap: {
+    success: true,
+    results: {
+      entities: [
+        { name: "Testnagar", entity_id: "LOC-1", popularity: 0.996, query: { affinity: 1 }, disambiguation: "Testnagar, Testcity", boundary: "POLYGON ((77.60 12.90, 77.62 12.90, 77.62 12.92, 77.60 12.92, 77.60 12.90))" },
+        { name: "Testcity", entity_id: "CITY-1", popularity: 1, query: { affinity: 0.97 }, disambiguation: "Testcity, Teststate" },
+      ],
+    },
+  },
   demographics: {
     success: true,
     results: {
@@ -122,6 +131,7 @@ export const RAW = {
 /** Picks the synthetic raw response that matches a request URL, like the real API would. */
 export function rawResponseFor(url: URL): unknown {
   if (url.pathname === "/search") return RAW.search;
+  if (url.searchParams.get("filter.type") === "urn:heatmap") return RAW.heatmap;
   if (url.pathname === "/v2/tags") return RAW.tags;
   const type = url.searchParams.get("filter.type");
   if (type === "urn:tag") return RAW.tasteTags;
@@ -162,4 +172,6 @@ export const METHOD_ARGS: { [M in QlooMethodName]: QlooMethods[M]["args"] } = {
   getTasteTags: { anchorIds: ["PLACE-1", "PLACE-2"], tagTypes: ["urn:tag:genre:place"], take: 10 },
   getBrandAffinity: { anchorIds: ["PLACE-1", "PLACE-2"], take: 5 },
   getDemographics: { anchorIds: ["PLACE-1"] },
+  getNeighbourhoodHeatmap: { city: "Testcity", tagIds: ["urn:tag:genre:place:restaurant:bakery"], take: 10 },
+  getNearbyAffinityPlaces: { anchorIds: ["PLACE-1"], locality: "Testnagar", city: "Testcity", take: 10 },
 };
