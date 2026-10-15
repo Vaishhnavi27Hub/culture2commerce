@@ -41,7 +41,24 @@ flowchart LR
   Q -. fallback .-> QS[Bundled sample data]
 ```
 
-## Agent contracts
+## Launch modes
+
+`launchMode` is `solo`, `partner` or `both`. The same four agents run in every mode; the mode
+decides which extra work each one does and which plans the Pilot Planner builds.
+
+| Agent | solo | partner | both |
+|---|---|---|---|
+| Local Researcher | neighbourhoods + locality profiles | also partner leads and the admired business | as partner |
+| Cultural Opportunity Finder | cultural fit | also product tags and partner scores | as partner |
+| Feasibility Critic | solo ranking, price range | also collaboration options | also the solo vs partner comparison |
+| Pilot Planner | solo pilot | partner pilot with outreach | both pilots |
+
+Partner logic lives in `src/server/partners.ts` (classification, product matching, scoring,
+collaboration options, comparison) and `src/server/data/collab-profiles.ts` (per-idea venue
+types and illustrative collaboration assumptions). Shared pure calculators used by both the
+server and the browser: `src/lib/collab.ts`, `src/lib/pricing.ts`, `src/lib/outreach.ts`.
+
+## Agent contracts (original solo flow)
 
 | Agent | Input | Qloo calls | Output |
 |---|---|---|---|

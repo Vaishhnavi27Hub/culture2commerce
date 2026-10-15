@@ -34,6 +34,12 @@ Four agents do the work, and you watch them live:
 4. **Pilot Planner** turns the winner into quantities, prices, a schedule, a budget and a
    measurable continue / pivot / stop rule.
 
+It can also start **with an existing business** instead of a stall. Qloo finds similar
+businesses, complementary ones (cafés whose crowd likes the local bakeries but which don't bake)
+and potential high-visibility hosts, plus places with a crowd like a business the user admires.
+The agents cost consignment, counter, workshop and wholesale formats, compare going solo with
+partnering, and draft an outreach email and WhatsApp message.
+
 The app also shows a "Without Qloo vs With Qloo" comparison, a locality comparison, a full
 evidence trail, a transparent score, a confidence level with reasons, exports, and a form to
 report pilot results and see predicted versus actual.
@@ -87,7 +93,7 @@ any number that the scoring did not produce.
 - A recommendation that Qloo actually decides. Every run is re-scored with Qloo's signals
   removed; in our live demo that changes the pick from the cheapest locality to the one where
   art places resonate most. Coffee had the highest cultural fit and was still rejected on cost.
-- 142 automated tests plus an end-to-end browser test, none of which spend API quota.
+- 201 automated tests plus two end-to-end browser tests, none of which spend API quota.
 
 ## What we learned
 

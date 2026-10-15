@@ -36,23 +36,23 @@
 
   <rect class="agent" x="20" y="170" width="215" height="92" rx="10"/>
   <text class="t" x="127" y="198" text-anchor="middle">1 Local Researcher</text>
-  <text class="s" x="127" y="218" text-anchor="middle">anchor venues, vibe tags,</text>
-  <text class="s" x="127" y="234" text-anchor="middle">competitors, stall fees</text>
+  <text class="s" x="127" y="218" text-anchor="middle">heatmap neighbourhoods, venues,</text>
+  <text class="s" x="127" y="234" text-anchor="middle">competitors, partner leads</text>
 
   <rect class="agent" x="262" y="170" width="215" height="92" rx="10"/>
   <text class="t" x="369" y="198" text-anchor="middle">2 Cultural Opportunity Finder</text>
-  <text class="s" x="369" y="218" text-anchor="middle">concept affinity, taste tags,</text>
-  <text class="s" x="369" y="234" text-anchor="middle">brands, demographics</text>
+  <text class="s" x="369" y="218" text-anchor="middle">affinity, locality lift, brands,</text>
+  <text class="s" x="369" y="234" text-anchor="middle">product tags, partner fit</text>
 
   <rect class="agent" x="504" y="170" width="215" height="92" rx="10"/>
   <text class="t" x="611" y="198" text-anchor="middle">3 Feasibility Critic</text>
-  <text class="s" x="611" y="218" text-anchor="middle">costs, verdicts, scoring,</text>
-  <text class="s" x="611" y="234" text-anchor="middle">confidence, ranking</text>
+  <text class="s" x="611" y="218" text-anchor="middle">solo + collaboration costs,</text>
+  <text class="s" x="611" y="234" text-anchor="middle">pricing, solo vs partner</text>
 
   <rect class="agent" x="746" y="170" width="215" height="92" rx="10"/>
   <text class="t" x="853" y="198" text-anchor="middle">4 Pilot Planner</text>
-  <text class="s" x="853" y="218" text-anchor="middle">quantities, schedule, budget,</text>
-  <text class="s" x="853" y="234" text-anchor="middle">continue / pivot / stop rule</text>
+  <text class="s" x="853" y="218" text-anchor="middle">solo and partner pilots,</text>
+  <text class="s" x="853" y="234" text-anchor="middle">outreach drafts, stop rule</text>
 
   <path class="line" d="M235 216 H262"/>
   <path class="line" d="M477 216 H504"/>

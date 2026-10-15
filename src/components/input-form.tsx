@@ -1,8 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
-import { NISHA_EXAMPLE } from "@/lib/nisha";
-import { runInputSchema, type RiskPreference, type RunInput } from "@/lib/schemas";
+import { BROWNIE_EXAMPLE, NISHA_EXAMPLE } from "@/lib/nisha";
+import { runInputSchema, type LaunchMode, type RiskPreference, type RunInput } from "@/lib/schemas";
 
 export interface ConceptOption {
   id: string;
@@ -28,6 +28,9 @@ interface FormState {
   interests: string;
   conceptIds: string[];
   risk: RiskPreference;
+  mode: LaunchMode;
+  product: string;
+  admired: string;
 }
 
 const EMPTY: FormState = {
@@ -40,7 +43,33 @@ const EMPTY: FormState = {
   interests: "",
   conceptIds: [],
   risk: "low",
+  mode: "solo",
+  product: "",
+  admired: "",
 };
+
+const MODE_OPTIONS: { value: LaunchMode; label: string; help: string }[] = [
+  { value: "solo", label: "On my own", help: "Run my own stall, pop-up or workshop" },
+  { value: "partner", label: "With an existing business", help: "Sell through or alongside a café, shop or venue" },
+  { value: "both", label: "Show me both", help: "Compare the two approaches side by side" },
+];
+
+function toForm(example: RunInput): FormState {
+  return {
+    city: example.city,
+    suggest: example.localities.length === 0,
+    localities: example.localities,
+    customLocality: "",
+    budget: String(example.budgetInr),
+    weekends: example.weekends,
+    interests: example.interests.join(", "),
+    conceptIds: example.conceptIds,
+    risk: example.riskPreference,
+    mode: example.launchMode,
+    product: example.productDescription ?? "",
+    admired: example.admiredBusiness ?? "",
+  };
+}
 
 const RISK_OPTIONS: { value: RiskPreference; label: string; help: string }[] = [
   { value: "low", label: "Low risk", help: "Protect my money; weight safety more" },
@@ -76,6 +105,9 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
       .slice(0, 8),
     conceptIds: f.conceptIds,
     riskPreference: f.risk,
+    launchMode: f.mode,
+    ...(f.product.trim() ? { productDescription: f.product.trim() } : {}),
+    ...(f.admired.trim() && f.mode !== "solo" ? { admiredBusiness: f.admired.trim() } : {}),
   });
 
   const validate = (f: FormState): RunInput | undefined => {
@@ -103,21 +135,10 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
     if (input) onSubmit(input);
   };
 
-  const tryNisha = () => {
-    const filled: FormState = {
-      city: NISHA_EXAMPLE.city,
-      suggest: false,
-      localities: NISHA_EXAMPLE.localities,
-      customLocality: "",
-      budget: String(NISHA_EXAMPLE.budgetInr),
-      weekends: NISHA_EXAMPLE.weekends,
-      interests: NISHA_EXAMPLE.interests.join(", "),
-      conceptIds: NISHA_EXAMPLE.conceptIds,
-      risk: NISHA_EXAMPLE.riskPreference,
-    };
-    setForm(filled);
+  const tryExample = (example: RunInput) => {
+    setForm(toForm(example));
     setErrors({});
-    onSubmit(NISHA_EXAMPLE);
+    onSubmit(example);
   };
 
   const toggleLocality = (name: string) => {
@@ -150,22 +171,51 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
 
   return (
     <form onSubmit={submit} noValidate className="space-y-8" aria-busy={busy}>
-      <div className="rounded-2xl border border-brand/25 bg-brand-soft p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
-        <div>
-          <p className="font-semibold text-ink">New here? Start with Nisha.</p>
-          <p className="mt-0.5 text-sm text-muted">
-            A student in Bengaluru with ₹15,000 and two weekends, choosing between a thrift stall, art prints and a coffee pop-up.
-          </p>
-        </div>
-        <button suppressHydrationWarning
-          type="button"
-          onClick={tryNisha}
-          disabled={busy}
-          className="mt-3 inline-flex w-full shrink-0 items-center justify-center rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white hover:bg-ink/85 disabled:opacity-50 sm:mt-0 sm:w-auto"
-        >
-          Try Nisha’s example
-        </button>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {[
+          { example: NISHA_EXAMPLE, title: "Start on your own: Nisha", text: "A student in Bengaluru with ₹15,000 and two weekends, choosing between a thrift stall, art prints and a coffee pop-up.", button: "Try Nisha’s example" },
+          { example: BROWNIE_EXAMPLE, title: "Start with a partner: brownies", text: "Homemade eggless brownies, ₹10,000, no stall. Find cafés, bakeries and venues to sell through, and compare with going solo.", button: "Try the partner example" },
+        ].map((ex) => (
+          <div key={ex.button} className="flex flex-col justify-between gap-3 rounded-2xl border border-brand/25 bg-brand-soft p-4">
+            <div>
+              <p className="font-semibold text-ink">{ex.title}</p>
+              <p className="mt-0.5 text-sm text-muted">{ex.text}</p>
+            </div>
+            <button suppressHydrationWarning
+              type="button"
+              onClick={() => tryExample(ex.example)}
+              disabled={busy}
+              className="inline-flex w-full items-center justify-center rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white hover:bg-ink/85 disabled:opacity-50 sm:w-auto sm:self-start"
+            >
+              {ex.button}
+            </button>
+          </div>
+        ))}
       </div>
+
+      <fieldset className="space-y-3">
+        <legend className="text-lg font-bold">How do you want to start your business?</legend>
+        <div role="radiogroup" aria-label="Launch mode" className="grid gap-2 sm:grid-cols-3">
+          {MODE_OPTIONS.map((opt) => (
+            <label
+              key={opt.value}
+              className={`flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 ${form.mode === opt.value ? "border-brand bg-brand-soft" : "border-line bg-card hover:border-brand/50"}`}
+            >
+              <input suppressHydrationWarning
+                type="radio"
+                name={id("mode")}
+                className="mt-1 accent-[var(--color-brand)]"
+                checked={form.mode === opt.value}
+                onChange={() => set("mode", opt.value)}
+              />
+              <span>
+                <span className="block text-sm font-semibold">{opt.label}</span>
+                <span className="block text-xs text-muted">{opt.help}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <fieldset className="space-y-5">
         <legend className="text-lg font-bold">1. Where</legend>
@@ -385,6 +435,44 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
             Separate with commas. Ideas that match your skills count as lower risk. Please don’t enter personal details.
           </p>
         </div>
+
+        <div>
+          <label htmlFor={id("product")} className="text-sm font-semibold">
+            Describe your product <span className="font-normal text-muted">(optional)</span>
+          </label>
+          <textarea suppressHydrationWarning
+            id={id("product")}
+            className={`${inputClass} min-h-20`}
+            placeholder="I make eggless brownies, vegan cupcakes and homemade plum cakes."
+            value={form.product}
+            maxLength={300}
+            onChange={(e) => set("product", e.target.value)}
+            aria-describedby={id("product-help")}
+          />
+          <p id={id("product-help")} className="mt-1.5 text-xs text-muted">
+            Matched to Qloo tags to find businesses that sell similar things or whose customers might want yours.
+          </p>
+        </div>
+
+        {form.mode !== "solo" && (
+          <div>
+            <label htmlFor={id("admired")} className="text-sm font-semibold">
+              A business you admire <span className="font-normal text-muted">(optional)</span>
+            </label>
+            <input suppressHydrationWarning
+              id={id("admired")}
+              className={inputClass}
+              placeholder="e.g. a bakery or café whose crowd and atmosphere you like"
+              value={form.admired}
+              maxLength={80}
+              onChange={(e) => set("admired", e.target.value)}
+              aria-describedby={id("admired-help")}
+            />
+            <p id={id("admired-help")} className="mt-1.5 text-xs text-muted">
+              Use the name as it appears on maps; add the area if the name is common. Qloo uses it to find places with a similar crowd. It does not tell us they share actual customers.
+            </p>
+          </div>
+        )}
       </fieldset>
 
       {(errors.form || serverIssues.length > 0) && (

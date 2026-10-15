@@ -1,6 +1,6 @@
 import type { DataSource } from "./schemas";
 
-export const inr = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
+export const inr = (n: number) => `${n < 0 ? "−" : ""}₹${Math.abs(Math.round(n)).toLocaleString("en-IN")}`;
 
 export const score = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
