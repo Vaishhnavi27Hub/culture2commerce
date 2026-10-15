@@ -7,7 +7,7 @@ import { matchesAny } from "@/server/agents/types";
 import { CONCEPTS, getConcept } from "@/server/data/concepts";
 import { getMarketEstimate, suggestLocalities } from "@/server/data/local-market";
 import type { Place } from "@/server/qloo/types";
-import { makeCtx } from "../helpers/ctx";
+import { makeCtx, sampleOnlyQloo } from "../helpers/ctx";
 
 const place = (name: string, genre: string, tags: string[] = []): Place => ({
   id: name,
@@ -93,12 +93,29 @@ describe("Local Researcher", () => {
     expect(out.localities).toHaveLength(3);
   });
 
-  it("analyses an unknown city as one city-level area and says so", async () => {
+  it("asks Qloo's heatmap for neighbourhoods in any city and drops administrative areas", async () => {
     const out = await localResearcher({ city: "Pune", localities: [] }, makeCtx({ city: "Pune", localities: [] }));
+    expect(out.localitySource).toBe("qloo_heatmap");
+    expect(out.localities).toHaveLength(3);
+    expect(out.neighbourhoods.every((n) => n.name !== "Pune")).toBe(true);
+    expect(out.neighbourhoods.filter((n) => n.selected).map((n) => n.name)).toEqual(out.localities.map((l) => l.name));
+    expect(out.localities[0]?.market.localitySpecific).toBe(false);
+  });
+
+  it("analyses an unknown city as one area when Qloo has no neighbourhood ranking", async () => {
+    const inner = sampleOnlyQloo();
+    const qloo = { ...inner, getNeighbourhoodHeatmap: async () => Promise.reject(new Error("no heatmap")) };
+    const out = await localResearcher({ city: "Pune", localities: [] }, makeCtx({ city: "Pune", localities: [] }, qloo));
+    expect(out.localitySource).toBe("city_only");
     expect(out.localities).toHaveLength(1);
     expect(out.localities[0]?.level).toBe("city");
-    expect(out.localities[0]?.market.localitySpecific).toBe(false);
     expect(out.warnings.join(" ")).toMatch(/analysed as one area/);
+  });
+
+  it("suggests different neighbourhoods for different ideas", async () => {
+    const pick = async (conceptIds: string[]) =>
+      (await localResearcher({ city: "Bengaluru", localities: [] }, makeCtx({ localities: [], conceptIds }))).localities.map((l) => l.name);
+    expect(await pick(["thrift-stall"])).not.toEqual(await pick(["baked-goods"]));
   });
 });
 

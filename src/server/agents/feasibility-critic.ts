@@ -8,8 +8,14 @@ import {
   type LocalResearchOutput,
   type Opportunity,
   type ScoredOption,
+  type PartnerStrategy,
+  type Pricing,
+  type StrategyComparison,
 } from "@/lib/schemas";
+import { pricePositioning } from "@/lib/pricing";
+import { getCollabProfile } from "../data/collab-profiles";
 import type { Concept } from "../data/concepts";
+import { buildCollabOptions, compareStrategies } from "../partners";
 import {
   clamp,
   computeConfidence,
@@ -275,5 +281,99 @@ export const feasibilityCritic: Agent<FeasibilityInput, FeasibilityOutput> = asy
   const downgraded = options.filter((o) => o.verdict === "downgraded").length;
   ctx.note(`${options.length} options costed: ${rejected} rejected, ${downgraded} downgraded`);
 
-  return feasibilityOutputSchema.parse({ weights, options, ...(winner ? { winnerId: winner.id } : {}), warnings });
+  // ---------------------------------------------------------------- price positioning
+  const mode = ctx.input.launchMode;
+  const partnerConcept = input.local.partnerConceptId ? ctx.concepts.find((c) => c.id === input.local.partnerConceptId) : undefined;
+  const pricingConcept = mode === "partner" && partnerConcept ? partnerConcept : (ctx.concepts.find((c) => c.id === winner?.conceptId) ?? partnerConcept);
+  const collabProfile = partnerConcept ? getCollabProfile(partnerConcept.id) : undefined;
+  let pricing: Pricing | undefined;
+  if (pricingConcept) {
+    const topPartner = input.cultural.partners[0];
+    const pricingLocality =
+      mode === "partner" && topPartner ? topPartner.locality : (winner?.locality ?? input.local.localities[0]?.name ?? ctx.input.city);
+    const profile = input.local.localities.find((l) => l.name === pricingLocality) ?? input.local.localities[0];
+    const levels = [
+      ...(profile?.anchors ?? []).map((a) => a.priceLevel),
+      ...input.cultural.partners.filter((p) => p.locality === pricingLocality).map((p) => p.priceLevel),
+    ].filter((l): l is number => l !== undefined);
+    const packaging = getCollabProfile(pricingConcept.id)?.packagingPerUnitInr ?? 0;
+    const p = pricePositioning({ unitCostInr: pricingConcept.unitCostInr, packagingPerUnitInr: packaging, referencePriceInr: pricingConcept.unitPriceInr, venuePriceLevels: levels });
+    pricing = {
+      conceptId: pricingConcept.id,
+      locality: pricingLocality,
+      tier: p.tier,
+      ...(p.medianLevel !== undefined ? { medianLevel: p.medianLevel } : {}),
+      venuesUsed: p.venuesUsed,
+      floorInr: p.floorInr,
+      rangeInr: p.rangeInr,
+      suggestedInr: p.suggestedInr,
+      unitCostInr: pricingConcept.unitCostInr,
+      packagingPerUnitInr: packaging,
+      explanation: p.explanation,
+      source: levels.length ? (profile?.qlooSource ?? "estimate") : "estimate",
+    };
+  }
+
+  // ---------------------------------------------------------------- partnership options
+  let partnerStrategy: PartnerStrategy | undefined;
+  if (mode !== "solo" && partnerConcept && collabProfile) {
+    const unitPriceInr = pricing && pricing.conceptId === partnerConcept.id ? pricing.suggestedInr : partnerConcept.unitPriceInr;
+    const eligible = input.cultural.partners.filter((p) => p.fitScore >= 35);
+    const optionsForPartners = buildCollabOptions(eligible, {
+      concept: partnerConcept,
+      profile: collabProfile,
+      locality: undefined,
+      weekends: ctx.input.weekends,
+      budgetInr: budget,
+      unitPriceInr,
+    }).map((o) => {
+      // Counter fees depend on the partner's locality; recompute with that locality's stall estimate.
+      const partner = eligible.find((p) => p.id === o.partnerId);
+      const locality = input.local.localities.find((l) => l.name === partner?.locality);
+      if (!partner || !locality || o.model !== "counter") return o;
+      return buildCollabOptions([partner], { concept: partnerConcept, profile: collabProfile, locality, weekends: ctx.input.weekends, budgetInr: budget, unitPriceInr }).find((x) => x.id === o.id) ?? o;
+    });
+    optionsForPartners.sort((a, b) => Number(a.verdict === "rejected") - Number(b.verdict === "rejected") || b.score - a.score || a.id.localeCompare(b.id));
+    const best = optionsForPartners.find((o) => o.verdict !== "rejected");
+    const status: PartnerStrategy["status"] = input.cultural.partners.length === 0 ? "no_partners" : best ? "ready" : "none_affordable";
+    partnerStrategy = {
+      status,
+      conceptId: partnerConcept.id,
+      conceptLabel: partnerConcept.label,
+      options: optionsForPartners.slice(0, 12),
+      ...(best ? { bestOptionId: best.id } : {}),
+      message:
+        status === "ready"
+          ? `Best partnership: ${best!.label.toLowerCase()} with ${best!.partnerName}, about ${inr(best!.upfrontInr)} upfront.`
+          : status === "no_partners"
+            ? "No suitable partner businesses were found near these localities."
+            : "Partners were found, but no collaboration format fits the budget or breaks even with the current assumptions.",
+    };
+    ctx.note(partnerStrategy.message);
+  }
+
+  // ---------------------------------------------------------------- solo vs partnership
+  let comparison: StrategyComparison | undefined;
+  if (mode === "both") {
+    const bestPartner = partnerStrategy?.options.find((o) => o.id === partnerStrategy?.bestOptionId);
+    comparison = compareStrategies({
+      solo: winner,
+      soloConcept: ctx.concepts.find((c) => c.id === winner?.conceptId),
+      partner: bestPartner ?? partnerStrategy?.options[0],
+      partnerCandidate: input.cultural.partners.find((p) => p.id === (bestPartner ?? partnerStrategy?.options[0])?.partnerId),
+      budgetInr: budget,
+      risk: ctx.input.riskPreference,
+    });
+    ctx.note(`Comparison: ${comparison.recommended === "none" ? "neither approach fits" : `${comparison.recommended === "solo" ? "going solo" : "partnering"} is recommended`}`);
+  }
+
+  return feasibilityOutputSchema.parse({
+    weights,
+    options,
+    ...(winner ? { winnerId: winner.id } : {}),
+    ...(partnerStrategy ? { partnerStrategy } : {}),
+    ...(comparison ? { comparison } : {}),
+    ...(pricing ? { pricing } : {}),
+    warnings,
+  });
 };

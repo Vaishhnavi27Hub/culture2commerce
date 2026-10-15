@@ -5,8 +5,12 @@ import {
   type LocalityProfile,
   type LocalResearchOutput,
   type Opportunity,
+  type PartnerCandidate,
+  type ProductProfile,
 } from "@/lib/schemas";
+import { COLLAB_PROFILES, getCollabProfile } from "../data/collab-profiles";
 import type { Concept } from "../data/concepts";
+import { extractProductTerms, pickPartnerConcept, scorePartner, stems } from "../partners";
 import type { BrandAffinity, DemographicSkew, QlooSource, Sourced, TagAffinity } from "../qloo/types";
 import { culturalFit, NEUTRAL_SCORE } from "../scoring";
 import { article, matchesAny, uniq, type Agent, type AgentContext } from "./types";
@@ -101,7 +105,10 @@ async function assess(
   signals: LocalitySignals,
   ctx: AgentContext,
   warnings: string[],
+  extraKeywords: string[] = [],
 ): Promise<Assessment> {
+  // The user's own product words count as extra keywords for the idea they describe.
+  const keywords = [...concept.keywords, ...extraKeywords];
   const sources: QlooSource[] = [profile.qlooSource];
   const evidence: Evidence[] = [];
   const anchorIds = profile.anchors.map((a) => a.id);
@@ -142,7 +149,7 @@ async function assess(
   }
 
   // 2. Supporting signal: does the concept show up in the audience's over-indexed genres?
-  const matchedTags = (signals.tasteTags?.data ?? []).filter((t) => matchesAny(t.name, concept.keywords, concept.excludeKeywords));
+  const matchedTags = (signals.tasteTags?.data ?? []).filter((t) => matchesAny(t.name, keywords, concept.excludeKeywords));
   if (signals.tasteTags) sources.push(signals.tasteTags.source);
   for (const t of matchedTags.slice(0, 3)) {
     evidence.push({
@@ -156,9 +163,9 @@ async function assess(
 
   // 3. Resonance: brands, vibe tags and anchor venues that echo the concept.
   const brands = signals.brands?.data ?? [];
-  const matchedBrands = brands.filter((b) => matchesAny(`${b.name} ${b.tags.join(" ")}`, concept.keywords, concept.excludeKeywords));
-  const matchedVibes = profile.vibeTags.filter((v) => matchesAny(v.name, concept.keywords, concept.excludeKeywords));
-  const matchedAnchors = profile.anchors.filter((a) => matchesAny(`${a.genre ?? ""} ${a.tags.join(" ")}`, concept.keywords, concept.excludeKeywords));
+  const matchedBrands = brands.filter((b) => matchesAny(`${b.name} ${b.tags.join(" ")}`, keywords, concept.excludeKeywords));
+  const matchedVibes = profile.vibeTags.filter((v) => matchesAny(v.name, keywords, concept.excludeKeywords));
+  const matchedAnchors = profile.anchors.filter((a) => matchesAny(`${a.genre ?? ""} ${a.tags.join(" ")}`, keywords, concept.excludeKeywords));
   if (signals.brands) sources.push(signals.brands.source);
   const brandEvidence = matchedBrands.length ? matchedBrands.slice(0, 3) : brands.slice(0, 2);
   for (const b of brandEvidence) {
@@ -289,14 +296,42 @@ function finalise(a: Assessment, all: Assessment[]): Opportunity {
   };
 }
 
+/** Reads the user's product description and matches it to Qloo tags (at most 3 tag lookups). */
+async function interpretProduct(ctx: AgentContext, fallbackTerms: string[]): Promise<ProductProfile> {
+  const userTerms = extractProductTerms(ctx.input.productDescription);
+  const terms = userTerms.length ? userTerms : fallbackTerms;
+  const tags: ProductProfile["tags"] = [];
+  for (const term of userTerms.slice(0, 3)) {
+    try {
+      const r = await ctx.qloo.searchTags({ query: term, take: 6 });
+      for (const tag of r.data.filter((x) => PRODUCT_TAG_TYPE.test(x.type)).slice(0, 3)) {
+        if (!tags.some((x) => x.name.toLowerCase() === tag.name.toLowerCase())) tags.push({ name: tag.name, type: tag.type });
+      }
+    } catch {
+      // A failed lookup only means fewer tags; plain words are still matched.
+    }
+  }
+  return {
+    ...(ctx.input.productDescription ? { description: ctx.input.productDescription } : {}),
+    terms,
+    tags,
+    source: userTerms.length ? "user" : "default",
+  };
+}
+
+const PRODUCT_TAG_TYPE = /specialty_dish|menu_highlight|cuisine|dietary_option|offerings|genre:place|category:place/;
+
 export const culturalOpportunityFinder: Agent<LocalResearchOutput, CulturalOutput> = async (input, ctx) => {
   const warnings: string[] = [];
+  const userTerms = extractProductTerms(ctx.input.productDescription);
+  const productConcept = pickPartnerConcept(ctx.concepts, COLLAB_PROFILES, userTerms);
+  const productStemsForIdea = userTerms.length ? stems(userTerms) : [];
   const perLocality = await Promise.all(
     input.localities.map(async (profile) => {
       const signals = await gatherLocalitySignals(profile, ctx, warnings);
       const taste = signals.tasteTags?.data.slice(0, 3).map((t) => t.name).join(", ");
       ctx.note(`${profile.name}: audience leans towards ${taste || "no clear genres"}`);
-      return Promise.all(ctx.concepts.map((concept) => assess(concept, profile, signals, ctx, warnings)));
+      return Promise.all(ctx.concepts.map((concept) => assess(concept, profile, signals, ctx, warnings, concept.id === productConcept?.id ? productStemsForIdea : [])));
     }),
   );
   // Second pass: compare localities with each other to get the lift for every concept.
@@ -312,7 +347,38 @@ export const culturalOpportunityFinder: Agent<LocalResearchOutput, CulturalOutpu
   }
   const degraded = opportunities.every((o) => o.breakdown.meanAffinity === undefined);
   if (degraded) warnings.push("No Qloo affinity data was available; cultural fit is neutral for every option.");
-  return culturalOutputSchema.parse({ opportunities, degraded, warnings });
+
+  // Partner compatibility: product similarity, audience affinity, reputation and category fit.
+  const partnerConcept = input.partnerConceptId ? ctx.concepts.find((c) => c.id === input.partnerConceptId) : undefined;
+  const collabProfile = partnerConcept ? getCollabProfile(partnerConcept.id) : undefined;
+  let productProfile: ProductProfile | undefined;
+  let partners: PartnerCandidate[] = [];
+  if (partnerConcept && collabProfile) {
+    productProfile = await interpretProduct(ctx, collabProfile.defaultProductTerms);
+    if (productProfile.source === "user") {
+      ctx.note(`Product read as: ${productProfile.terms.join(", ")}${productProfile.tags.length ? `; Qloo tags: ${productProfile.tags.map((x) => x.name).join(", ")}` : ""}`);
+    }
+    const productStems = stems([...productProfile.terms, ...productProfile.tags.map((x) => x.name)]);
+    const productLabel = productProfile.source === "user" ? productProfile.terms.slice(0, 2).join(" and ") : partnerConcept.label.toLowerCase();
+    partners = input.partnerLeads
+      .map((lead) => scorePartner(lead, partnerConcept, collabProfile, productStems, productLabel))
+      .sort((a, b) => b.fitScore - a.fitScore || a.name.localeCompare(b.name));
+    // Keep a balanced shortlist: at most 6 of each type.
+    const perType = { similar: 0, complementary: 0, host: 0 };
+    const ranked = partners;
+    partners = ranked.filter((p) => ++perType[p.partnerType] <= 6);
+    // The user asked for places like the business they admire, so always show the best two of those.
+    for (const p of ranked.filter((x) => x.viaAdmired).slice(0, 2)) {
+      if (!partners.includes(p)) partners.push(p);
+    }
+    if (partners.length) {
+      const top = partners[0]!;
+      ctx.note(`Best partner match: ${top.name} (${top.partnerType}, fit ${top.fitScore}/100)`);
+    } else {
+      warnings.push("No suitable partner businesses were found near the localities analysed.");
+    }
+  }
+  return culturalOutputSchema.parse({ opportunities, degraded, warnings, partners, ...(productProfile ? { productProfile } : {}) });
 };
 
 /** Neutral opportunities, used by the orchestrator when this agent fails outright. */
@@ -329,5 +395,5 @@ export function neutralOpportunities(local: LocalResearchOutput, concepts: Conce
       qlooSources: [profile.qlooSource],
     })),
   );
-  return { opportunities, degraded: true, warnings: ["Cultural analysis failed; neutral cultural-fit scores were used."] };
+  return { opportunities, partners: [], degraded: true, warnings: ["Cultural analysis failed; neutral cultural-fit scores were used."] };
 }

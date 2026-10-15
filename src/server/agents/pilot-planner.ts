@@ -1,6 +1,17 @@
-import { pilotPlanSchema, type LocalityProfile, type PilotPlan, type ScoredOption } from "@/lib/schemas";
+import { buildOutreach } from "@/lib/outreach";
+import {
+  pilotPlanSchema,
+  type LocalityProfile,
+  type PartnerCandidate,
+  type PartnerPlan,
+  type PartnerStrategy,
+  type PilotPlan,
+  type ProductProfile,
+  type ScoredOption,
+} from "@/lib/schemas";
+import { getCollabProfile } from "../data/collab-profiles";
 import { DAYS_PER_WEEKEND } from "./feasibility-critic";
-import { inr, type Agent } from "./types";
+import { inr, type Agent, type AgentContext } from "./types";
 
 /**
  * Agent 4: Pilot Planner.
@@ -137,3 +148,107 @@ export const pilotPlanner: Agent<PilotPlanInput, PilotPlan> = async ({ option, p
     permitNotes: profile.market.permitNotes.filter((n) => concept.licenceInr > 0 || !/food/i.test(n)),
   } satisfies PilotPlan);
 };
+
+// ---------------------------------------------------------------------------
+// Partnership pilot
+// ---------------------------------------------------------------------------
+
+export interface PartnerPlanInput {
+  strategy: PartnerStrategy;
+  partners: PartnerCandidate[];
+  product?: ProductProfile;
+}
+
+/** Turns the best collaboration option into a partner-based experiment, with outreach drafts. */
+export function partnerPilotPlanner(input: PartnerPlanInput, ctx: AgentContext): PartnerPlan | undefined {
+  const { strategy, partners } = input;
+  const best = strategy.options.find((o) => o.id === strategy.bestOptionId);
+  const concept = ctx.concepts.find((c) => c.id === strategy.conceptId);
+  if (!best || !concept) return undefined;
+  const profile = getCollabProfile(concept.id);
+  const product = input.product?.source === "user" && input.product.description ? input.product.description : concept.tagline.toLowerCase();
+  const plural = concept.unitLabelPlural;
+  const weekends = ctx.input.weekends;
+  const weekendWord = weekends === 1 ? "weekend" : "weekends";
+
+  // Shortlist: the best viable option per partner, best partner first.
+  const seen = new Set<string>();
+  const shortlistOptions = strategy.options.filter((o) => o.verdict !== "rejected" && !seen.has(o.partnerId) && seen.add(o.partnerId)).slice(0, 3);
+  const shortlist = shortlistOptions.map((o) => {
+    const partner = partners.find((p) => p.id === o.partnerId);
+    const why =
+      o.partnerType === "complementary" && profile
+        ? `your customers ${profile.complementaryWhy.replace(/^its customers /, "")}`
+        : o.partnerType === "host"
+          ? "your venue attracts the kind of visitors who would enjoy this"
+          : "your customers already enjoy products like mine";
+    const pilotSummary =
+      o.model === "workshop"
+        ? `${weekends} session${weekends === 1 ? "" : "s"} of about ${o.inputs.assumptions.seatsPerSession} seats`
+        : o.model === "wholesale"
+          ? `a first order of about ${o.units} ${plural} over ${weekends} ${weekendWord}`
+          : `${weekends} ${weekendWord} with about ${Math.max(o.units, 10)} ${plural}`;
+    return {
+      partnerId: o.partnerId,
+      name: o.partnerName,
+      partnerType: o.partnerType,
+      locality: partner?.locality ?? "",
+      model: o.label,
+      why: partner?.reasons[0] ?? "",
+      outreach: buildOutreach({
+        partnerName: o.partnerName,
+        ...(partner?.genre ? { partnerGenre: partner.genre } : {}),
+        partnerType: o.partnerType,
+        product,
+        conceptLabel: concept.label,
+        modelLabel: o.label,
+        whyForPartner: why,
+        pilotSummary,
+        city: ctx.input.city,
+      }),
+    };
+  });
+
+  const breakeven = best.breakevenUnits ?? best.units;
+  const half = Math.max(1, Math.ceil(breakeven / 2));
+  const unitWord = best.model === "workshop" ? "seats" : plural;
+  const timeline = [
+    { when: "Days 1 to 3", tasks: ["Visit the shortlisted places at the hours you would sell", "Note who comes in and what they buy", "Check your own registrations and labels (see compliance)"] },
+    { when: "Days 3 to 7", tasks: [`Send the outreach message to ${shortlist[0]?.name ?? "your top partner"} first, then the others`, "Bring samples to any meeting", "Agree terms in writing: share, dates, display, unsold stock"] },
+    ...Array.from({ length: weekends }, (_, i) => ({
+      when: `Weekend ${i + 1}`,
+      tasks: [`Deliver or set up ${best.model === "workshop" ? "the session" : `about ${Math.ceil(best.units / weekends)} ${plural}`}`, "Record units sold and any customer feedback", ...(i === 0 && weekends > 1 ? ["Adjust price or product mix only if sales are clearly off"] : [])],
+    })),
+    { when: "After the pilot", tasks: ["Settle payments with the partner", "Ask the partner whether they want to continue or reorder", "Enter the results to get a continue, pivot or stop verdict"] },
+  ];
+
+  return {
+    title: `${best.label} with ${best.partnerName}: ${weekends}-weekend partner pilot`,
+    conceptLabel: concept.label,
+    product,
+    model: best.model,
+    modelLabel: best.label,
+    shortlist,
+    budget: best.costs,
+    upfrontInr: best.upfrontInr,
+    budgetInr: ctx.input.budgetInr,
+    timeline,
+    successMetrics: [
+      { metric: "Sales through the partner", target: `At least ${breakeven} ${unitWord} (the break-even point at these terms)` },
+      { metric: "Sell-through", target: best.model === "wholesale" ? "The partner sells most of the first order within the pilot" : "At least 60% of the stock you supplied" },
+      { metric: "Partner interest", target: "The partner wants to continue or reorder within 2 weeks" },
+    ],
+    rule: {
+      continueIf: `At least ${breakeven} ${unitWord} sold and the partner wants to continue: continue, and propose a monthly arrangement.`,
+      pivotIf: `Between ${half} and ${breakeven - 1} ${unitWord}, or good sales but an unwilling partner: pivot. Try the next partner on the shortlist or another format.`,
+      stopIf: `Fewer than ${half} ${unitWord}: stop this format and test the next-ranked option or a solo pop-up.`,
+    },
+    validationSteps: [
+      "Treat every shortlisted place as a business worth contacting, not a confirmed partner.",
+      "Start with the smallest batch the partner will accept.",
+      "Keep a written record of stock handed over and money received.",
+      "Commission rates, fees and wholesale discounts shown are example assumptions; replace them with the partner's actual terms.",
+    ],
+    compliance: profile?.extraChecks ?? [],
+  };
+}

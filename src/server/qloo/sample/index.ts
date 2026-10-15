@@ -11,6 +11,11 @@ import {
   type Sourced,
 } from "../types";
 import {
+  GENERIC_SAMPLE_PARTNERS,
+  SAMPLE_ADMIN_AREAS,
+  SAMPLE_PARTNERS,
+  SAMPLE_PRICE_LEVEL,
+  SAMPLE_PRODUCT_TAGS,
   GENERIC_SAMPLE_LOCALITY,
   SAMPLE_CONCEPT_LABEL,
   SAMPLE_LOCALITIES,
@@ -63,6 +68,7 @@ function venuePlaces(key: string, loc: SampleLocality): Place[] {
     genre: v.genre,
     neighborhood: loc.name,
     rating: v.rating,
+    priceLevel: SAMPLE_PRICE_LEVEL[key] ?? 2,
     popularity: Number((0.99 - i * 0.01).toFixed(3)),
     lat: Number((loc.lat + (i - 2) * 0.002).toFixed(5)),
     lon: Number((loc.lon + (2 - i) * 0.002).toFixed(5)),
@@ -72,13 +78,31 @@ function venuePlaces(key: string, loc: SampleLocality): Place[] {
 
 const handlers: { [M in QlooMethodName]: (args: QlooMethods[M]["args"]) => QlooMethods[M]["result"] } = {
   searchEntities: (a) => {
+    // Place searches (a "business you admire") only match sample venues by name; unknown names return nothing.
+    if (a.types?.includes("urn:entity:place")) {
+      const q = a.query.toLowerCase().replace(/\(sample\)/g, "").split(",")[0]?.trim() ?? "";
+      if (q.length < 3) return [];
+      const all = Object.entries(SAMPLE_LOCALITIES).flatMap(([key, loc]) => [
+        ...loc.venues.map((v) => ({ key, loc, name: v.name, genre: v.genre })),
+        ...(SAMPLE_PARTNERS[key] ?? []).map((p) => ({ key, loc, name: p.name, genre: p.genre })),
+      ]);
+      return all
+        .filter((v) => v.name.toLowerCase().includes(q))
+        .slice(0, a.take ?? 5)
+        .map((v) => ({ id: `sample-admired-${slug(v.name)}`, name: v.name, types: ["urn:entity:place"], lat: v.loc.lat, lon: v.loc.lon, city: "Bengaluru", neighborhood: v.loc.name, genre: v.genre }));
+    }
     const { key, loc } = findLocality(a.query);
     return [{ id: `sample-${slug(key)}`, name: loc.name, types: ["urn:entity:locality"], lat: loc.lat, lon: loc.lon }];
   },
 
   searchTags: (a) => {
     const key = sampleConceptKey([a.query.replace(/\s+/g, "_")]);
-    return [{ id: `sample:tag:${key}`, name: SAMPLE_CONCEPT_LABEL[key], type: "urn:tag:genre:place" }];
+    const word = a.query.trim().toLowerCase();
+    const title = word.charAt(0).toUpperCase() + word.slice(1);
+    return [
+      { id: `sample:tag:dish:${slug(word)}`, name: title, type: "urn:tag:specialty_dish:place" },
+      { id: `sample:tag:${key}`, name: SAMPLE_CONCEPT_LABEL[key], type: "urn:tag:genre:place" },
+    ];
   },
 
   getLocalityPlaces: (a) => {
@@ -99,8 +123,12 @@ const handlers: { [M in QlooMethodName]: (args: QlooMethods[M]["args"]) => QlooM
       genre: SAMPLE_CONCEPT_LABEL[concept],
       neighborhood: loc.name,
       rating: Number((4.5 - (i % 5) * 0.1).toFixed(1)),
+      priceLevel: SAMPLE_PRICE_LEVEL[key] ?? 2,
+      popularity: Number((0.9 - i * 0.05).toFixed(3)),
       distanceM: 250 + i * 180,
-      tags: [],
+      tags: SAMPLE_PRODUCT_TAGS[concept]
+        .filter((_, j) => (i + j) % 2 === 0)
+        .map((t) => ({ id: `sample:tag:dish:${slug(t)}`, name: t, type: "urn:tag:specialty_dish:place" })),
     }));
   },
 
@@ -135,6 +163,55 @@ const handlers: { [M in QlooMethodName]: (args: QlooMethods[M]["args"]) => QlooM
       affinity: b.affinity,
       tags: b.tags,
     }));
+  },
+
+  getNeighbourhoodHeatmap: (a) => {
+    const concept = sampleConceptKey(a.tagIds);
+    const city = a.city.split(",")[0]?.trim() ?? a.city;
+    const known = /^(bengaluru|bangalore)$/i.test(city);
+    const areas = known
+      ? Object.values(SAMPLE_LOCALITIES).map((l) => ({ name: l.name, affinity: l.conceptAffinity[concept], lat: l.lat, lon: l.lon }))
+      : [
+          { name: `${city} Central (sample)`, affinity: 0.95, lat: undefined, lon: undefined },
+          { name: `${city} Market Area (sample)`, affinity: 0.93, lat: undefined, lon: undefined },
+          { name: `${city} University Area (sample)`, affinity: 0.91, lat: undefined, lon: undefined },
+        ];
+    const admin = known ? SAMPLE_ADMIN_AREAS : [city];
+    return [...areas.map((x) => ({ ...x, admin: false })), ...admin.map((name, i) => ({ name, affinity: 0.9 - i * 0.01, lat: undefined, lon: undefined, admin: true }))]
+      .sort((x, y) => y.affinity - x.affinity)
+      .slice(0, a.take ?? 25)
+      .map((x) => ({
+        id: `sample-heat-${slug(x.name)}`,
+        name: x.name,
+        affinity: Number(x.affinity.toFixed(3)),
+        popularity: x.admin ? 1 : 0.95,
+        ...(x.lat !== undefined && x.lon !== undefined ? { lat: x.lat, lon: x.lon } : {}),
+        disambiguation: x.admin ? `${x.name}, Karnataka, India` : `${x.name}, ${city}, Karnataka, India`,
+      }));
+  },
+
+  getNearbyAffinityPlaces: (a) => {
+    const { key, loc } = findLocality(a.locality);
+    const partners = SAMPLE_PARTNERS[key] ?? GENERIC_SAMPLE_PARTNERS;
+    const wanted = (a.tagIds ?? []).map((t) => (t.split(":").pop() ?? "").replace(/_/g, " "));
+    const base = loc.conceptAffinity.other + 0.08;
+    return partners
+      .filter((p) => wanted.length === 0 || wanted.some((w) => p.genre.toLowerCase().includes(w.replace("restaurant ", ""))))
+      .slice(0, a.take ?? 30)
+      .map((p, i) => ({
+        id: `sample-${slug(key)}-partner-${slug(p.name)}`,
+        name: p.name,
+        genre: p.genre,
+        neighborhood: loc.name,
+        rating: p.rating,
+        priceLevel: p.priceLevel,
+        costDescription: p.costDescription,
+        popularity: Number((0.95 - i * 0.04).toFixed(3)),
+        affinity: Number(Math.min(0.99, base - i * 0.006).toFixed(3)),
+        lat: Number((loc.lat + 0.001 * i).toFixed(5)),
+        lon: Number((loc.lon - 0.001 * i).toFixed(5)),
+        tags: p.tags.map((t) => ({ id: `sample:tag:${slug(t)}`, name: t, type: "urn:tag:neighborhood_characteristic:qloo" })),
+      }));
   },
 
   getDemographics: (a) => {

@@ -23,6 +23,10 @@ export const entityRefSchema = z.object({
   popularity: z.number().optional(),
   lat: z.number().optional(),
   lon: z.number().optional(),
+  /** For places: where Qloo says the entity is, used to keep search results in the right city. */
+  city: z.string().optional(),
+  neighborhood: z.string().optional(),
+  genre: z.string().optional(),
 });
 export type EntityRef = z.infer<typeof entityRefSchema>;
 
@@ -40,9 +44,30 @@ export const placeSchema = z.object({
   distanceM: z.number().optional(),
   /** 0..1 affinity to the signal used in the request; absent when no signal was sent. */
   affinity: z.number().optional(),
+  /** Typical spend at the venue as Qloo describes it, e.g. "₹1 to ₹200". Not a product price. */
+  costDescription: z.string().optional(),
+  /** Address exactly as provided by Qloo. */
+  address: z.string().optional(),
+  city: z.string().optional(),
   tags: z.array(tagRefSchema),
 });
 export type Place = z.infer<typeof placeSchema>;
+
+/** One locality from Qloo's heatmap: how strongly the signal's audience is associated with it. */
+export const neighbourhoodHeatSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  affinity: z.number(),
+  popularity: z.number().optional(),
+  lat: z.number().optional(),
+  lon: z.number().optional(),
+  disambiguation: z.string().optional(),
+});
+export type NeighbourhoodHeat = z.infer<typeof neighbourhoodHeatSchema>;
+
+/** Tag families that describe a place's vibe and crowd (as opposed to its products or business type). */
+export const VIBE_TAG_TYPE = /(ambience|audience|visit_intent|neighborhood_characteristic|setting|decor|occasion|crowd|vibe|customer_identity)/;
+export const isVibeTag = (type: string) => VIBE_TAG_TYPE.test(type);
 
 export const resolvedLocalitySchema = z.object({
   id: z.string(),
@@ -125,6 +150,16 @@ export interface QlooMethods {
     args: { anchorIds: string[]; context?: LocalityContext };
     result: DemographicSkew[];
   };
+  /** Localities of a city ranked by how strongly an idea's audience is associated with them. */
+  getNeighbourhoodHeatmap: {
+    args: { city: string; tagIds: string[]; take?: number };
+    result: NeighbourhoodHeat[];
+  };
+  /** Places in a locality (any type, or the given tags) ranked by affinity to the given entities' audience. */
+  getNearbyAffinityPlaces: {
+    args: { anchorIds: string[]; locality: string; city: string; tagIds?: string[]; take?: number; context?: LocalityContext };
+    result: Place[];
+  };
 }
 
 export type QlooMethodName = keyof QlooMethods;
@@ -138,6 +173,8 @@ export const QLOO_METHOD_NAMES = [
   "getTasteTags",
   "getBrandAffinity",
   "getDemographics",
+  "getNeighbourhoodHeatmap",
+  "getNearbyAffinityPlaces",
 ] as const satisfies readonly QlooMethodName[];
 
 /** Zod schema for each method's result; shared by every implementation and the contract tests. */
@@ -150,6 +187,8 @@ export const qlooResultSchemas = {
   getTasteTags: z.array(tagAffinitySchema),
   getBrandAffinity: z.array(brandAffinitySchema),
   getDemographics: z.array(demographicSkewSchema),
+  getNeighbourhoodHeatmap: z.array(neighbourhoodHeatSchema),
+  getNearbyAffinityPlaces: z.array(placeSchema),
 } satisfies { [M in QlooMethodName]: z.ZodType<QlooMethods[M]["result"]> };
 
 /** A record of one logical Qloo call, safe to show in the UI. Never contains the API key. */
@@ -183,7 +222,8 @@ export type QlooErrorKind =
   | "timeout"
   | "network"
   | "invalid_response"
-  | "not_recorded";
+  | "not_recorded"
+  | "budget_exceeded";
 
 /** Error raised by Qloo clients. The message is always safe to log and display. */
 export class QlooError extends Error {
