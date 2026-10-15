@@ -7,6 +7,7 @@ import {
   type DemographicSkew,
   type EntityRef,
   type LocalityPlaces,
+  type NeighbourhoodHeat,
   type Place,
   type QlooClient,
   type QlooMethodName,
@@ -103,6 +104,26 @@ const requestBuilders: { [M in QlooMethodName]: (args: QlooMethods[M]["args"]) =
       "signal.interests.entities": a.anchorIds.join(","),
     },
   }),
+  getNeighbourhoodHeatmap: (a) => ({
+    endpoint: "/v2/insights",
+    params: {
+      "filter.type": "urn:heatmap",
+      "filter.location.query": a.city,
+      "signal.interests.tags": a.tagIds.join(","),
+      "output.heatmap.boundary": "urn:entity:locality",
+      take: String(a.take ?? 25),
+    },
+  }),
+  getNearbyAffinityPlaces: (a) => ({
+    endpoint: "/v2/insights",
+    params: {
+      "filter.type": PLACE,
+      "signal.interests.entities": a.anchorIds.join(","),
+      "filter.location.query": a.city ? `${a.locality}, ${a.city}` : a.locality,
+      ...(a.tagIds?.length ? { "filter.tags": a.tagIds.join(","), "operator.filter.tags": "union" } : {}),
+      take: String(a.take ?? 30),
+    },
+  }),
 };
 
 export function buildQlooRequest<M extends QlooMethodName>(method: M, args: QlooMethods[M]["args"]): QlooRequest {
@@ -134,11 +155,16 @@ const rawEntitySchema = z.object({
   popularity: num,
   location: z.object({ lat: num, lon: num }).nullish(),
   query: z.object({ affinity: num, distance: num }).nullish(),
+  disambiguation: str,
+  boundary: str,
   properties: z
     .object({
       neighborhood: str,
       business_rating: num,
       price_level: num,
+      cost_description: str,
+      address: str,
+      geocode: z.object({ city: str }).nullish(),
       primary_genre: z.object({ id: str, name: str }).nullish(),
     })
     .nullish(),
@@ -188,10 +214,13 @@ const rawDemographicsSchema = z.object({
 // Mapping raw -> internal
 // ---------------------------------------------------------------------------
 
-/** Tag families that describe vibe, audience and business type. Payment, amenity and dish tags are dropped. */
+/**
+ * Tag families kept on places: vibe and crowd, business type, and what the place sells
+ * (dishes, cuisine, dietary options) for product matching. Payment, parking and similar tags are dropped.
+ */
 const USEFUL_TAG_TYPE =
-  /(ambience|audience|visit_intent|neighborhood_characteristic|setting|decor|occasion|crowd|vibe|genre:place|category:place)/;
-const MAX_TAGS_PER_PLACE = 30;
+  /(ambience|audience|visit_intent|neighborhood_characteristic|setting|decor|occasion|crowd|vibe|customer_identity|genre:place|category:place|specialty_dish|menu_highlight|cuisine|dietary_option|offerings|culinary_style)/;
+const MAX_TAGS_PER_PLACE = 45;
 
 const round = (n: number, digits = 3) => Number(n.toFixed(digits));
 const defined = <T>(v: T | null | undefined): v is T => v !== null && v !== undefined;
@@ -225,8 +254,25 @@ function mapPlace(e: RawEntity): Place | undefined {
     ...(defined(e.location?.lon) ? { lon: round(e.location.lon, 5) } : {}),
     ...(defined(e.query?.distance) ? { distanceM: Math.round(e.query.distance) } : {}),
     ...(defined(e.query?.affinity) ? { affinity: round(e.query.affinity) } : {}),
+    ...(p.cost_description ? { costDescription: p.cost_description } : {}),
+    ...(p.address ? { address: p.address } : {}),
+    ...(p.geocode?.city ? { city: p.geocode.city } : {}),
     tags,
   };
+}
+
+/** Centre of a WKT polygon: the mean of the first ring's points. Good enough to place a pin. */
+export function polygonCentre(wkt: string | null | undefined): { lat: number; lon: number } | undefined {
+  if (!wkt) return undefined;
+  const ring = wkt.slice(wkt.indexOf("((") + 2).split(")")[0] ?? "";
+  const points = ring
+    .split(",")
+    .map((pair) => pair.trim().split(/\s+/).map(Number))
+    .filter((xy): xy is [number, number] => xy.length === 2 && xy.every((n) => Number.isFinite(n)));
+  if (points.length === 0) return undefined;
+  const lon = points.reduce((s, [x]) => s + x, 0) / points.length;
+  const lat = points.reduce((s, [, y]) => s + y, 0) / points.length;
+  return { lat: round(lat, 5), lon: round(lon, 5) };
 }
 
 const mappers: { [M in QlooMethodName]: (raw: unknown) => QlooMethods[M]["result"] } = {
@@ -241,6 +287,9 @@ const mappers: { [M in QlooMethodName]: (raw: unknown) => QlooMethods[M]["result
               ...(defined(e.popularity) ? { popularity: round(e.popularity) } : {}),
               ...(defined(e.location?.lat) ? { lat: round(e.location.lat, 5) } : {}),
               ...(defined(e.location?.lon) ? { lon: round(e.location.lon, 5) } : {}),
+              ...(e.properties?.geocode?.city ? { city: e.properties.geocode.city } : {}),
+              ...(e.properties?.neighborhood ? { neighborhood: e.properties.neighborhood } : {}),
+              ...(e.properties?.primary_genre?.name ? { genre: e.properties.primary_genre.name } : {}),
             }
           : undefined,
       )
@@ -293,6 +342,25 @@ const mappers: { [M in QlooMethodName]: (raw: unknown) => QlooMethods[M]["result
         };
       })
       .filter(defined),
+
+  getNeighbourhoodHeatmap: (raw): NeighbourhoodHeat[] =>
+    (rawInsightsEntitiesSchema.parse(raw).results?.entities ?? [])
+      .map((e) => {
+        if (!e.entity_id || !e.name || !defined(e.query?.affinity)) return undefined;
+        const centre = defined(e.location?.lat) && defined(e.location?.lon) ? { lat: e.location.lat, lon: e.location.lon } : polygonCentre(e.boundary);
+        return {
+          id: e.entity_id,
+          name: e.name,
+          affinity: round(e.query.affinity),
+          ...(defined(e.popularity) ? { popularity: round(e.popularity) } : {}),
+          ...(centre ? { lat: round(centre.lat, 5), lon: round(centre.lon, 5) } : {}),
+          ...(e.disambiguation ? { disambiguation: e.disambiguation } : {}),
+        };
+      })
+      .filter(defined),
+
+  getNearbyAffinityPlaces: (raw): Place[] =>
+    (rawInsightsEntitiesSchema.parse(raw).results?.entities ?? []).map(mapPlace).filter(defined),
 
   getDemographics: (raw): DemographicSkew[] =>
     (rawDemographicsSchema.parse(raw).results?.demographics ?? []).map((d) => ({
@@ -361,6 +429,7 @@ export function clearQlooCache(): void {
 }
 
 const RETRYABLE = new Set([429, 500, 502, 503, 504]);
+const HEATMAP_TIMEOUT_MS = 30_000;
 
 export function createLiveQlooClient(options: LiveQlooOptions): QlooClient {
   const {
@@ -383,7 +452,7 @@ export function createLiveQlooClient(options: LiveQlooOptions): QlooClient {
     if (slot > t) await sleep(slot - t);
   }
 
-  async function fetchJson(request: QlooRequest): Promise<unknown> {
+  async function fetchJson(request: QlooRequest, requestTimeoutMs = timeoutMs): Promise<unknown> {
     if (!apiKey) throw new QlooError("no_key", "QLOO_API_KEY is not set");
     const url = new URL(request.endpoint, baseUrl);
     for (const [k, v] of Object.entries(request.params)) url.searchParams.set(k, v);
@@ -393,7 +462,7 @@ export function createLiveQlooClient(options: LiveQlooOptions): QlooClient {
       if (attempt > 0) await sleep(backoffBaseMs * 2 ** (attempt - 1));
       await throttle();
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
       try {
         const res = await fetchImpl(url, {
           method: "GET",
@@ -423,7 +492,7 @@ export function createLiveQlooClient(options: LiveQlooOptions): QlooClient {
           if (!RETRYABLE.has(err.status ?? 0)) throw err;
           lastError = err;
         } else if (err instanceof Error && err.name === "AbortError") {
-          lastError = new QlooError("timeout", `Qloo did not respond within ${timeoutMs} ms`);
+          lastError = new QlooError("timeout", `Qloo did not respond within ${requestTimeoutMs} ms`);
         } else {
           // Deliberately generic: the underlying error text is not forwarded.
           lastError = new QlooError("network", "Could not reach the Qloo API (network error)");
@@ -449,7 +518,8 @@ export function createLiveQlooClient(options: LiveQlooOptions): QlooClient {
       data = hit.data as QlooMethods[M]["result"];
       cached = true;
     } else {
-      data = mapQlooResponse(method, await fetchJson(request));
+      // Heatmap responses carry boundary polygons for every area (about 5 MB), so allow more time.
+      data = mapQlooResponse(method, await fetchJson(request, method === "getNeighbourhoodHeatmap" ? Math.max(timeoutMs, HEATMAP_TIMEOUT_MS) : timeoutMs));
       sharedCache.set(cacheKey, { expires: now() + cacheTtlMs, data });
     }
     return {
@@ -476,5 +546,7 @@ export function createLiveQlooClient(options: LiveQlooOptions): QlooClient {
     getTasteTags: (a) => call("getTasteTags", a),
     getBrandAffinity: (a) => call("getBrandAffinity", a),
     getDemographics: (a) => call("getDemographics", a),
+    getNeighbourhoodHeatmap: (a) => call("getNeighbourhoodHeatmap", a),
+    getNearbyAffinityPlaces: (a) => call("getNearbyAffinityPlaces", a),
   };
 }

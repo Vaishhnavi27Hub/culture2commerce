@@ -13,4 +13,5 @@ export const NISHA_EXAMPLE: RunInput = {
   interests: ["illustration", "creative", "design"],
   conceptIds: ["thrift-stall", "art-prints", "coffee-popup"],
   riskPreference: "low",
+  launchMode: "solo",
 };

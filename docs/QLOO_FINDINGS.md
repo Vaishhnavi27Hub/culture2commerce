@@ -127,3 +127,25 @@ Indiranagar audiences than with the Jayanagar one.
 **Honest limits.** The lifts are small in absolute terms (hundredths of an affinity point), the
 lead over the runner-up is about 2 points, and thrift still rests on a single comparable place.
 The app shows the raw lift values and its confidence reasons rather than hiding this.
+
+## 10. Phase 2 verification: partners, neighbourhoods, prices (15 Oct)
+
+About 20 controlled calls (monthly counter 9,393 → 9,377). Results:
+
+| Capability needed | Call | Result |
+|---|---|---|
+| Product words to tags | `GET /v2/tags?filter.query=brownie` | **Supported.** `urn:tag:specialty_dish:place:brownie`, `urn:tag:menu_highlight:qloo:brownie`. "vegan" gives genre, cuisine and offerings tags. |
+| Host venue types | `/v2/tags` for co-working, food court, shopping mall, community center, book store, jewelry, juice | **Supported.** IDs follow `urn:tag:genre:place:<name>` (food venues use `...:restaurant:<name>`). |
+| Neighbourhood ranking for an idea | `filter.type=urn:heatmap`, `filter.location.query=<city>`, `signal.interests.tags=<idea tag>`, `output.heatmap.boundary=urn:entity:locality` | **Supported**, and the ranking changes with the idea. Bakeries: Hoysala Nagar, Aramane Nagara, Hudi, Konena Agrahara, Mahadevapura. Art galleries: Shanthi Nagar, Adugodi, Pulikeshinagar, Koramangala. The list also contains administrative areas (city, "East Zone", "Bengaluru Urban") that must be filtered. Responses are large (about 5 MB, 9 to 12 s) because each area includes its boundary polygon, so results are cached. `output.heatmap.boundary` only accepts `urn:geohash` or `urn:entity:locality`. |
+| Business you admire | `GET /search?query=Lamara Patisserie&types=urn:entity:place` | **Supported**, but search is global: the 2nd and 3rd results were in France and Egypt, so results are filtered by city. |
+| Places similar to an admired business | insights, `signal.interests.entities=<admired>`, bakery and dessert tags, city filter | **Supported.** Returned AvocadoandBrownies, Brownie Magix, Krumb Kraft (affinity 0.97 to 0.98). |
+| Cross-category partners | insights, `signal.interests.entities=<local bakeries>`, `filter.location.query=<locality>`, no tag filter | **Supported.** Cafés, juice shops, food courts and restaurants at 0.97 affinity. Also irrelevant types (a butcher shop), so results are classified and filtered by venue type. |
+| High-visibility hosts | same, with `filter.tags` = mall, food court, co-working, community center (union) | **Supported.** Returned food courts and a shopping mall with affinity 0.95 to 0.97. |
+| Price signals | place `properties.price_level` and `properties.cost_description` | **Supported.** Nest Bakery: level 1, "₹1 to ₹200". Lamara Patisserie: level 4, "₹600 to ₹1600". These describe typical spend at the venue, not the price of any one product. |
+| Footfall | none | **Not available.** Qloo popularity is a relative popularity percentile and tags such as "High pedestrian traffic" are descriptive. Neither is a visitor count, so hosts are labelled "potential high-visibility location". |
+
+Meaning of the scores used:
+- **affinity** (0 to 1): how strongly an entity is associated with the signal (for example, with the
+  people who like the given bakeries). It is not a probability of purchase and does not mean two
+  businesses share actual customers.
+- **popularity** (0 to 1): a relative popularity percentile within Qloo's data, not footfall.

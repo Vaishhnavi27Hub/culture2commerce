@@ -243,3 +243,63 @@ export const SAMPLE_CONCEPT_LABEL: Record<SampleConceptKey, string> = {
   plants: "Plant nursery",
   other: "Shop",
 };
+
+// ---------------------------------------------------------------------------
+// Partner-discovery sample data (also invented, also marked "(sample)")
+// ---------------------------------------------------------------------------
+
+export interface SamplePartner {
+  name: string;
+  genre: string;
+  rating: number;
+  priceLevel: number;
+  costDescription: string;
+  tags: string[];
+}
+
+/** Places near each sample locality that a partner search can return. Includes one irrelevant venue on purpose. */
+const partnerSet = (area: string, priceLevel: number): SamplePartner[] => [
+  { name: `${area} Brew Corner (sample)`, genre: "Cafe", rating: 4.4, priceLevel, costDescription: "₹200 to ₹600", tags: ["Cozy", "Young professionals", "Coffee"] },
+  { name: `${area} Juice Junction (sample)`, genre: "Juice shop", rating: 4.2, priceLevel: Math.max(1, priceLevel - 1), costDescription: "₹100 to ₹300", tags: ["Takeaway", "Students"] },
+  { name: `${area} Book Nook (sample)`, genre: "Book store", rating: 4.5, priceLevel, costDescription: "₹200 to ₹800", tags: ["Quiet", "Readers"] },
+  { name: `${area} Cowork Hub (sample)`, genre: "Coworking space", rating: 4.3, priceLevel, costDescription: "₹300 to ₹900", tags: ["Young professionals", "Startups"] },
+  { name: `${area} Food Court (sample)`, genre: "Food court", rating: 4.0, priceLevel: Math.max(1, priceLevel - 1), costDescription: "₹150 to ₹400", tags: ["Busy", "High pedestrian traffic"] },
+  { name: `${area} Central Mall (sample)`, genre: "Shopping mall", rating: 4.2, priceLevel, costDescription: "₹300 to ₹1500", tags: ["Families", "Busy"] },
+  { name: `${area} Style Boutique (sample)`, genre: "Boutique", rating: 4.6, priceLevel: Math.min(4, priceLevel + 1), costDescription: "₹800 to ₹3000", tags: ["Trendy", "Design lovers"] },
+  { name: `${area} Fit Studio (sample)`, genre: "Gym", rating: 4.3, priceLevel, costDescription: "₹500 to ₹1500", tags: ["Fitness", "Morning"] },
+  { name: `${area} Community Hall (sample)`, genre: "Community center", rating: 4.1, priceLevel: 1, costDescription: "₹0 to ₹200", tags: ["Families", "Events"] },
+  { name: `${area} Meat Mart (sample)`, genre: "Butcher shop", rating: 4.4, priceLevel: 2, costDescription: "₹200 to ₹800", tags: ["Routine visit"] },
+];
+
+export const SAMPLE_PARTNERS: Record<string, SamplePartner[]> = {
+  indiranagar: partnerSet("Indiranagar", 3),
+  koramangala: partnerSet("Koramangala", 2),
+  jayanagar: partnerSet("Jayanagar", 2),
+  "hsr layout": partnerSet("HSR", 2),
+  malleshwaram: partnerSet("Malleshwaram", 2),
+};
+export const GENERIC_SAMPLE_PARTNERS = partnerSet("Local", 2);
+
+/** Typical venue price level of each sample locality (1 to 4). */
+export const SAMPLE_PRICE_LEVEL: Record<string, number> = {
+  indiranagar: 3,
+  koramangala: 2,
+  jayanagar: 2,
+  "hsr layout": 2,
+  malleshwaram: 2,
+};
+
+/** Product tags attached to sample competitors, so product matching has something to match. */
+export const SAMPLE_PRODUCT_TAGS: Record<SampleConceptKey, string[]> = {
+  art: ["Art prints", "Posters", "Handmade"],
+  thrift: ["Vintage", "Second hand", "Denim"],
+  coffee: ["Coffee", "Cold brew", "Espresso"],
+  boardgames: ["Board games", "Snacks"],
+  books: ["Books", "Stationery"],
+  bakery: ["Brownie", "Cakes", "Egg free", "Cookies"],
+  plants: ["Plants", "Succulents"],
+  other: [],
+};
+
+/** Neighbourhood heatmap rows for the sample city, including administrative areas a real response also contains. */
+export const SAMPLE_ADMIN_AREAS = ["Bengaluru", "East Zone", "Bengaluru Urban"];

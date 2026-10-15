@@ -13,6 +13,7 @@ import {
   type FeasibilityOutput,
   type LocalResearchOutput,
   type Narrative,
+  type PartnerPlan,
   type PilotPlan,
   type QlooCall,
   type RunInput,
@@ -21,13 +22,13 @@ import {
 import { culturalOpportunityFinder, neutralOpportunities } from "./agents/cultural-opportunity-finder";
 import { feasibilityCritic, type FeasibilityInput } from "./agents/feasibility-critic";
 import { localResearcher, type LocalResearchInput } from "./agents/local-researcher";
-import { pilotPlanner, type PilotPlanInput } from "./agents/pilot-planner";
+import { partnerPilotPlanner, pilotPlanner, type PilotPlanInput } from "./agents/pilot-planner";
 import { inr, uniq, type Agent, type AgentContext } from "./agents/types";
 import { getConcept, type Concept } from "./data/concepts";
 import { buildBaseline, buildNarrativeFacts, templateNarrative, type NarrativeFacts } from "./llm/templates";
 import { getQlooClient } from "./qloo";
 import { bindAll } from "./qloo/recorded";
-import type { QlooClient, QlooMethodName, QlooMethods, Sourced } from "./qloo/types";
+import { QlooError, type QlooClient, type QlooMethodName, type QlooMethods, type Sourced } from "./qloo/types";
 
 /**
  * Runs the four agents in order and reports every state change as an event:
@@ -54,6 +55,8 @@ export interface RunOptions {
   now?: () => Date;
   /** Replace individual agents (used by tests to simulate failures). */
   agents?: Partial<PipelineAgents>;
+  /** Maximum Qloo calls for this run; further calls are refused and agents continue with what they have. */
+  callBudget?: number;
 }
 
 const SOURCE_RANK = { live: 0, recorded: 1, sample: 2 } as const;
@@ -64,13 +67,32 @@ function safeMessage(err: unknown): string {
 }
 
 /** Wraps a Qloo client so every call an agent makes is logged for the trace. */
-function withCallLog(client: QlooClient, sink: QlooCall[]): QlooClient {
+function withCallLog(client: QlooClient, sink: QlooCall[], budget: CallBudget): QlooClient {
   return bindAll(async <M extends QlooMethodName>(method: M, args: QlooMethods[M]["args"]) => {
+    if (budget.used >= budget.limit) {
+      budget.blocked++;
+      throw new QlooError("budget_exceeded", `Per-run Qloo call budget of ${budget.limit} reached`);
+    }
+    budget.used++;
     const fn = client[method] as (a: QlooMethods[M]["args"]) => Promise<Sourced<QlooMethods[M]["result"]>>;
     const result = await fn(args);
     sink.push(result.call);
     return result;
   });
+}
+
+interface CallBudget {
+  limit: number;
+  used: number;
+  blocked: number;
+}
+
+/** Default per-run cap on Qloo calls (QLOO_RUN_CALL_BUDGET). A full partner run uses about 40. */
+export const DEFAULT_CALL_BUDGET = 70;
+
+function callBudgetFromEnv(): number {
+  const n = Number(process.env.QLOO_RUN_CALL_BUDGET);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : DEFAULT_CALL_BUDGET;
 }
 
 export async function runPipeline(rawInput: unknown, options: RunOptions = {}): Promise<RunResult> {
@@ -88,6 +110,7 @@ export async function runPipeline(rawInput: unknown, options: RunOptions = {}): 
   };
 
   const concepts = input.conceptIds.map(getConcept).filter((c): c is Concept => Boolean(c));
+  const budget: CallBudget = { limit: options.callBudget ?? callBudgetFromEnv(), used: 0, blocked: 0 };
   const unknownConcepts = input.conceptIds.filter((id) => !getConcept(id));
 
   const traces = new Map<AgentName, AgentTrace>(
@@ -133,7 +156,7 @@ export async function runPipeline(rawInput: unknown, options: RunOptions = {}): 
     trace.inputSummary = describe.input;
     emit(name, { status: "running", inputSummary: describe.input });
     const ctx: AgentContext = {
-      qloo: withCallLog(qloo, calls),
+      qloo: withCallLog(qloo, calls, budget),
       input,
       concepts,
       note: (text) => {
@@ -192,6 +215,7 @@ export async function runPipeline(rawInput: unknown, options: RunOptions = {}): 
   let pilotPlan: PilotPlan | undefined;
   let narrative: Narrative | undefined;
   let counterfactual: Counterfactual | undefined;
+  let partnerPlan: PartnerPlan | undefined;
 
   const conceptNames = concepts.map((c) => c.label.toLowerCase()).join(", ");
 
@@ -272,51 +296,83 @@ export async function runPipeline(rawInput: unknown, options: RunOptions = {}): 
 
         const winner = feasible.options.find((o) => o.id === feasible!.winnerId);
         const profile = winner ? local.localities.find((l) => l.name === winner.locality) : undefined;
-        if (!winner || !profile) {
-          message = "No option fits the budget. See the reasons on each option, then try a larger budget, fewer weekends or a simpler idea.";
+        const strategy = feasible.partnerStrategy;
+        const soloReady = input.launchMode !== "partner" && Boolean(winner && profile);
+        const partnerReady = input.launchMode !== "solo" && strategy?.status === "ready";
+        if (!soloReady && !partnerReady) {
+          message =
+            input.launchMode === "partner"
+              ? `${strategy?.message ?? "No partnership option could be built."} Try a larger budget, other localities or the solo option.`
+              : "No option fits the budget. See the reasons on each option, then try a larger budget, fewer weekends or a simpler idea.";
           skip("Pilot Planner", "Skipped because no option was accepted.");
         } else {
           // 4. Pilot Planner (the narrative is written in the same step)
           let narrativeSource: DataSource = "template";
           const planned = await step(
             "Pilot Planner",
-            async (planInput: PilotPlanInput, ctx) => {
-              const plan = await agents.pilotPlanner(planInput, ctx);
-              const facts = buildNarrativeFacts({ city: input.city, winner, options: feasible!.options, plan, budgetInr: input.budgetInr, weekends: input.weekends });
-              narrative = templateNarrative(facts);
-              if (options.narrate) {
-                try {
-                  narrative = await options.narrate(facts);
-                } catch (err) {
-                  const why = err instanceof Error && err.name === "LlmError" ? err.message : "The LLM was unavailable";
-                  narrative = { ...narrative, note: `${why}. Showing template text instead.` };
-                }
+            async (_planInput: null, ctx) => {
+              const plan = soloReady ? await agents.pilotPlanner({ option: winner!, profile: profile! }, ctx) : undefined;
+              const partnerPlanOut = partnerReady
+                ? partnerPilotPlanner({ strategy: strategy!, partners: cultural!.partners, ...(cultural!.productProfile ? { product: cultural!.productProfile } : {}) }, ctx)
+                : undefined;
+              if (partnerPlanOut) {
+                ctx.note(`Partner pilot: ${partnerPlanOut.modelLabel.toLowerCase()} with ${partnerPlanOut.shortlist[0]?.name ?? "the top partner"}; ${partnerPlanOut.shortlist.length} outreach drafts written`);
               }
-              narrativeSource = narrative.source;
-              ctx.note(narrative.source === "llm" ? "Explanation polished by the LLM" : "Explanation written from templates (no LLM)");
-              return plan;
+              if (winner) {
+                const facts = buildNarrativeFacts({ city: input.city, winner, options: feasible!.options, ...(plan ? { plan } : {}), budgetInr: input.budgetInr, weekends: input.weekends });
+                narrative = templateNarrative(facts);
+                if (options.narrate) {
+                  try {
+                    narrative = await options.narrate(facts);
+                  } catch (err) {
+                    const why = err instanceof Error && err.name === "LlmError" ? err.message : "The LLM was unavailable";
+                    narrative = { ...narrative, note: `${why}. Showing template text instead.` };
+                  }
+                }
+                narrativeSource = narrative.source;
+                ctx.note(narrative.source === "llm" ? "Explanation polished by the LLM" : "Explanation written from templates (no LLM)");
+              }
+              return { plan, partnerPlan: partnerPlanOut };
             },
-            { option: winner, profile },
+            null,
             {
-              input: `Winner: ${winner.conceptLabel.toLowerCase()} in ${winner.locality}; ${winner.plannedUnits} ${winner.unitLabel}s expected; budget ${inr(input.budgetInr)}`,
-              output: (o) => `${o.days}-day pilot costing ${inr(o.totalCostInr)}; continue at ${o.rule.continueUnits} sold or ${inr(o.rule.continueRevenueInr)}`,
+              input: [
+                soloReady && winner ? `Solo winner: ${winner.conceptLabel.toLowerCase()} in ${winner.locality}` : "",
+                partnerReady && strategy ? `Partner option: ${strategy.message}` : "",
+                `budget ${inr(input.budgetInr)}`,
+              ]
+                .filter(Boolean)
+                .join("; "),
+              output: (o) =>
+                [
+                  o.plan ? `Solo: ${o.plan.days}-day pilot costing ${inr(o.plan.totalCostInr)}, continue at ${o.plan.rule.continueUnits} sold` : "",
+                  o.partnerPlan ? `Partner: ${o.partnerPlan.modelLabel.toLowerCase()} costing ${inr(o.partnerPlan.upfrontInr)}, ${o.partnerPlan.shortlist.length} partners shortlisted` : "",
+                ]
+                  .filter(Boolean)
+                  .join("; ") || "No plan could be built",
               extraSources: ["estimate"],
             },
           );
           const plannerTrace = traces.get("Pilot Planner")!;
-          plannerTrace.dataSources = uniq([...plannerTrace.dataSources, narrativeSource]);
+          if (winner) plannerTrace.dataSources = uniq([...plannerTrace.dataSources, narrativeSource]);
           if (planned) {
-            pilotPlan = planned;
+            pilotPlan = planned.plan;
+            partnerPlan = planned.partnerPlan;
           } else {
             status = status === "completed" ? "partial" : status;
             message = "The recommendation is ready, but the Pilot Planner failed to build the plan.";
-            if (!narrative) {
+            if (!narrative && winner) {
               narrative = templateNarrative(buildNarrativeFacts({ city: input.city, winner, options: feasible.options, budgetInr: input.budgetInr, weekends: input.weekends }));
             }
           }
         }
       }
     }
+  }
+
+  if (budget.blocked > 0) {
+    const firstAgentWithCalls = traces.get("Cultural Opportunity Finder")!;
+    firstAgentWithCalls.warnings = uniq([...firstAgentWithCalls.warnings, `${budget.blocked} Qloo calls were skipped because the per-run budget of ${budget.limit} was reached.`]);
   }
 
   const allCalls = [...traces.values()].flatMap((t) => t.qlooCalls);
@@ -340,6 +396,14 @@ export async function runPipeline(rawInput: unknown, options: RunOptions = {}): 
     ...(feasible ? { weights: feasible.weights } : {}),
     ...(feasible?.winnerId ? { winnerId: feasible.winnerId } : {}),
     ...(pilotPlan ? { pilotPlan } : {}),
+    ...(partnerPlan ? { partnerPlan } : {}),
+    ...(local ? { localitySource: local.localitySource, neighbourhoods: local.neighbourhoods } : { neighbourhoods: [] }),
+    partners: cultural?.partners ?? [],
+    ...(local?.admired ? { admired: local.admired } : {}),
+    ...(cultural?.productProfile ? { productProfile: cultural.productProfile } : {}),
+    ...(feasible?.partnerStrategy ? { partnerStrategy: feasible.partnerStrategy } : {}),
+    ...(feasible?.comparison ? { comparison: feasible.comparison } : {}),
+    ...(feasible?.pricing ? { pricing: feasible.pricing } : {}),
     ...(concepts.length ? { baseline: buildBaseline(concepts, input.city) } : {}),
     ...(narrative ? { narrative } : {}),
     ...(counterfactual ? { counterfactual } : {}),
