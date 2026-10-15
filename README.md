@@ -32,11 +32,39 @@ It does three things together:
 3. **Validation.** The winner becomes a low-cost real-world pilot with a measurable
    continue / pivot / stop rule, and a form to compare predicted and actual results.
 
-### Built-in example
+### Start on your own, with an existing business, or compare both
+
+Many people have a product but cannot afford a stall. The first question in the app is
+**"How do you want to start?"**
+
+- **On my own:** a stall, pop-up or workshop, as above.
+- **With an existing business:** Culture2Commerce finds businesses worth approaching and
+  plans a partnership pilot:
+  - **similar businesses** (for brownies: bakeries and dessert shops), flagged as possible competitors;
+  - **complementary businesses** (cafés, juice bars, bookshops) whose crowd may want the product;
+  - **potential high-visibility hosts** (food courts, malls, co-working spaces), labelled as
+    *potential* visibility because no visitor counts exist.
+
+  It then costs four collaboration formats (consignment shelf, weekend counter, co-hosted
+  workshop, wholesale supply), lets you change the assumptions, recommends one, and writes an
+  email and a WhatsApp message to send yourself.
+- **Show me both:** a like-for-like comparison of the two approaches, with a recommendation
+  that follows the numbers (solo wins when it is cheaper and stronger; partnering wins when no
+  stall fits the budget).
+
+Two optional fields sharpen the search: **"Describe your product"** (matched to Qloo tags such
+as *Brownie* or *Egg free*) and **"A business you admire"** (Qloo finds places with a similar crowd).
+
+### Built-in examples
 
 Nisha is a student in Bengaluru with ₹15,000 and two weekends. She is choosing between a
 thrift stall, art prints and a coffee pop-up, and prefers something creative and low-risk.
 Click **Try Nisha's example** to watch the four agents work through it.
+
+**The partner example:** homemade eggless brownies, ₹10,000, no stall. Click
+**Try the partner example** to see the solo-versus-partner comparison, partners found through
+Qloo (including places with a crowd like Lamara Patisserie, the "business you admire"), and
+ready-to-send outreach drafts.
 
 ## Screenshots
 
@@ -51,14 +79,18 @@ data marked "(sample)". With a Qloo key the same screens show real Qloo places a
 |---|---|
 | ![Recommendation](docs/screenshots/3-recommendation.png) | ![Pilot plan](docs/screenshots/4-pilot-plan.png) |
 
+| Solo vs partnership and potential partners | Partner pilot with outreach drafts |
+|---|---|
+| ![Partners](docs/screenshots/5-partners.png) | ![Partner plan](docs/screenshots/6-partner-plan.png) |
+
 ## The four agents
 
 | Agent | What it does | Qloo |
 |---|---|---|
-| **Local Researcher** | Finds candidate areas, their most popular venues, a distinctive vibe fingerprint, existing competitors, stall fees and permit notes. | Yes |
-| **Cultural Opportunity Finder** | Tests each concept against each area's audience using Qloo affinities, taste tags, brand affinities and demographics. | Yes |
-| **Feasibility Critic** | Costs every option against the budget, scores feasibility and risk, rejects what does not fit, ranks the rest and rates confidence. | No |
-| **Pilot Planner** | Turns the winner into quantities, prices, a schedule, a checklist, a budget and a continue / pivot / stop rule. | No |
+| **Local Researcher** | Picks neighbourhoods with Qloo's heatmap (or uses yours), profiles each one's popular venues, vibe, competitors, stall fees and permits, and finds similar, complementary and host businesses, including places like the business you admire. | Yes |
+| **Cultural Opportunity Finder** | Tests each idea against each area's audience (affinity, locality lift, taste tags, brands, demographics), reads your product description into Qloo tags, and scores every potential partner. | Yes |
+| **Feasibility Critic** | Costs every solo option and every collaboration format against the budget, rejects what does not fit or break even, estimates a price range, and compares solo with partnering. | No |
+| **Pilot Planner** | Builds the solo pilot, the partner pilot (shortlist, format, budget, timeline, success rule, outreach drafts), or both. | No |
 
 An orchestrator runs them in order, streams every state change to the browser and keeps going
 with degraded output if one agent fails.
@@ -77,10 +109,13 @@ and are sent back to Qloo as the taste signal.
 | Taste analysis | `GET /v2/insights` | `filter.type=urn:tag`, `signal.interests.entities` | Genres the audience over-indexes on |
 | Brand affinity | `GET /v2/insights` | `filter.type=urn:entity:brand`, `signal.interests.entities` | Cross-domain evidence |
 | Demographics | `GET /v2/insights` | `filter.type=urn:demographics`, `signal.interests.entities` | Target audience age and gender skew |
-| Tag lookup | `GET /v2/tags` | `filter.query` | Verifying concept tag IDs |
-| Entity lookup | `GET /search` | `query`, `types` | Resolving names to entities |
+| Neighbourhoods for an idea | `GET /v2/insights` | `filter.type=urn:heatmap`, `signal.interests.tags`, `output.heatmap.boundary=urn:entity:locality` | Ranks a city's neighbourhoods for the idea's audience (replaces any fixed list) |
+| Complementary partners and hosts | `GET /v2/insights` | `signal.interests.entities` (local similar businesses), `filter.location.query` (locality), optional host `filter.tags` | Cafés, food courts, malls and more ranked by affinity with the crowd of similar local businesses |
+| Places like an admired business | `GET /v2/insights` | `signal.interests.entities` (the admired place), concept `filter.tags`, city filter | Similar businesses with a comparable crowd |
+| Product words to tags | `GET /v2/tags` | `filter.query` | "eggless brownies" becomes *Brownie*, *Egg free* for product matching |
+| Entity lookup | `GET /search` | `query`, `types=urn:entity:place` | Resolving the admired business (results are filtered by city) |
 
-Nisha's scenario makes 30 Qloo calls. What the API really returns for Bengaluru, what did not
+Nisha's scenario makes 30 Qloo calls; the partner example about 30 as well (one idea, more partner searches). Each run is capped by `QLOO_RUN_CALL_BUDGET` (default 70). What the API really returns for Bengaluru, what did not
 work and how the design adapted is documented in [docs/QLOO_FINDINGS.md](docs/QLOO_FINDINGS.md).
 
 ### Transparent scoring
@@ -173,8 +208,8 @@ data. Any OpenAI-compatible provider works with `LLM_PROVIDER=openai_compatible`
 | Command | What it does | Calls Qloo? |
 |---|---|---|
 | `npm run dev` | Start the app | When you run a scenario |
-| `npm test` | Unit, contract and integration tests (142) | No |
-| `npm run test:e2e` | Playwright smoke test of the full Nisha flow | No |
+| `npm test` | Unit, contract and integration tests (201) | No |
+| `npm run test:e2e` | Playwright tests of the Nisha flow and the partner example | No |
 | `npm run test:live` | A handful of real API tests | Yes, about 6 calls |
 | `npm run qloo:check` | Three live calls with pass/fail and latency | Yes, 3 calls |
 | `npm run qloo:record` | Refresh the private snapshot | Yes, about 90 calls |

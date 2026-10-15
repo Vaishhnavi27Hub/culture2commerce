@@ -149,3 +149,21 @@ Meaning of the scores used:
   people who like the given bakeries). It is not a probability of purchase and does not mean two
   businesses share actual customers.
 - **popularity** (0 to 1): a relative popularity percentile within Qloo's data, not footfall.
+
+## 11. First live partner-mode run (15 Oct)
+
+Input: homemade eggless brownies, vegan cupcakes and plum cakes; Bengaluru; ₹10,000; 2
+weekends; "Show me both"; admired business "Lamara Patisserie". 30 live calls, about 16 s.
+
+- Neighbourhoods (heatmap): Hoysala Nagar, Aramane Nagara, Hudi analysed; Konena Agrahara,
+  Shivaji Nagar, Domlur, Pulikeshinagar, White Field also ranked.
+- Admired business resolved to Lamara Patisserie in Marathahalli; similar-crowd places
+  included Liliyum Patisserie, Chaska Box and Brownie Magix, with product-tag overlaps such as
+  "Egg free" and "Brownies".
+- Complementary partners included Third Wave Coffee, Waffle Magic and Chai Point; hosts included
+  Park Square Mall and Nexus Shantiniketan.
+- No solo stall fitted ₹10,000 (all three about ₹16,000), so the comparison recommended a
+  partnership. The best option at that time was wholesale supply, which only breaks even at the
+  default assumptions; consignment did not break even in the pilot because of the one-time
+  food registration. Both facts are shown to the user.
+- One issue found and fixed: chain branches ranked high; they now carry a risk note and penalty.

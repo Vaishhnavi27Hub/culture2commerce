@@ -9,7 +9,8 @@ import { AgentPipeline } from "./agent-pipeline";
 import { RunSourceBadge } from "./badges";
 import { LocalityCompare, WithWithoutQloo } from "./compare";
 import { InputForm, type ConceptOption } from "./input-form";
-import { PilotPlanView } from "./pilot-plan";
+import { CollabCalculator, ComparisonPanel, NeighbourhoodPanel, PartnerList, PartnerStrategyCard, PricingPanel } from "./partners";
+import { PartnerPlanView, PilotPlanView } from "./pilot-plan";
 import { ConfidencePanel, EvidenceTrail, RankedOptions, ScoreBreakdown, WinnerCard } from "./recommendation";
 
 type Stage = "input" | "agents" | "recommendation" | "plan";
@@ -38,6 +39,8 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
   const [error, setError] = useState<string | undefined>();
   const [issues, setIssues] = useState<{ field: string; message: string }[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>();
+  const [partnerId, setPartnerId] = useState<string | undefined>();
+  const [planTab, setPlanTab] = useState<"solo" | "partner">("solo");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -81,6 +84,8 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
       setError(undefined);
       setIssues([]);
       setResult(undefined);
+      setPartnerId(undefined);
+      setPlanTab(input.launchMode === "partner" ? "partner" : "solo");
       setTraces(emptyTraces());
       setRunning(true);
       go("agents");
@@ -119,7 +124,7 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
     input: true,
     agents: running || Boolean(result) || Boolean(error),
     recommendation: Boolean(result && result.options.length > 0),
-    plan: Boolean(result?.pilotPlan),
+    plan: Boolean(result?.pilotPlan || result?.partnerPlan),
   };
   const shownSource = result?.qlooSource ?? qlooStatus;
 
@@ -240,12 +245,50 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
               Recommendation
             </h1>
             {result.message && <p className="rounded-2xl border border-warn/30 bg-warn-soft p-3 text-sm text-warn">{result.message}</p>}
-            {winner ? (
-              <WinnerCard result={result} winner={winner} onOpenPlan={() => go("plan")} />
-            ) : (
-              <div className="rounded-2xl border border-bad/30 bg-bad-soft p-5">
-                <h2 className="text-2xl font-bold text-bad">No option fits this budget</h2>
-                <p className="mt-1 text-sm">Each option below shows why. Try a larger budget, fewer weekends or a simpler idea.</p>
+
+            {result.comparison && <ComparisonPanel comparison={result.comparison} />}
+
+            {result.input.launchMode !== "solo" && (
+              <PartnerStrategyCard
+                result={result}
+                onOpenPlan={() => {
+                  setPlanTab("partner");
+                  go("plan");
+                }}
+              />
+            )}
+
+            {result.input.launchMode !== "partner" &&
+              (winner ? (
+                <WinnerCard
+                  result={result}
+                  winner={winner}
+                  onOpenPlan={() => {
+                    setPlanTab("solo");
+                    go("plan");
+                  }}
+                />
+              ) : (
+                <div className="rounded-2xl border border-bad/30 bg-bad-soft p-5">
+                  <h2 className="text-2xl font-bold text-bad">No solo option fits this budget</h2>
+                  <p className="mt-1 text-sm">Each option below shows why. Try a larger budget, fewer weekends, a simpler idea, or a partnership.</p>
+                </div>
+              ))}
+
+            {result.input.launchMode !== "solo" && result.partners.length > 0 && (
+              <>
+                <PartnerList result={result} selectedId={partnerId} onSelect={setPartnerId} />
+                <CollabCalculator result={result} partnerId={partnerId} />
+              </>
+            )}
+
+            <PricingPanel result={result} />
+            <NeighbourhoodPanel result={result} />
+
+            {result.input.launchMode === "partner" && (
+              <div className="border-t border-line pt-8">
+                <h2 className="text-2xl font-bold">Cultural analysis of the areas</h2>
+                <p className="mt-1 text-sm text-muted">How each idea fits each locality&rsquo;s audience if you ran it yourself. This is what the partner search builds on.</p>
               </div>
             )}
 
@@ -282,12 +325,38 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
           </div>
         )}
 
-        {stage === "plan" && result?.pilotPlan && (
-          <div>
+        {stage === "plan" && result && (result.pilotPlan || result.partnerPlan) && (
+          <div className="space-y-5">
             <h1 ref={headingRef} tabIndex={-1} className="sr-only">
               Pilot plan
             </h1>
-            <PilotPlanView result={result} plan={result.pilotPlan} onSaveResults={saveResults} />
+            {result.pilotPlan && result.partnerPlan && (
+              <div className="no-print inline-flex rounded-xl border border-line bg-card p-1" role="tablist" aria-label="Choose a pilot plan">
+                {(
+                  [
+                    ["solo", "On your own"],
+                    ["partner", "With a partner"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    aria-selected={planTab === value}
+                    onClick={() => setPlanTab(value)}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold ${planTab === value ? "bg-brand text-white" : "text-muted hover:text-ink"}`}
+                  >
+                    {label}
+                    {result.comparison?.recommended === value && <span className="ml-1.5 rounded-full bg-spark px-1.5 py-0.5 text-[10px] text-ink">Recommended</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+            {result.partnerPlan && (planTab === "partner" || !result.pilotPlan) ? (
+              <PartnerPlanView result={result} plan={result.partnerPlan} />
+            ) : (
+              result.pilotPlan && <PilotPlanView result={result} plan={result.pilotPlan} onSaveResults={saveResults} />
+            )}
           </div>
         )}
 

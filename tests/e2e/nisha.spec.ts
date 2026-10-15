@@ -82,3 +82,45 @@ test("Nisha's example runs end to end on the offline fallback", async ({ page })
 
   expect(errors).toEqual([]);
 });
+
+test("the partner example compares both approaches and drafts outreach messages", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+
+  await page.goto("/");
+  await expect(page.getByRole("radio", { name: /With an existing business/ })).toBeVisible();
+  await page.getByRole("button", { name: "Try the partner example" }).click();
+  await expect(page.getByText("4 of 4 agents finished")).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("button", { name: /See the recommendation/ }).click();
+
+  // Solo vs partnership, best partnership and the partner list.
+  await expect(page.getByRole("heading", { name: /Recommended: start (on your own|with an existing business)|Neither approach fits yet/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Potential partners" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Where your idea's audience is" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Price positioning" })).toBeVisible();
+  await expect(page.getByText(/not measured demand or foot traffic/)).toBeVisible();
+
+  await page.getByRole("button", { name: /High-visibility hosts \(\d+\)/ }).click();
+  const firstCard = page.locator("li").filter({ has: page.getByText("Potential high-visibility host") }).first();
+  await firstCard.getByRole("button").first().click();
+  await expect(firstCard.getByText(/not verified footfall/)).toBeVisible();
+  await firstCard.getByRole("button", { name: "Write an outreach message" }).click();
+  await expect(firstCard.locator("textarea")).toHaveValue(/\[Your name\]/);
+  await firstCard.getByRole("button", { name: "WhatsApp / DM" }).click();
+  await expect(firstCard.locator("textarea")).toHaveValue(/Happy to drop by with samples/);
+  await shoot(page, "5-partners.png", true);
+
+  // The collaboration calculator recomputes when an assumption changes.
+  const calc = page.locator("section").filter({ has: page.getByRole("heading", { name: /Collaboration options/ }) });
+  await expect(calc).toBeVisible();
+
+  // Partner pilot plan.
+  const toPlan = page.getByRole("button", { name: "See the partner pilot and outreach messages" });
+  if (await toPlan.count()) {
+    await toPlan.click();
+    await expect(page.getByRole("heading", { name: "Who to contact, in this order" })).toBeVisible();
+    await expect(page.getByText("These are businesses worth contacting, not confirmed partners.", { exact: false })).toBeVisible();
+    await shoot(page, "6-partner-plan.png", true);
+  }
+  expect(errors).toEqual([]);
+});

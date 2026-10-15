@@ -1,11 +1,12 @@
 "use client";
 
 import { useId, useState } from "react";
-import { downloadText, planToMarkdown, slugify } from "@/lib/export";
+import { downloadText, partnerPlanToMarkdown, planToMarkdown, slugify } from "@/lib/export";
 import { inr } from "@/lib/format";
 import { evaluatePilot } from "@/lib/pilot";
-import { pilotActualsSchema, type PilotPlan, type RunResult } from "@/lib/schemas";
+import { pilotActualsSchema, type PartnerPlan, type PilotPlan, type RunResult } from "@/lib/schemas";
 import { SourceBadge } from "./badges";
+import { OutreachPanel } from "./partners";
 
 function Card({ title, children, badge }: { title: string; children: React.ReactNode; badge?: React.ReactNode }) {
   return (
@@ -310,6 +311,123 @@ export function PilotPlanView({ result, plan, onSaveResults }: { result: RunResu
       </Card>
 
       <PilotResultsForm plan={plan} saved={result.pilotResults} onSave={onSaveResults} />
+    </div>
+  );
+}
+
+export function PartnerPlanView({ result, plan }: { result: RunResult; plan: PartnerPlan }) {
+  const base = `culture2commerce-partner-${slugify(plan.shortlist[0]?.name ?? "pilot")}`;
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold sm:text-3xl">{plan.title}</h2>
+          <p className="mt-1 text-sm text-muted">
+            {plan.modelLabel} · {inr(plan.upfrontInr)} of {inr(plan.budgetInr)} · {result.input.city}
+          </p>
+        </div>
+        <div className="no-print flex flex-wrap gap-2">
+          <button type="button" onClick={() => downloadText(`${base}-plan.md`, partnerPlanToMarkdown(plan), "text/markdown")} className="rounded-xl border border-line bg-card px-3 py-2 text-sm font-semibold hover:border-brand">
+            Download Markdown
+          </button>
+          <button type="button" onClick={() => window.print()} className="rounded-xl border border-line bg-card px-3 py-2 text-sm font-semibold hover:border-brand">
+            Print or save as PDF
+          </button>
+          <button type="button" onClick={() => downloadText(`${base}-run-trace.json`, JSON.stringify(result, null, 2), "application/json")} className="rounded-xl border border-line bg-card px-3 py-2 text-sm font-semibold hover:border-brand">
+            Download run trace (JSON)
+          </button>
+        </div>
+      </div>
+
+      <Card title="Who to contact, in this order">
+        <ol className="space-y-4">
+          {plan.shortlist.map((s, i) => (
+            <li key={s.partnerId} className="rounded-xl border border-line p-3">
+              <p className="font-semibold">
+                {i + 1}. {s.name} <span className="font-normal text-muted">({s.partnerType}, {s.locality}) · {s.model}</span>
+              </p>
+              <p className="mt-0.5 text-sm text-muted">{s.why}</p>
+              <div className="mt-2">
+                <OutreachPanel initial={s.outreach} />
+              </div>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-3 text-xs text-muted">These are businesses worth contacting, not confirmed partners. Do not promise anything until terms are agreed in writing.</p>
+      </Card>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Card title="Success metrics">
+          <ul className="divide-y divide-line">
+            {plan.successMetrics.map((m) => (
+              <li key={m.metric} className="flex flex-col gap-0.5 py-2 sm:flex-row sm:justify-between sm:gap-4">
+                <span className="text-sm font-semibold">{m.metric}</span>
+                <span className="text-sm text-muted sm:text-right">{m.target}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+        <Card title="Budget" badge={<SourceBadge source="estimate" long />}>
+          <table className="w-full text-sm">
+            <caption className="sr-only">Partner pilot budget</caption>
+            <tbody>
+              {plan.budget.map((b) => (
+                <tr key={b.item} className="border-b border-line">
+                  <th scope="row" className="py-2 text-left font-medium">
+                    {b.item}
+                    {b.note && <span className="block text-xs font-normal text-muted">{b.note}</span>}
+                  </th>
+                  <td className="py-2 text-right align-top tabular-nums">{inr(b.amountInr)}</td>
+                </tr>
+              ))}
+              <tr className="font-bold">
+                <th scope="row" className="py-2 text-left">
+                  Total upfront
+                </th>
+                <td className="py-2 text-right tabular-nums">{inr(plan.upfrontInr)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </Card>
+      </div>
+
+      <Card title="Decision rule">
+        <ul className="grid gap-3 md:grid-cols-3">
+          {[
+            { ...DECISION_STYLE.continue, text: plan.rule.continueIf },
+            { ...DECISION_STYLE.pivot, text: plan.rule.pivotIf },
+            { ...DECISION_STYLE.stop, text: plan.rule.stopIf },
+          ].map((r) => (
+            <li key={r.label} className={`rounded-xl border p-3 ${r.box}`}>
+              <p className={`font-display text-lg font-bold ${r.text}`}>{r.label}</p>
+              <p className="mt-1 text-sm">{r.text}</p>
+            </li>
+          ))}
+        </ul>
+      </Card>
+
+      <Card title="Timeline">
+        <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {plan.timeline.map((s) => (
+            <li key={s.when} className="rounded-xl bg-paper p-3">
+              <p className="text-sm font-bold">{s.when}</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm">
+                {s.tasks.map((t) => (
+                  <li key={t}>{t}</li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ol>
+      </Card>
+
+      <Card title="Before you invest more">
+        <ul className="list-disc space-y-1 pl-5 text-sm">
+          {[...plan.validationSteps, ...plan.compliance].map((n) => (
+            <li key={n}>{n}</li>
+          ))}
+        </ul>
+      </Card>
     </div>
   );
 }
