@@ -35,7 +35,8 @@ const TIER_MULTIPLIERS: Record<PriceTier, [number, number]> = {
   unknown: [0.9, 1.1],
 };
 
-const round10 = (n: number) => Math.max(10, Math.round(n / 10) * 10);
+// The small epsilon stops floating-point noise (100 × 1.15 = 114.999…) from rounding down.
+const round10 = (n: number) => Math.max(10, Math.round(n / 10 + 1e-9) * 10);
 
 export function median(values: number[]): number | undefined {
   if (values.length === 0) return undefined;

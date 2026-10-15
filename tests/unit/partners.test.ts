@@ -188,6 +188,11 @@ describe("price positioning", () => {
     expect(p.explanation[0]).toMatch(/no price levels/);
   });
 
+  it("rounds to the nearest ₹10 without floating-point errors (₹100 × 1.15 is ₹120, not ₹110)", () => {
+    const p = pricePositioning({ unitCostInr: 35, packagingPerUnitInr: 8, referencePriceInr: 100, venuePriceLevels: [3, 3, 4] });
+    expect(p.rangeInr).toEqual([120, 140]);
+  });
+
   it("computes medians", () => {
     expect(median([1, 3, 2])).toBe(2);
     expect(median([1, 2, 3, 4])).toBe(2.5);
