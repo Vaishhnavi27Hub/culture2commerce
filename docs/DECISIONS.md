@@ -196,3 +196,15 @@ The optional LLM is not used for them, to keep partner-facing text predictable.
 ## D34. Per-run Qloo call budget
 `QLOO_RUN_CALL_BUDGET` (default 70) caps calls per run; refused calls are reported as a warning
 and agents continue with what they have.
+
+## D35. Premium UI pass: what was added and what was deliberately not
+Palette (ivory, forest green, coral, lavender for AI-written text, sage), Fraunces for headlines
+and Inter for body. Dependencies added: `motion` (transitions, reveals; `MotionConfig
+reducedMotion="user"`) and `recharts` (bar charts, loaded with `next/dynamic` so the landing page
+does not pay for it; first load of `/` is about 215 kB). The hero city is pure CSS 3D rather than
+three.js or Spline: no WebGL, no extra download, no external scene. The locality "map" places
+areas by their Qloo coordinates on a plain grid; it is labelled as not a street map, because the
+app has no map provider. Every chart uses existing run data only and shows an empty state when a
+value is missing; there is no chart of page views or sign-ups because the app does not record
+them, and actual spend is not shown because it is not collected. Details on the recommendation
+and Pitch & Pilot screens are collapsed by default and open automatically for printing.

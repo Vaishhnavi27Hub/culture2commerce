@@ -22,6 +22,9 @@ See `docs/features.json` (single source of truth; `node scripts/progress.mjs lis
   per-run call budget.
 - **Implemented (checked by hand or by running):** environment setup, Qloo discovery, Qloo
   scripts, branding, /dev page, docs, GitHub.
+- **UI upgrade (17 Oct):** new design system, CSS 3D landing hero, idea search and category
+  filters, locality map and comparison chart, cultural affinity and budget charts, simplified
+  Pitch & Pilot with progressive disclosure, pilot results dashboard. See DECISIONS D35.
 - **Pending:** deployment.
 
 ## Checks run (latest results)

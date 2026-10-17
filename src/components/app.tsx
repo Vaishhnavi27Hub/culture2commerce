@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DISCLAIMER } from "@/lib/brand";
 import { RunRequestError, streamRun } from "@/lib/run-client";
@@ -11,7 +12,9 @@ import { LocalityCompare, WithWithoutQloo } from "./compare";
 import { InputForm, type ConceptOption } from "./input-form";
 import { CollabCalculator, ComparisonPanel, NeighbourhoodPanel, PartnerList, PartnerStrategyCard, PricingPanel } from "./partners";
 import { PartnerPlanView, PilotPlanView } from "./pilot-plan";
-import { ConfidencePanel, EvidenceTrail, RankedOptions, ScoreBreakdown, WinnerCard } from "./recommendation";
+import { CityHero, HeroHeadline } from "./hero";
+import { OptionDetail, RankedOptions, WinnerCard } from "./recommendation";
+import { Reveal, SectionHeading, Stagger, StaggerItem } from "./ui";
 
 type Stage = "input" | "agents" | "recommendation" | "plan";
 
@@ -19,7 +22,13 @@ const STAGES: { id: Stage; label: string }[] = [
   { id: "input", label: "Your idea" },
   { id: "agents", label: "Agents at work" },
   { id: "recommendation", label: "Recommendation" },
-  { id: "plan", label: "Pilot plan" },
+  { id: "plan", label: "Pitch & Pilot" },
+];
+
+const HOW_IT_WORKS = [
+  { title: "Cultural fit", text: "Qloo taste relationships show which ideas resonate with the people who already spend time in each area.", tone: "bg-lavender text-lavender-ink" },
+  { title: "Feasibility", text: "Budget, competition, logistics and venues are checked. Ideas that don’t fit are rejected with reasons.", tone: "bg-sage text-brand" },
+  { title: "Validation", text: "The winner becomes a small real-world experiment with a continue, pivot or stop rule.", tone: "bg-spark-soft text-spark-dark" },
 ];
 
 const STORAGE_KEY = "c2c:last-run";
@@ -66,6 +75,13 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
     } catch {
       // ignore
     }
+  };
+
+  const scrollToId = (id: string, focusSelector?: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    if (focusSelector) el.querySelector<HTMLElement>(focusSelector)?.focus({ preventScroll: true });
   };
 
   const go = useCallback((next: Stage) => {
@@ -127,14 +143,18 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
     plan: Boolean(result?.pilotPlan || result?.partnerPlan),
   };
   const shownSource = result?.qlooSource ?? qlooStatus;
+  const categoryOf = (conceptId: string) => concepts.find((c) => c.id === conceptId)?.category;
+  const stageIndex = STAGES.findIndex((s) => s.id === stage);
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
-      <nav aria-label="Steps" className="no-print sticky top-0 z-10 -mx-4 border-b border-line bg-paper/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+      <nav aria-label="Steps" className="no-print sticky top-0 z-20 -mx-4 border-b border-line/70 bg-paper/90 px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <ol className="flex flex-wrap gap-1.5">
+          <ol className="flex flex-wrap gap-1">
             {STAGES.map((s, i) => {
               const current = stage === s.id;
+              const done = i < stageIndex && available[s.id];
               return (
                 <li key={s.id}>
                   <button suppressHydrationWarning
@@ -142,15 +162,16 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
                     disabled={!available[s.id]}
                     aria-current={current ? "step" : undefined}
                     onClick={() => go(s.id)}
-                    className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
-                      current ? "border-brand bg-brand text-white" : "border-line bg-card text-ink hover:border-brand"
+                    className={`relative flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                      current ? "text-white" : "text-ink hover:bg-brand-soft/70"
                     }`}
                   >
-                    <span aria-hidden="true" className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${current ? "bg-white/25" : "bg-line"}`}>
-                      {i + 1}
+                    {current && <motion.span layoutId="stage-pill" className="absolute inset-0 rounded-full bg-brand shadow-sm" transition={{ type: "spring", stiffness: 450, damping: 36 }} />}
+                    <span aria-hidden="true" className={`relative flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${current ? "bg-white/20" : done ? "bg-leaf text-white" : "bg-line"}`}>
+                      {done ? "✓" : i + 1}
                     </span>
-                    {s.label}
-                    {s.id === "agents" && running && <span aria-hidden="true" className="animate-status h-2 w-2 rounded-full bg-current" />}
+                    <span className="relative">{s.label}</span>
+                    {s.id === "agents" && running && <span aria-hidden="true" className="animate-status relative h-2 w-2 rounded-full bg-current" />}
                   </button>
                 </li>
               );
@@ -160,46 +181,51 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
         </div>
       </nav>
 
-      <main className="pt-8">
+      <main className={stage === "input" ? "pt-0" : "pt-8"}>
+        <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={stage} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}>
         {stage === "input" && (
-          <div className="grid gap-10 lg:grid-cols-[1fr_20rem]">
-            <div>
-              <h1 ref={headingRef} tabIndex={-1} className="text-3xl font-bold leading-tight outline-none sm:text-5xl">
-                Find one small business bet <span className="text-brand">worth testing.</span>
-              </h1>
-              <p className="mt-3 max-w-2xl text-lg text-muted">
-                Tell us your city, budget and a few ideas. Four agents use Qloo’s taste graph and local cost estimates to recommend a specific concept, locality, audience and a
-                low-cost pilot.
-              </p>
-              <div className="mt-8">
-                <InputForm concepts={concepts} knownLocalities={knownLocalities} busy={running} serverIssues={issues} onSubmit={start} />
-              </div>
-            </div>
-            <aside aria-label="How it works" className="space-y-3 lg:pt-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted">How it works</p>
-              {[
-                ["Cultural fit", "Qloo taste relationships show which ideas resonate with the people who already spend time in each area."],
-                ["Feasibility", "Budget, competition, logistics and venues are checked. Ideas that don’t fit are rejected with reasons."],
-                ["Validation", "The winner becomes a small real-world experiment with a continue, pivot or stop rule."],
-              ].map(([title, text], i) => (
-                <div key={title} className="rounded-2xl border border-line bg-card p-4">
-                  <p className="flex items-center gap-2 font-semibold">
-                    <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-full bg-spark text-xs font-bold text-ink">
-                      {i + 1}
-                    </span>
-                    {title}
-                  </p>
-                  <p className="mt-1 text-sm text-muted">{text}</p>
-                </div>
-              ))}
+          <div>
+            <CityHero onDiscover={() => scrollToId("plan-form", "input, button")} onExplore={() => scrollToId("examples")}>
+              <HeroHeadline ref={headingRef} />
+            </CityHero>
+
+            <section aria-labelledby="how-heading" className="mt-6 sm:mt-10">
+              <Reveal>
+                <SectionHeading id="how-heading" eyebrow="How it works" title="From what people love to a tested idea" subtitle="Four agents do the research; you get one clear bet and a small, low-risk way to test it." />
+              </Reveal>
+              <Stagger as="ol" className="mt-6 grid gap-3 md:grid-cols-3">
+                {HOW_IT_WORKS.map((h, i) => (
+                  <StaggerItem as="li" key={h.title}>
+                    <div className="card lift h-full p-5">
+                      <span aria-hidden="true" className={`flex h-9 w-9 items-center justify-center rounded-full font-display text-lg font-semibold ${h.tone}`}>
+                        {i + 1}
+                      </span>
+                      <p className="mt-3 font-display text-xl font-semibold">{h.title}</p>
+                      <p className="mt-1 text-sm text-muted">{h.text}</p>
+                    </div>
+                  </StaggerItem>
+                ))}
+              </Stagger>
               {qlooStatus !== "live" && (
-                <p className="rounded-2xl border border-warn/30 bg-warn-soft p-3 text-sm text-warn">
+                <p className="mt-4 rounded-2xl border border-warn/30 bg-warn-soft p-3 text-sm text-warn">
                   {qlooStatus === "recorded"
                     ? "The live Qloo API is not configured, so runs use a recorded Qloo snapshot."
                     : "No Qloo API key is configured, so runs use bundled sample data. Results are illustrative, not real Qloo signals."}
                 </p>
               )}
-            </aside>
+            </section>
+
+            <section id="plan-form" aria-labelledby="form-heading" className="mt-12 scroll-mt-20 sm:mt-16">
+              <Reveal>
+                <div className="rounded-[1.75rem] border border-line bg-card p-5 shadow-[var(--shadow-lift)] sm:p-8">
+                  <SectionHeading id="form-heading" eyebrow="Discover my opportunity" title="Tell us where, how much and what you might sell" subtitle="Takes about a minute. Nothing personal is needed." />
+                  <div className="mt-8">
+                    <InputForm concepts={concepts} knownLocalities={knownLocalities} busy={running} serverIssues={issues} onSubmit={start} />
+                  </div>
+                </div>
+              </Reveal>
+            </section>
           </div>
         )}
 
@@ -219,7 +245,7 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
             )}
             <AgentPipeline traces={traces} running={running} />
             {result && (
-              <div className="animate-rise rounded-2xl border border-line bg-card p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+              <div className="animate-rise card p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
                 <div>
                   <p className="font-semibold">
                     {result.status === "completed" ? "All done." : result.status === "partial" ? "Finished with reduced detail." : "The run stopped early."}{" "}
@@ -230,7 +256,7 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
                   {result.message && <p className="mt-1 text-sm text-warn">{result.message}</p>}
                 </div>
                 {available.recommendation && (
-                  <button suppressHydrationWarning type="button" onClick={() => go("recommendation")} className="mt-3 inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-dark sm:mt-0 sm:w-auto">
+                  <button suppressHydrationWarning type="button" onClick={() => go("recommendation")} className="btn-primary mt-3 w-full shrink-0 px-5 py-3 text-sm sm:mt-0 sm:w-auto">
                     See the recommendation <span aria-hidden="true">→</span>
                   </button>
                 )}
@@ -270,7 +296,7 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
                 />
               ) : (
                 <div className="rounded-2xl border border-bad/30 bg-bad-soft p-5">
-                  <h2 className="text-2xl font-bold text-bad">No solo option fits this budget</h2>
+                  <h2 className="text-2xl font-semibold text-bad">No solo option fits this budget</h2>
                   <p className="mt-1 text-sm">Each option below shows why. Try a larger budget, fewer weekends, a simpler idea, or a partnership.</p>
                 </div>
               ))}
@@ -287,41 +313,35 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
 
             {result.input.launchMode === "partner" && (
               <div className="border-t border-line pt-8">
-                <h2 className="text-2xl font-bold">Cultural analysis of the areas</h2>
-                <p className="mt-1 text-sm text-muted">How each idea fits each locality&rsquo;s audience if you ran it yourself. This is what the partner search builds on.</p>
+                <SectionHeading title="Cultural analysis of the areas" subtitle="How each idea fits each locality’s audience if you ran it yourself. This is what the partner search builds on." />
               </div>
             )}
 
-            {winner && <WithWithoutQloo result={result} winner={winner} />}
+            <Reveal>
+              <LocalityCompare result={result} />
+            </Reveal>
 
-            <section aria-labelledby="ranked-heading">
-              <h3 id="ranked-heading" className="text-xl font-bold">
-                All options, ranked
-              </h3>
-              <p className="mt-1 text-sm text-muted">Select any option to see its scores and evidence below.</p>
-              <div className="mt-4">
-                <RankedOptions result={result} selectedId={selected?.id ?? ""} onSelect={setSelectedId} />
+            <section aria-labelledby="ranked-heading" className="space-y-6">
+              <SectionHeading
+                id="ranked-heading"
+                level={3}
+                eyebrow="Compare every option"
+                title="All options, ranked"
+                subtitle="Search or filter, then select an option to see its cultural signals, budget and the reasoning behind its score."
+              />
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,26rem)_1fr]">
+                <div className="xl:sticky xl:top-20 xl:self-start">
+                  <RankedOptions result={result} selectedId={selected?.id ?? ""} onSelect={setSelectedId} categoryOf={categoryOf} />
+                </div>
+                {selected && result.weights && <OptionDetail result={result} option={selected} weights={result.weights} />}
               </div>
             </section>
 
-            {selected && result.weights && (
-              <section aria-labelledby="why-heading" className="space-y-4" aria-live="polite">
-                <div>
-                  <h3 id="why-heading" className="text-xl font-bold">
-                    Why this? <span className="font-normal text-muted">{selected.conceptLabel} in {selected.locality}</span>
-                  </h3>
-                  <p className="mt-1 text-sm text-muted">{selected.hypothesis}</p>
-                </div>
-                <ScoreBreakdown option={selected} weights={result.weights} />
-                <ConfidencePanel option={selected} />
-                <div>
-                  <p className="mb-2 text-sm font-semibold">Evidence trail</p>
-                  <EvidenceTrail option={selected} />
-                </div>
-              </section>
+            {winner && (
+              <Reveal>
+                <WithWithoutQloo result={result} winner={winner} />
+              </Reveal>
             )}
-
-            <LocalityCompare result={result} />
           </div>
         )}
 
@@ -331,7 +351,7 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
               Pilot plan
             </h1>
             {result.pilotPlan && result.partnerPlan && (
-              <div className="no-print inline-flex rounded-xl border border-line bg-card p-1" role="tablist" aria-label="Choose a pilot plan">
+              <div className="no-print inline-flex rounded-xl border border-line bg-card p-1 shadow-sm" role="tablist" aria-label="Choose a pilot plan">
                 {(
                   [
                     ["solo", "On your own"],
@@ -353,15 +373,18 @@ export function App({ concepts, knownLocalities, qlooStatus }: Props) {
               </div>
             )}
             {result.partnerPlan && (planTab === "partner" || !result.pilotPlan) ? (
-              <PartnerPlanView result={result} plan={result.partnerPlan} />
+              <PartnerPlanView result={result} plan={result.partnerPlan} onEditInputs={() => go("input")} />
             ) : (
-              result.pilotPlan && <PilotPlanView result={result} plan={result.pilotPlan} onSaveResults={saveResults} />
+              result.pilotPlan && <PilotPlanView result={result} plan={result.pilotPlan} onSaveResults={saveResults} onEditInputs={() => go("input")} />
             )}
           </div>
         )}
 
+        </motion.div>
+        </AnimatePresence>
         <p className="mt-12 border-t border-line pt-4 text-center text-xs text-muted">{DISCLAIMER}</p>
       </main>
     </div>
+    </MotionConfig>
   );
 }
