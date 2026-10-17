@@ -6,6 +6,8 @@
  * not a quote. Users are told to verify costs locally.
  */
 
+import type { ConceptCategory } from "@/lib/categories";
+
 export interface ConceptCostItem {
   item: string;
   amountInr: number;
@@ -18,6 +20,8 @@ export interface Concept {
   label: string;
   tagline: string;
   format: "stall" | "workshop" | "event";
+  /** Browsing category in the input form. */
+  category: ConceptCategory;
   /** Qloo place tags that describe existing businesses of this type. */
   qlooTagIds: string[];
   /** Lower-case fragments matched against Qloo tag, genre and brand-tag names. */
@@ -57,6 +61,7 @@ const tag = (s: string) => `urn:tag:genre:place:${s}`;
 export const CONCEPTS: Concept[] = [
   {
     id: "art-prints",
+    category: "art",
     label: "Art print pop-up",
     tagline: "Sell original illustrations as affordable prints and postcards.",
     format: "stall",
@@ -98,6 +103,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "thrift-stall",
+    category: "fashion",
     label: "Thrift clothing stall",
     tagline: "Curated second-hand and vintage clothing at student-friendly prices.",
     format: "stall",
@@ -138,6 +144,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "coffee-popup",
+    category: "food",
     label: "Coffee pop-up",
     tagline: "Specialty coffee served from a small counter.",
     format: "stall",
@@ -180,6 +187,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "board-game-evening",
+    category: "experiences",
     label: "Board-game evening",
     tagline: "A ticketed evening of hosted board games with snacks.",
     format: "event",
@@ -219,6 +227,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "art-workshop",
+    category: "experiences",
     label: "Art-print workshop",
     tagline: "A paid, hands-on session where people make their own print.",
     format: "workshop",
@@ -258,6 +267,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "baked-goods",
+    category: "food",
     label: "Home-baked goods stall",
     tagline: "Small-batch cookies, brownies and loaf cakes.",
     format: "stall",
@@ -298,6 +308,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "plant-stall",
+    category: "home",
     label: "Indoor plant stall",
     tagline: "Small potted plants and propagation jars for desks and balconies.",
     format: "stall",
@@ -336,6 +347,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "handmade-jewellery",
+    category: "art",
     label: "Handmade jewellery stall",
     tagline: "Small-batch earrings, necklaces and bracelets.",
     format: "stall",
@@ -383,6 +395,6 @@ export function getConcept(id: string): Concept | undefined {
 }
 
 /** Small public view of the catalogue for the input form. */
-export function listConceptOptions(): { id: string; label: string; tagline: string }[] {
-  return CONCEPTS.map(({ id, label, tagline }) => ({ id, label, tagline }));
+export function listConceptOptions(): { id: string; label: string; tagline: string; category: ConceptCategory }[] {
+  return CONCEPTS.map(({ id, label, tagline, category }) => ({ id, label, tagline, category }));
 }

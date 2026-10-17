@@ -18,7 +18,7 @@ test("Nisha's example runs end to end on the offline fallback", async ({ page })
   page.on("pageerror", (e) => errors.push(e.message));
 
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("worth testing");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("business opportunities");
   await expect(page.getByText("Sample data, not Qloo (offline fallback)")).toBeVisible();
   await shoot(page, "1-input.png");
 
@@ -43,6 +43,9 @@ test("Nisha's example runs end to end on the offline fallback", async ({ page })
   await expect(page.getByText("Low confidence").first()).toBeVisible();
   await expect(page.getByText("High confidence")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Without Qloo vs With Qloo" })).toBeVisible();
+  await expect(page.getByText(/: area by area$/)).toBeVisible();
+  // The score formula and evidence are progressive disclosure behind the selected option.
+  await page.getByRole("button", { name: /Why this recommendation\?/ }).last().click();
   await expect(page.getByText("How the final score is computed")).toBeVisible();
   await expect(page.getByText(/final = 0\.4 × /)).toBeVisible();
   await expect(page.getByText("Evidence trail")).toBeVisible();
@@ -59,12 +62,13 @@ test("Nisha's example runs end to end on the offline fallback", async ({ page })
   await page.getByRole("button", { name: /See the pilot plan/ }).click();
   await expect(page.getByRole("heading", { name: /2-weekend pilot/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Decision rule" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Download Markdown" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Download my pilot plan/ })).toBeVisible();
+  await expect(page.getByText("No pilot results yet")).toBeVisible();
   await expect(page.getByRole("button", { name: "Download run trace (JSON)" })).toBeVisible();
   await expect(page.getByText("Estimates for planning only, not financial or legal advice.")).toBeVisible();
 
   const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download Markdown" }).click();
+  await page.getByRole("button", { name: /Download my pilot plan/ }).click();
   expect((await download).suggestedFilename()).toMatch(/pilot-plan\.md$/);
 
   await page.getByLabel(/sold$/).fill("3");
@@ -73,6 +77,7 @@ test("Nisha's example runs end to end on the offline fallback", async ({ page })
   await page.getByRole("button", { name: "Get verdict" }).click();
   await expect(page.getByText("Verdict: Stop")).toBeVisible();
   await expect(page.getByRole("table", { name: "Predicted versus actual pilot results" })).toBeVisible();
+  await expect(page.getByText("From passers-by to purchases")).toBeVisible();
   await shoot(page, "4-pilot-plan.png", true);
 
   // The developer page exists but is not linked from the app.

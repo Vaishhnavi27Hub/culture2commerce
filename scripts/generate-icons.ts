@@ -56,13 +56,13 @@ async function main() {
   // Social card: dark background, VKY mark, wordmark and tagline.
   const mark = (await png(brand("logo-vky-dark.svg"), 220)).toString("base64");
   const card = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-    <rect width="1200" height="630" fill="#14122b"/>
-    <circle cx="1080" cy="90" r="220" fill="#5b3df5" opacity="0.35"/>
-    <circle cx="1150" cy="560" r="160" fill="#ff7a3d" opacity="0.25"/>
+    <rect width="1200" height="630" fill="#123d32"/>
+    <circle cx="1080" cy="90" r="220" fill="#dce9dc" opacity="0.35"/>
+    <circle cx="1150" cy="560" r="160" fill="#ff735c" opacity="0.25"/>
     <image href="data:image/png;base64,${mark}" x="90" y="110" width="220" height="220"/>
-    <text x="90" y="430" font-family="'Segoe UI', Arial, sans-serif" font-size="84" font-weight="700" fill="#ffffff">Culture<tspan fill="#ff7a3d">2</tspan>Commerce</text>
-    <text x="92" y="492" font-family="'Segoe UI', Arial, sans-serif" font-size="34" fill="#d9d6ee">Find one small business bet worth testing.</text>
-    <text x="92" y="560" font-family="'Segoe UI', Arial, sans-serif" font-size="26" fill="#a9a5c7">Team VKY · Built on Qloo’s taste graph</text>
+    <text x="90" y="430" font-family="'Segoe UI', Arial, sans-serif" font-size="84" font-weight="700" fill="#ffffff">Culture<tspan fill="#ff735c">2</tspan>Commerce</text>
+    <text x="92" y="492" font-family="'Segoe UI', Arial, sans-serif" font-size="34" fill="#e7efe7">Turn cultural signals into business opportunities.</text>
+    <text x="92" y="560" font-family="'Segoe UI', Arial, sans-serif" font-size="26" fill="#b9cdbf">Team VKY · Built on Qloo’s taste graph</text>
   </svg>`;
   const og = await sharp(Buffer.from(card)).png().toBuffer();
   fs.writeFileSync(app("opengraph-image.png"), og);
@@ -77,7 +77,7 @@ async function main() {
     for (const name of ["favicon", "logo-mark", "logo-mark-dark", "logo-vky", "logo-vky-dark"]) {
       for (const size of [16, 32, 256]) fs.writeFileSync(path.join(previewDir, `${name}-${size}.png`), await png(brand(`${name}.svg`), size));
     }
-    for (const [name, bg] of [["logo-full", "#ffffff"], ["logo-full-dark", "#14122b"]] as const) {
+    for (const [name, bg] of [["logo-full", "#ffffff"], ["logo-full-dark", "#123d32"]] as const) {
       const buf = await sharp(fs.readFileSync(brand(`${name}.svg`)), { density: 288 }).flatten({ background: bg }).png().toBuffer();
       fs.writeFileSync(path.join(previewDir, `${name}.png`), buf);
     }
