@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import { useState } from "react";
 import type { AgentTrace, QlooCall } from "@/lib/schemas";
 import { AGENT_INFO } from "@/lib/trace";
@@ -56,7 +57,7 @@ function AgentCard({ trace, defaultOpen }: { trace: AgentTrace; defaultOpen: boo
 
   return (
     <li
-      className={`rounded-2xl border bg-card shadow-sm transition-colors ${
+      className={`rounded-2xl border bg-card shadow-[var(--shadow-card)] transition-colors ${
         trace.status === "running" ? "border-brand ring-2 ring-brand/15" : trace.status === "failed" ? "border-bad/50" : "border-line"
       }`}
     >
@@ -77,7 +78,7 @@ function AgentCard({ trace, defaultOpen }: { trace: AgentTrace; defaultOpen: boo
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="font-display text-base font-bold">{trace.agent}</span>
+            <span className="font-display text-lg font-semibold">{trace.agent}</span>
             <StatusBadge status={trace.status} />
             {trace.durationMs !== undefined && trace.status === "completed" && (
               <span className="text-xs text-muted">{trace.durationMs < 1000 ? `${trace.durationMs} ms` : `${(trace.durationMs / 1000).toFixed(1)} s`}</span>
@@ -95,6 +96,12 @@ function AgentCard({ trace, defaultOpen }: { trace: AgentTrace; defaultOpen: boo
                     ? latestNote
                     : info.role}
           </span>
+          {trace.status === "running" && !latestNote && (
+            <span aria-hidden="true" className="mt-2 block space-y-1.5">
+              <span className="skeleton block h-2.5 w-3/4" />
+              <span className="skeleton block h-2.5 w-1/2" />
+            </span>
+          )}
         </span>
         <span aria-hidden="true" className={`mt-1 text-muted transition-transform ${open ? "rotate-180" : ""}`}>
           ▾
@@ -176,13 +183,17 @@ export function AgentPipeline({ traces, running }: { traces: AgentTrace[]; runni
     <section aria-labelledby="pipeline-heading">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h2 id="pipeline-heading" className="text-2xl font-bold">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-spark-dark">Four agents, one recommendation</p>
+          <h2 id="pipeline-heading" className="text-3xl font-semibold">
             Agent workflow
           </h2>
           <p className="mt-1 text-sm text-muted" aria-live="polite">
             {running ? `Working… ${done} of 4 agents finished.` : `${done} of 4 agents finished · ${totalCalls} Qloo calls in total.`}
           </p>
         </div>
+      </div>
+      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-line/70" role="progressbar" aria-label="Agents finished" aria-valuemin={0} aria-valuemax={4} aria-valuenow={done}>
+        <motion.div className="h-full rounded-full bg-gradient-to-r from-brand to-series-1" initial={false} animate={{ width: `${(done / 4) * 100}%` }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} />
       </div>
 
       {/* Compact flow strip: who hands what to whom. */}

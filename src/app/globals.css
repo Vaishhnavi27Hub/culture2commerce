@@ -1,23 +1,35 @@
 @import "tailwindcss";
 
-/* Brand tokens for Culture2Commerce (Team VKY). */
+/*
+ * Brand tokens for Culture2Commerce (Team VKY).
+ * Warm ivory paper, deep forest green for primary actions and positive signals,
+ * coral for highlights, lavender for AI-written insight, sage for supporting fills.
+ */
 @theme {
-  --color-ink: #14122b;
-  --color-muted: #595770;
-  --color-paper: #fbfaf7;
+  --color-ink: #1d2925;
+  --color-muted: #56645f;
+  --color-paper: #fff8f0;
   --color-card: #ffffff;
-  --color-line: #e4e1d8;
+  --color-line: #eadfd1;
 
-  --color-brand: #5b3df5;
-  --color-brand-dark: #3f27c2;
-  --color-brand-soft: #efebff;
+  /* Primary: forest green. "brand-soft" is the sage tint used for selected states. */
+  --color-brand: #123d32;
+  --color-brand-dark: #0b2a22;
+  --color-brand-soft: #dce9dc;
 
-  --color-spark: #ff7a3d;
-  --color-spark-dark: #b8460f;
-  --color-spark-soft: #fff0e8;
+  /* Highlight: coral. "spark-dark" is the text-safe shade. */
+  --color-spark: #ff735c;
+  --color-spark-dark: #b13d28;
+  --color-spark-soft: #ffe9e3;
 
-  --color-leaf: #0b7a5c;
-  --color-leaf-soft: #e3f6ef;
+  /* AI-generated insight. */
+  --color-lavender: #e9e2ff;
+  --color-lavender-ink: #4a3a8c;
+
+  --color-sage: #dce9dc;
+
+  --color-leaf: #1a6b4f;
+  --color-leaf-soft: #e1f2e8;
 
   --color-warn: #8a5300;
   --color-warn-soft: #fff4d6;
@@ -25,12 +37,19 @@
   --color-bad: #b42318;
   --color-bad-soft: #fdecea;
 
+  /* Chart series: validated for colour-vision deficiency (all pairs). Amber needs visible labels. */
+  --color-series-1: #1f8a6a;
+  --color-series-2: #6b5bd2;
+  --color-series-3: #e89a2c;
+
+  --shadow-card: 0 1px 2px rgb(60 40 20 / 0.04), 0 4px 16px -4px rgb(60 40 20 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(60 40 20 / 0.05), 0 16px 36px -12px rgb(60 40 20 / 0.18);
 }
 
 /* Fonts are loaded by next/font in layout.tsx and exposed as CSS variables. */
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-display: var(--font-space-grotesk), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
 }
 
 html {
@@ -47,13 +66,85 @@ h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+  font-optical-sizing: auto;
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-brand);
+  outline: 3px solid var(--color-spark);
   outline-offset: 2px;
   border-radius: 6px;
+}
+
+/* Reusable surfaces. */
+@utility card {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-card);
+}
+
+@utility lift {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.875rem;
+  background: var(--color-brand);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 6px 18px -8px rgb(18 61 50 / 0.6);
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+  &:hover {
+    background: var(--color-brand-dark);
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: none;
+  }
+  &:disabled {
+    opacity: 0.6;
+    transform: none;
+  }
+}
+
+@utility btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.875rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-card);
+  color: var(--color-ink);
+  font-weight: 600;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease;
+  &:hover {
+    border-color: var(--color-brand);
+  }
+  &:active {
+    transform: scale(0.98);
+  }
+  &:disabled {
+    opacity: 0.4;
+  }
 }
 
 @keyframes c2c-pulse {
@@ -85,23 +176,82 @@ h3 {
   animation: c2c-rise 0.35s ease-out both;
 }
 
+@keyframes c2c-shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-line) 25%, #f5ede2 50%, var(--color-line) 75%);
+  background-size: 200% 100%;
+  animation: c2c-shimmer 1.4s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+/* Hero miniature city: gentle float. Pointer parallax is applied in JS. */
+@keyframes c2c-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: c2c-float 7s ease-in-out infinite;
+}
+
+@keyframes c2c-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.animate-ping-soft {
+  animation: c2c-ping 2.2s ease-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-status,
-  .animate-rise {
+  .animate-rise,
+  .animate-float,
+  .animate-ping-soft,
+  .skeleton {
     animation: none;
   }
   html {
     scroll-behavior: auto;
   }
+  .lift:hover {
+    transform: none;
+  }
 }
 
-/* Printing the pilot plan: hide navigation and controls, keep the plan. */
+/* Printing the pilot plan: hide navigation and controls, keep the plan, open collapsed details. */
 @media print {
   .no-print {
     display: none !important;
   }
   body {
     background: #fff;
+  }
+  /* Scroll reveals may not have run: show everything in its final state. */
+  [style*="opacity"] {
+    opacity: 1 !important;
+  }
+  [style*="transform"]:not([style*="preserve-3d"]) {
+    transform: none !important;
   }
   .print-plain {
     border: none !important;
