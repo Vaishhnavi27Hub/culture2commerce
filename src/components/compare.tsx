@@ -212,7 +212,7 @@ function LocalityMap({ localities, selected, onSelect, best }: { localities: Loc
                 className="group absolute -translate-x-1/2 -translate-y-full rounded-full"
               >
                 <span className="relative flex flex-col items-center">
-                  <span className={`relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-card shadow-lg transition-transform group-hover:scale-110 ${isSel ? "scale-110 bg-spark text-[#1d2925]" : lead ? "bg-brand text-on-brand" : "bg-card text-brand"}`}>
+                  <span className={`relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-card shadow-lg transition-transform group-hover:scale-110 ${isSel ? "scale-110 bg-spark text-[#2b2540]" : lead ? "bg-brand text-on-brand" : "bg-card text-brand"}`}>
                     {isSel && <span aria-hidden="true" className="animate-ping-soft absolute inset-0 rounded-full bg-spark" />}
                     <span className="relative">
                       <PinIcon />

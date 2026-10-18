@@ -11,8 +11,8 @@ import { EmptyState } from "./ui";
 
 /** SVG text and grid colours per theme (Recharts takes plain colour values). */
 const PALETTE = {
-  light: { axis: "#56645f", grid: "#efe6da", ink: "#1d2925", marker: "#b7a998" },
-  dark: { axis: "#b5c4bc", grid: "#2b3d35", ink: "#f3f5f0", marker: "#5d7268" },
+  light: { axis: "#625c7a", grid: "#ece4f5", ink: "#2b2540", marker: "#c4b6dc" },
+  dark: { axis: "#bdb6d2", grid: "#3a3350", ink: "#f4f1fa", marker: "#6d6390" },
 } as const;
 
 function useWidth<T extends HTMLElement>() {
@@ -84,7 +84,7 @@ export function HBarChart({ data, domain, format, valueName, highlightLabel }: {
           <XAxis type="number" hide domain={domain ?? [0, "auto"]} />
           <YAxis type="category" dataKey="label" width={yWidth} tickLine={false} axisLine={false} tick={{ fill: AXIS, fontSize: 12 }} tickFormatter={(v: string) => truncate(v, maxChars)} />
           <Tooltip
-            cursor={{ fill: "rgba(127,140,133,0.08)" }}
+            cursor={{ fill: "rgba(140,120,200,0.08)" }}
             content={({ active, payload }) => {
               const d = active && payload?.[0] ? (payload[0].payload as HBarDatum) : undefined;
               if (!d) return null;
@@ -140,7 +140,7 @@ export function GroupedHBarChart<K extends string>({
           <YAxis type="category" dataKey="label" width={yWidth} tickLine={false} axisLine={false} tick={{ fill: INK, fontSize: 12, fontWeight: 600 }} tickFormatter={(v: string) => truncate(v, Math.floor(yWidth / 7))} />
           {marker && <ReferenceLine x={marker.value} stroke={MARKER} strokeDasharray="3 3" label={{ value: marker.label, position: "top", fill: AXIS, fontSize: 10 }} />}
           <Tooltip
-            cursor={{ fill: "rgba(127,140,133,0.08)" }}
+            cursor={{ fill: "rgba(140,120,200,0.08)" }}
             content={({ active, payload, label }) =>
               active && payload?.length ? (
                 <TooltipBox

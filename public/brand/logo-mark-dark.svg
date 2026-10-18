@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Culture2Commerce mark">
   <title>Culture2Commerce mark</title>
   <rect width="64" height="64" rx="15" fill="#ffffff"/>
-  <path d="M15 24 L32 12 L49 24" fill="none" stroke="#123d32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="15" cy="24" r="4" fill="#123d32"/>
-  <circle cx="49" cy="24" r="4" fill="#123d32"/>
-  <circle cx="32" cy="12" r="5.5" fill="#ff735c"/>
-  <path d="M11 30 H53 L50 37 H14 Z" fill="#ff735c"/>
-  <rect x="15" y="36" width="34" height="16" rx="3" fill="#123d32"/>
+  <path d="M15 24 L32 12 L49 24" fill="none" stroke="#5b4bc4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="15" cy="24" r="4" fill="#5b4bc4"/>
+  <circle cx="49" cy="24" r="4" fill="#5b4bc4"/>
+  <circle cx="32" cy="12" r="5.5" fill="#ff9db5"/>
+  <path d="M11 30 H53 L50 37 H14 Z" fill="#ff9db5"/>
+  <rect x="15" y="36" width="34" height="16" rx="3" fill="#5b4bc4"/>
   <rect x="27" y="41" width="10" height="11" rx="2" fill="#ffffff"/>
 </svg>

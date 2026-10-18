@@ -1,66 +1,80 @@
 @import "tailwindcss";
 
 /*
- * Brand tokens for Culture2Commerce (Team VKY).
- * Warm ivory paper, deep forest green for primary actions and positive signals,
- * coral for highlights, lavender for AI-written insight, sage for supporting fills.
+ * Brand tokens for Culture2Commerce (Team VKY): a pastel palette.
+ * Pastel lavender, peach, mint, sky and pink for surfaces and accents; a deep violet carries
+ * text, buttons and links so contrast stays at WCAG AA. Token names are unchanged from the
+ * earlier palette ("brand", "spark", "leaf", ...), so every component follows automatically.
  */
 @theme {
-  --color-ink: #1d2925;
-  --color-muted: #56645f;
-  --color-paper: #fff8f0;
+  --color-ink: #2b2540;
+  --color-muted: #625c7a;
+  --color-paper: #fbf8ff;
   --color-card: #ffffff;
-  --color-line: #eadfd1;
+  --color-line: #ebe3f6;
 
-  /* Primary: forest green. "brand-soft" is the sage tint used for selected states. */
-  --color-brand: #123d32;
-  --color-brand-dark: #0b2a22;
-  --color-brand-soft: #dce9dc;
+  /* Primary: deep violet (6.3:1 on white). "brand-soft" is the lavender tint for selected states. */
+  --color-brand: #5b4bc4;
+  --color-brand-dark: #4636a8;
+  --color-brand-soft: #ece7ff;
 
-  /* Highlight: coral. "spark-dark" is the text-safe shade. */
-  --color-spark: #ff735c;
-  --color-spark-dark: #b13d28;
-  --color-spark-soft: #ffe9e3;
+  /* Highlight: pastel pink. "spark-dark" is the text-safe shade. */
+  --color-spark: #ff9db5;
+  --color-spark-dark: #b8365f;
+  --color-spark-soft: #ffe8ef;
 
   /* AI-generated insight. */
-  --color-lavender: #e9e2ff;
-  --color-lavender-ink: #4a3a8c;
+  --color-lavender: #ece6ff;
+  --color-lavender-ink: #4b3ba6;
 
-  --color-sage: #dce9dc;
+  /* Mint, for supporting fills. */
+  --color-sage: #dcf5ea;
 
-  --color-leaf: #1a6b4f;
-  --color-leaf-soft: #e1f2e8;
+  --color-leaf: #1d7556;
+  --color-leaf-soft: #ddf5e9;
 
   --color-warn: #8a5300;
-  --color-warn-soft: #fff4d6;
+  --color-warn-soft: #fff3cf;
 
   --color-bad: #b42318;
-  --color-bad-soft: #fdecea;
+  --color-bad-soft: #fdecec;
 
-  /* Informational states. */
-  --color-info: #245a85;
-  --color-info-soft: #e3eef8;
+  /* Informational states: sky. */
+  --color-info: #2f5d9a;
+  --color-info-soft: #e1edff;
 
-  /* Text on top of brand, leaf or bad fills (white in light mode, deep green in dark mode). */
+  /* Peach and butter, decorative only (never behind small text without a darker ink). */
+  --color-peach: #ffe1d2;
+  --color-butter: #fff1c2;
+  --color-sky: #dcebff;
+
+  /* Text on top of brand, leaf or bad fills. */
   --color-on-brand: #ffffff;
 
-  /* Dark feature surfaces (winner card, comparison header): dark green in both themes. */
-  --color-hero: #123d32;
+  /* Feature surfaces with white text (winner card, footer): deep violet, with a gradient below. */
+  --color-hero: #3d2f88;
 
   /* Nested or selected panels. */
-  --color-elevated: #fffaf3;
+  --color-elevated: #faf7ff;
 
   /* Locality map background and grid. */
-  --color-map: #f4efe4;
-  --color-map-grid: #e6dccd;
+  --color-map: #f5f1ff;
+  --color-map-grid: #e5dcf5;
 
   /* Chart series: validated for colour-vision deficiency (all pairs). Amber needs visible labels. */
   --color-series-1: #1f8a6a;
   --color-series-2: #6b5bd2;
   --color-series-3: #e89a2c;
 
-  --shadow-card: 0 1px 2px rgb(60 40 20 / 0.04), 0 4px 16px -4px rgb(60 40 20 / 0.08);
-  --shadow-lift: 0 2px 4px rgb(60 40 20 / 0.05), 0 16px 36px -12px rgb(60 40 20 / 0.18);
+  --shadow-card: 0 1px 2px rgb(70 50 140 / 0.05), 0 6px 20px -6px rgb(70 50 140 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(70 50 140 / 0.06), 0 18px 40px -12px rgb(70 50 140 / 0.24);
+
+  /* Backdrop mesh colours (the drifting pastel blobs behind every page). */
+  --blob-1: #ffe1d2;
+  --blob-2: #e6ddff;
+  --blob-3: #d6f4e6;
+  --blob-4: #dcebff;
+  --blob-5: #ffdcea;
 }
 
 /* Fonts are loaded by next/font in layout.tsx and exposed as CSS variables. */
@@ -76,42 +90,52 @@
  */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-ink: #f3f5f0;
-  --color-muted: #b5c4bc;
-  --color-paper: #101a17;
-  --color-card: #192621;
-  --color-elevated: #22332c;
-  --color-line: #35483f;
+  --color-ink: #f4f1fa;
+  --color-muted: #bdb6d2;
+  --color-paper: #15121f;
+  --color-card: #1f1a2d;
+  --color-elevated: #29233b;
+  --color-line: #3a3350;
 
-  --color-brand: #76d6af;
-  --color-brand-dark: #9be3c6;
-  --color-brand-soft: #233d31;
+  --color-brand: #b9a9ff;
+  --color-brand-dark: #d0c5ff;
+  --color-brand-soft: #2e2750;
 
-  --color-spark: #ff8b78;
-  --color-spark-dark: #ff8b78;
-  --color-spark-soft: #40251f;
+  --color-spark: #ff9db8;
+  --color-spark-dark: #ff9db8;
+  --color-spark-soft: #3d2231;
 
-  --color-lavender: #2b2645;
-  --color-lavender-ink: #c4b5fd;
-  --color-sage: #233d31;
+  --color-lavender: #2b2547;
+  --color-lavender-ink: #cbbfff;
+  --color-sage: #1d3a30;
 
-  --color-leaf: #76d6af;
-  --color-leaf-soft: #1f3a2f;
+  --color-leaf: #82deb7;
+  --color-leaf-soft: #1c362c;
 
   --color-warn: #f5c56a;
   --color-warn-soft: #3a2f15;
   --color-bad: #ff8b85;
   --color-bad-soft: #3d201e;
-  --color-info: #8ac8f5;
-  --color-info-soft: #1c3142;
+  --color-info: #9cc8ff;
+  --color-info-soft: #1d2b45;
 
-  --color-on-brand: #0b2a22;
-  --color-hero: #1d3a30;
-  --color-map: #16221e;
-  --color-map-grid: #2a3a33;
+  --color-peach: #3d2a24;
+  --color-butter: #3a3219;
+  --color-sky: #1d2b45;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px -4px rgb(0 0 0 / 0.35);
-  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.3), 0 16px 36px -12px rgb(0 0 0 / 0.5);
+  --color-on-brand: #1c1438;
+  --color-hero: #2c2257;
+  --color-map: #1b1728;
+  --color-map-grid: #2e2842;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px -4px rgb(0 0 0 / 0.4);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.3), 0 16px 36px -12px rgb(0 0 0 / 0.55);
+
+  --blob-1: rgb(255 157 184 / 0.13);
+  --blob-2: rgb(185 169 255 / 0.16);
+  --blob-3: rgb(130 222 183 / 0.1);
+  --blob-4: rgb(156 200 255 / 0.11);
+  --blob-5: rgb(255 200 160 / 0.08);
 }
 
 :root {
@@ -148,6 +172,147 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+/* Pastel mesh behind every page: soft blobs that drift slowly. Purely decorative. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -15%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 32% at 12% 18%, var(--blob-1), transparent 70%),
+    radial-gradient(34% 30% at 88% 12%, var(--blob-2), transparent 70%),
+    radial-gradient(40% 38% at 75% 82%, var(--blob-3), transparent 70%),
+    radial-gradient(30% 30% at 18% 86%, var(--blob-4), transparent 70%),
+    radial-gradient(26% 24% at 52% 48%, var(--blob-5), transparent 70%);
+  animation: c2c-drift 36s ease-in-out infinite alternate;
+}
+
+@keyframes c2c-drift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, -2%, 0) rotate(6deg) scale(1.05);
+  }
+  100% {
+    transform: translate3d(-3%, 2%, 0) rotate(-4deg) scale(1);
+  }
+}
+
+/* Feature surfaces get a deep violet-to-plum gradient over the hero colour. */
+.bg-hero {
+  background-image:
+    radial-gradient(60% 80% at 100% 0%, rgb(255 157 181 / 0.28), transparent 60%),
+    radial-gradient(50% 70% at 0% 100%, rgb(130 222 183 / 0.16), transparent 60%),
+    linear-gradient(135deg, #3d2f88 0%, #5a3a9a 55%, #7d4590 100%);
+}
+:root[data-theme="dark"] .bg-hero {
+  background-image:
+    radial-gradient(60% 80% at 100% 0%, rgb(255 157 184 / 0.16), transparent 60%),
+    radial-gradient(50% 70% at 0% 100%, rgb(130 222 183 / 0.08), transparent 60%),
+    linear-gradient(135deg, #261d4f 0%, #33255f 55%, #45284f 100%);
+}
+
+/* Animated pastel gradient text (the hero headline accent). Darker stops keep contrast on light. */
+.text-gradient {
+  background: linear-gradient(100deg, #b8365f 0%, #7a45c9 35%, #2f7dc4 65%, #b8365f 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: c2c-hue 9s ease-in-out infinite alternate;
+}
+:root[data-theme="dark"] .text-gradient {
+  background-image: linear-gradient(100deg, #ff9db8 0%, #c6b6ff 35%, #9cdcff 65%, #ff9db8 100%);
+}
+@keyframes c2c-hue {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+/* Cursor effects (see cursor-effects.tsx): a playful wiggle when the pointer reaches a button. */
+@keyframes c2c-wiggle {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  20% {
+    rotate: -4deg;
+  }
+  45% {
+    rotate: 3.5deg;
+  }
+  70% {
+    rotate: -2deg;
+  }
+  85% {
+    rotate: 1deg;
+  }
+}
+.fx-wiggle {
+  animation: c2c-wiggle 0.55s ease-in-out;
+}
+/* Cursor layers: hidden until a mouse moves (the class is added by cursor-effects.tsx). */
+.cursor-fx > * {
+  position: fixed;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+.fx-active .cursor-fx > * {
+  opacity: 1;
+}
+.cursor-glow {
+  z-index: -1;
+  width: 520px;
+  height: 520px;
+  border-radius: 9999px;
+  background:
+    radial-gradient(circle at 35% 35%, rgb(255 157 181 / 0.55), transparent 55%),
+    radial-gradient(circle at 65% 60%, rgb(185 169 255 / 0.55), transparent 55%),
+    radial-gradient(circle at 50% 50%, rgb(143 220 184 / 0.35), transparent 65%);
+  filter: blur(10px);
+  will-change: transform, filter;
+}
+:root[data-theme="dark"] .fx-active .cursor-glow {
+  opacity: 0.35;
+}
+.cursor-sparkles {
+  z-index: 60;
+}
+.cursor-ring {
+  z-index: 61;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  border: 2px solid color-mix(in srgb, var(--color-brand) 55%, transparent);
+  background: transparent;
+  transition:
+    opacity 400ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease;
+  will-change: transform;
+}
+.cursor-ring[data-hover="true"] {
+  background: color-mix(in srgb, var(--color-spark) 22%, transparent);
+  border-color: color-mix(in srgb, var(--color-spark-dark) 55%, transparent);
+}
+
+.fx-magnetic {
+  transition:
+    translate 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 150ms ease,
+    filter 150ms ease,
+    box-shadow 150ms ease;
 }
 
 h1,
@@ -187,14 +352,17 @@ h1[tabindex="-1"]:focus-visible {
   box-shadow: var(--shadow-card);
 }
 
+/* Hover lift. On mouse devices the cursor effects also set --tilt-x/--tilt-y to tilt toward the pointer. */
 @utility lift {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateY(var(--lift-y, 0px));
   transition:
-    transform 180ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 180ms ease,
     border-color 180ms ease;
   &:hover {
-    transform: translateY(-2px);
+    --lift-y: -3px;
     box-shadow: var(--shadow-lift);
+    border-color: color-mix(in srgb, var(--color-brand) 30%, var(--color-line));
   }
 }
 
@@ -205,16 +373,18 @@ h1[tabindex="-1"]:focus-visible {
   gap: 0.5rem;
   border-radius: 0.875rem;
   background: var(--color-brand);
+  background-image: linear-gradient(120deg, var(--color-brand) 0%, color-mix(in srgb, var(--color-brand) 70%, var(--color-spark-dark)) 100%);
   color: var(--color-on-brand);
   font-weight: 600;
-  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--color-brand) 60%, transparent);
+  box-shadow: 0 8px 22px -8px color-mix(in srgb, var(--color-brand) 65%, transparent);
   transition:
     transform 150ms ease,
     background-color 150ms ease,
     box-shadow 150ms ease;
   &:hover {
-    background: var(--color-brand-dark);
+    filter: brightness(1.08) saturate(1.1);
     transform: translateY(-1px);
+    box-shadow: 0 12px 28px -10px color-mix(in srgb, var(--color-spark-dark) 55%, transparent);
   }
   &:active {
     transform: translateY(1px) scale(0.98);
@@ -340,30 +510,40 @@ h1[tabindex="-1"]:focus-visible {
   html {
     scroll-behavior: auto;
   }
+  .lift,
   .lift:hover {
     transform: none;
+  }
+  body::before,
+  .text-gradient,
+  .fx-wiggle {
+    animation: none;
   }
 }
 
 /* Printing the pilot plan: hide navigation and controls, keep the plan, open collapsed details. */
 @media print {
   :root[data-theme="dark"] {
-    --color-ink: #1d2925;
-    --color-muted: #56645f;
+    --color-ink: #2b2540;
+    --color-muted: #625c7a;
     --color-paper: #ffffff;
     --color-card: #ffffff;
-    --color-elevated: #fffaf3;
-    --color-line: #eadfd1;
-    --color-brand: #123d32;
-    --color-brand-soft: #dce9dc;
+    --color-elevated: #faf7ff;
+    --color-line: #ebe3f6;
+    --color-brand: #5b4bc4;
+    --color-brand-soft: #ece7ff;
     --color-on-brand: #ffffff;
+  }
+  body::before,
+  .cursor-fx {
+    display: none !important;
   }
   .no-print {
     display: none !important;
   }
   body {
     background: #fff;
-    color: #1d2925;
+    color: #2b2540;
   }
   /* Scroll reveals may not have run: show everything in its final state. */
   [style*="opacity"] {

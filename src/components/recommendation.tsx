@@ -363,7 +363,7 @@ function ScoreRing({ value }: { value: number }) {
           cy="50"
           r={r}
           fill="none"
-          stroke="#ff735c"
+          stroke="#ff9db5"
           strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={c}
@@ -489,7 +489,7 @@ export function WinnerCard({ result, winner, onOpenPlan }: { result: RunResult; 
 
           <div className="no-print mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
             {plan && (
-              <button type="button" onClick={onOpenPlan} className="inline-flex items-center justify-center gap-2 rounded-xl bg-spark px-5 py-3 text-sm font-bold text-[#1d2925] shadow-lg transition hover:-translate-y-px hover:brightness-105 active:translate-y-px">
+              <button type="button" onClick={onOpenPlan} className="inline-flex items-center justify-center gap-2 rounded-xl bg-spark px-5 py-3 text-sm font-bold text-[#2b2540] shadow-lg transition hover:-translate-y-px hover:brightness-105 active:translate-y-px">
                 View Pilot Plan <ArrowIcon />
               </button>
             )}
@@ -610,7 +610,7 @@ export function RankedOptions({
                     className={`w-full rounded-2xl border p-3.5 text-left transition-all ${selected ? "border-brand bg-brand-soft/70 shadow-sm" : "border-line bg-card hover:-translate-y-px hover:border-brand/50 hover:shadow-[var(--shadow-card)]"}`}
                   >
                     <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${o.id === result.winnerId ? "bg-spark text-[#1d2925]" : "bg-brand text-on-brand"}`}>{o.rank}</span>
+                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${o.id === result.winnerId ? "bg-spark text-[#2b2540]" : "bg-brand text-on-brand"}`}>{o.rank}</span>
                       <span className="font-semibold">
                         {o.conceptLabel} <span className="font-normal text-muted">in {o.locality}</span>
                       </span>

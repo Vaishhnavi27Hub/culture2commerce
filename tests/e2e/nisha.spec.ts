@@ -8,11 +8,18 @@ import { expect, test, type Page } from "@playwright/test";
  * save README screenshots.
  */
 const shotsDir = path.join(process.cwd(), "docs", "screenshots");
+// Screenshots are written once all tests finish, not during them: writing into the project while
+// `next dev` watches it can trigger a Fast Refresh rebuild mid-test and stall a page reload.
+const pendingShots: { name: string; png: Buffer }[] = [];
 const shoot = async (page: Page, name: string, fullPage = false) => {
   if (!process.env.C2C_SCREENSHOTS) return;
-  fs.mkdirSync(shotsDir, { recursive: true });
-  await page.screenshot({ path: path.join(shotsDir, name), fullPage });
+  pendingShots.push({ name, png: await page.screenshot({ fullPage }) });
 };
+test.afterAll(() => {
+  if (pendingShots.length === 0) return;
+  fs.mkdirSync(shotsDir, { recursive: true });
+  for (const shot of pendingShots.splice(0)) fs.writeFileSync(path.join(shotsDir, shot.name), shot.png);
+});
 
 /** Open a collapsed "Supporting analysis" section by its title. */
 const openSection = (page: Page, title: string | RegExp) => page.getByRole("button", { name: title }).first().click();
@@ -26,6 +33,7 @@ test("Nisha's example runs end to end on the offline fallback", async ({ page })
   await expect(page.getByRole("heading", { level: 1 })).toContainText("next big thing");
   await expect(page.getByRole("button", { name: "Try Nisha’s example" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Four agents, one clear next step" })).toBeVisible();
+  if (process.env.C2C_SCREENSHOTS) await page.waitForTimeout(1500); // let the hero entrance animation finish
   await shoot(page, "0-landing.png");
 
   // Discover Opportunity navigates to the dedicated input page.
@@ -162,7 +170,7 @@ test("the theme toggle switches, persists and avoids a flash on reload", async (
   await expect(html).toHaveAttribute("data-theme", "light");
   await page.getByRole("button", { name: "Switch to dark mode" }).click();
   await expect(html).toHaveAttribute("data-theme", "dark");
-  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(16, 26, 23)");
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(21, 18, 31)");
 
   // Persisted across pages and reloads, and set before first paint by the head script.
   await page.goto("/discover");
