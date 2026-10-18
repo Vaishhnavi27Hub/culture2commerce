@@ -32,12 +32,18 @@ See `docs/features.json` (single source of truth; `node scripts/progress.mjs lis
 - **Pastel theme and cursor effects (18 Oct, feature branch):** new pastel palette (light and
   dark), drifting backdrop, cursor glow, sparkles, magnetic buttons, card tilt; logos recoloured.
   See DECISIONS D37.
+- **Aurora theme, real map, new logo (18 Oct, feature branch):** reference-style dark theme
+  (default) with light variant, new hero with product preview, professional cursor effects
+  (spotlight, card glow, magnetic buttons), Leaflet + OpenStreetMap locality map, redrawn logos.
+  No Qloo calls used for this work. See DECISIONS D38.
 - **Pending:** team review and merge of the feature branch; deployment.
 
 ## Checks run (latest results)
 
 | Date | Command | Result |
 |---|---|---|
+| 18 Oct | Aurora theme + real map: lint, typecheck, `npm test` (202/202), `npm run test:e2e` (4/4 on three cold runs; now also checks map pins and pin selection) | Pass |
+| 18 Oct | Aurora theme, cursor effects and map in the browser (by hand, production build, sample data, 0 Qloo calls) | Hero, spotlight, card glow, map tiles, pins and pin selection confirmed; light and dark checked |
 | 18 Oct | Pastel theme + cursor effects: lint, typecheck, `npm test` (202/202), `npm run test:e2e` (4/4, three clean cold runs in a row) | Pass |
 | 18 Oct | Cursor effects in the browser (by hand, production build) | Glow, ring, magnetic button and wiggle confirmed; light and dark checked |
 | 18 Oct | `npm run lint` (feature branch) | Pass |

@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { localityLead, signed } from "@/lib/explain";
@@ -7,7 +8,7 @@ import { inr, score } from "@/lib/format";
 import type { LocalityProfile, RunResult, ScoredOption } from "@/lib/schemas";
 import { SourceBadge, VerdictBadge } from "./badges";
 import { ChartFrame, GroupedHBarChart, LegendRow, SERIES } from "./charts";
-import { PinIcon, Segmented } from "./ui";
+import { Segmented } from "./ui";
 
 // ---------------------------------------------------------------------------
 // Without Qloo vs With Qloo
@@ -158,86 +159,11 @@ const METRICS = [
   { key: "room", label: "Room vs competitors", help: "Higher means fewer similar places within 2 km" },
 ] as const;
 
-/** Places localities by their real coordinates (equirectangular, fine at city scale). No street map is drawn. */
-function LocalityMap({ localities, selected, onSelect, best }: { localities: LocalityProfile[]; selected: string; onSelect: (name: string) => void; best: (name: string) => ScoredOption | undefined }) {
-  const located = localities.filter((l) => l.lat !== undefined && l.lon !== undefined);
-  if (located.length === 0) {
-    return (
-      <div className="flex h-full min-h-48 items-center justify-center rounded-2xl border border-dashed border-line bg-paper/60 p-4 text-center text-sm text-muted">
-        Qloo returned no coordinates for these areas, so they cannot be placed on a map.
-      </div>
-    );
-  }
-  const lats = located.map((l) => l.lat!);
-  const lons = located.map((l) => l.lon!);
-  const midLat = (Math.max(...lats) + Math.min(...lats)) / 2;
-  const kx = Math.cos((midLat * Math.PI) / 180);
-  const spanX = (Math.max(...lons) - Math.min(...lons)) * kx;
-  const spanY = Math.max(...lats) - Math.min(...lats);
-  const span = Math.max(spanX, spanY, 0.01);
-  const pos = (l: LocalityProfile) => ({
-    x: 50 + (((l.lon! - Math.min(...lons)) * kx - spanX / 2) / span) * 52,
-    y: 50 - ((l.lat! - Math.min(...lats) - spanY / 2) / span) * 52,
-  });
-  const km = span * 111;
-  const scaleKm = km > 8 ? 5 : km > 3 ? 2 : 1;
-  const scalePct = (scaleKm / km) * 52;
-  const winnerScore = Math.max(...located.map((l) => best(l.name)?.scores.final ?? 0));
-
-  return (
-    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-line bg-map">
-      <div aria-hidden="true" className="absolute inset-0 opacity-60" style={{ backgroundImage: "linear-gradient(var(--color-map-grid) 1px, transparent 1px), linear-gradient(90deg, var(--color-map-grid) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
-      <div aria-hidden="true" className="absolute -left-10 top-1/4 h-40 w-56 rounded-full bg-sage/70 blur-2xl" />
-      <div aria-hidden="true" className="absolute bottom-0 right-6 h-32 w-40 rounded-full bg-lavender/60 blur-2xl" />
-      <ul className="absolute inset-0">
-        {located.map((l, i) => {
-          const p = pos(l);
-          const top = best(l.name);
-          const isSel = selected === l.name;
-          const lead = top !== undefined && top.scores.final === winnerScore;
-          return (
-            <motion.li
-              key={l.name}
-              className="absolute"
-              style={{ left: `${p.x}%`, top: `${p.y}%` }}
-              initial={{ opacity: 0, scale: 0.6, y: -10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 380, damping: 22, delay: 0.1 + i * 0.1 }}
-            >
-              <button
-                type="button"
-                onClick={() => onSelect(l.name)}
-                aria-pressed={isSel}
-                aria-label={`${l.name}${top ? `, best idea ${top.conceptLabel}, score ${score(top.scores.final)}` : ", nothing fits the budget"}`}
-                className="group absolute -translate-x-1/2 -translate-y-full rounded-full"
-              >
-                <span className="relative flex flex-col items-center">
-                  <span className={`relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-card shadow-lg transition-transform group-hover:scale-110 ${isSel ? "scale-110 bg-spark text-[#2b2540]" : lead ? "bg-brand text-on-brand" : "bg-card text-brand"}`}>
-                    {isSel && <span aria-hidden="true" className="animate-ping-soft absolute inset-0 rounded-full bg-spark" />}
-                    <span className="relative">
-                      <PinIcon />
-                    </span>
-                  </span>
-                  <span className={`mt-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm ${isSel ? "bg-hero text-white" : "bg-card/95 text-ink"}`}>
-                    {l.name}
-                    {top && <span className="ml-1 tabular-nums opacity-70">{score(top.scores.final)}</span>}
-                  </span>
-                </span>
-              </button>
-            </motion.li>
-          );
-        })}
-      </ul>
-      {located.length > 1 && (
-        <div className="absolute bottom-2 left-3 text-[10px] text-muted" aria-hidden="true">
-          <span className="block h-1 border-x border-b border-muted" style={{ width: `${scalePct}%`, minWidth: 24 }} />
-          about {scaleKm} km
-        </div>
-      )}
-      <p className="absolute bottom-2 right-3 text-[10px] text-muted">Positions from Qloo coordinates · not a street map</p>
-    </div>
-  );
-}
+/** Real street map (Leaflet), loaded only in the browser and only when this section renders. */
+const LocalityMap = dynamic(() => import("./locality-map").then((m) => m.LocalityMap), {
+  ssr: false,
+  loading: () => <div className="skeleton aspect-[4/3] w-full rounded-2xl" aria-label="Loading map" />,
+});
 
 function LocalityCard({ l, top }: { l: LocalityProfile; top: ScoredOption | undefined }) {
   return (

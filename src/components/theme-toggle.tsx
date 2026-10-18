@@ -5,7 +5,7 @@ import { applyTheme, readTheme, subscribeTheme, type Theme } from "@/lib/theme";
 
 /** Current theme, kept in sync with <html data-theme>. Renders "light" on the server. */
 export function useTheme(): Theme {
-  return useSyncExternalStore(subscribeTheme, readTheme, () => "light");
+  return useSyncExternalStore(subscribeTheme, readTheme, () => "dark");
 }
 
 function SunIcon() {

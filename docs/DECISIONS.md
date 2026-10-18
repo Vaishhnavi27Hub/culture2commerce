@@ -235,3 +235,19 @@ prefers-reduced-motion; the native cursor is never hidden, the layers ignore poi
 and one animation frame loop runs only while something is moving. Logos and icons were
 recoloured to match. e2e screenshots are written after the tests finish, because writing into
 the project during a `next dev` run triggered a Fast Refresh rebuild that stalled a reload.
+
+## D38. Aurora theme, professional pointer effects and a real map
+Replaces D37's pastel look at the team's request, matching a reference design: a near-black
+canvas lit by teal and violet glows, white headings in Plus Jakarta Sans, a lavender-to-sky
+gradient highlight, white pill buttons and violet glass cards. Dark is the default on first
+visit (the storage key moved to `c2c:theme-v2` so old choices do not carry over); light mode
+stays available through the toggle. The landing hero is now a centred headline with a product
+preview (an example report and floating stat cards, labelled illustrative) instead of the CSS
+city. Pointer effects were reduced to what B2B product sites use: a spotlight revealing a faint
+dot grid around the cursor, card edges and surfaces that light up under the pointer, and buttons
+that lean a few pixels toward it; sparkles, confetti, the cursor ring, wiggles and tilts were
+removed. The locality "map" is now a real Leaflet street map: standard OpenStreetMap tiles (free,
+no key, attribution shown; CARTO tiles were tried but now require a key), recoloured by a CSS
+filter in dark mode. Pins sit at Qloo's coordinates with the 2 km competitor radius drawn around
+each; clicking a pin selects the area. No Qloo calls were added. Logos and icons were redrawn
+as a gradient tile with a dark market-stall glyph.

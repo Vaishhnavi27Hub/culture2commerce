@@ -74,7 +74,7 @@ export function SiteHeader() {
   const inJourney = STEPS.some((s) => pathname.startsWith(s.href));
   const source = result?.qlooSource ?? config.qlooStatus;
   return (
-    <header className="no-print sticky top-0 z-30 border-b border-line/70 bg-paper/85 backdrop-blur-md">
+    <header className="no-print sticky top-0 z-30 border-b border-line/60 bg-paper/70 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-2.5 sm:gap-3 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2 rounded-lg" aria-label={`${APP_NAME} home`}>
           {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo, swapped for dark mode by CSS */}
@@ -100,6 +100,11 @@ export function SiteHeader() {
         )}
 
         <div className="flex shrink-0 items-center gap-2">
+          {!inJourney && (
+            <Link href="/discover" className="hidden rounded-full border border-ink/25 px-4 py-1.5 text-sm font-semibold text-ink transition-colors hover:border-brand hover:text-brand md:inline-flex">
+              Get started
+            </Link>
+          )}
           <span className="hidden lg:inline-flex">
             <RunSourceBadge source={source} />
           </span>

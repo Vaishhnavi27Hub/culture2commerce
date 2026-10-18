@@ -73,6 +73,9 @@ test("Nisha's example runs end to end on the offline fallback", async ({ page })
 
   await openSection(page, /Locality analysis/);
   await expect(page.getByRole("heading", { name: "How the answer changes by locality" })).toBeVisible();
+  await expect(page.locator(".c2c-map .c2c-pin")).toHaveCount(3);
+  await page.getByRole("button", { name: /^Jayanagar, best idea/ }).click();
+  await expect(page.locator(".c2c-pin.is-selected")).toContainText("Jayanagar");
 
   // The over-budget coffee pop-up is listed as rejected, with its reason.
   await openSection(page, /Compare other opportunities/);
@@ -163,27 +166,25 @@ test("the partner example compares both approaches and drafts outreach messages"
   expect(errors).toEqual([]);
 });
 
-test("the theme toggle switches, persists and avoids a flash on reload", async ({ page }) => {
+test("the theme starts dark, switches, persists and avoids a flash on reload", async ({ page }) => {
+  // First visit: the dark "aurora" theme, whatever the OS preference.
   await page.emulateMedia({ colorScheme: "light" });
-  await page.goto("/");
-  const html = page.locator("html");
-  await expect(html).toHaveAttribute("data-theme", "light");
-  await page.getByRole("button", { name: "Switch to dark mode" }).click();
-  await expect(html).toHaveAttribute("data-theme", "dark");
-  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(21, 18, 31)");
-
-  // Persisted across pages and reloads, and set before first paint by the head script.
   await page.goto("/discover");
+  const html = page.locator("html");
   await expect(html).toHaveAttribute("data-theme", "dark");
-  await expect(page.getByRole("button", { name: "Switch to light mode" })).toBeVisible();
-
-  // The OS preference applies only until the user chooses.
-  await page.evaluate(() => localStorage.clear());
-  await page.emulateMedia({ colorScheme: "dark" });
-  await page.reload();
-  await expect(html).toHaveAttribute("data-theme", "dark");
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(7, 7, 13)");
   await expect(page.getByRole("button", { name: "Try Nisha’s example" })).toBeVisible();
   await shoot(page, "7-dark-discover.png");
+
+  // Switch to light; the choice persists across pages and reloads (set before first paint).
+  await page.getByRole("button", { name: "Switch to light mode" }).click();
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(246, 245, 251)");
+  await page.goto("/");
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await page.reload();
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await expect(page.getByRole("button", { name: "Switch to dark mode" })).toBeVisible();
 });
 
 test("pages fit a phone screen and keep the theme toggle reachable", async ({ page }) => {

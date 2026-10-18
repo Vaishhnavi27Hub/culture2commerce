@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 import { DISCLAIMER, TEAM_CREDIT } from "@/lib/brand";
 import { AgentPipeline } from "./agent-pipeline";
 import { LocalityCompare, WithWithoutQloo } from "./compare";
-import { CityHero, HeroHeadline } from "./hero";
+import { LandingHero } from "./hero";
 import { InputForm } from "./input-form";
 import { CollabCalculator, ComparisonPanel, NeighbourhoodPanel, PartnerList, PartnerStrategyCard, PricingPanel } from "./partners";
 import { PartnerPlanView, PilotPlanView } from "./pilot-plan";
@@ -78,25 +78,23 @@ export function LandingPage() {
   const { config } = useRun();
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
-      <CityHero discoverHref="/discover" learnHref="#how-it-works">
-        <HeroHeadline />
-      </CityHero>
+      <LandingHero discoverHref="/discover" learnHref="#how-it-works" />
 
-      <section id="how-it-works" aria-labelledby="how-heading" className="mt-6 scroll-mt-24 sm:mt-10">
+      <section id="how-it-works" aria-labelledby="how-heading" className="mt-10 scroll-mt-24 sm:mt-16">
         <Reveal>
           <SectionHeading id="how-heading" eyebrow="How it works" title="Four agents, one clear next step" subtitle="Each agent hands its findings to the next, so you end with one opportunity and a plan to test it." />
         </Reveal>
         <Stagger as="ol" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((s, i) => (
             <StaggerItem as="li" key={s.title}>
-              <div className="card lift relative h-full p-5">
+              <div className="card card-violet lift relative h-full p-5">
                 <div className="flex items-center gap-2">
                   <span aria-hidden="true" className={`flex h-9 w-9 items-center justify-center rounded-full ${s.tone}`}>
                     {s.icon}
                   </span>
                   <span className="text-xs font-bold uppercase tracking-wider text-muted">Agent {i + 1}</span>
                 </div>
-                <p className="mt-3 font-display text-xl font-semibold">{s.title}</p>
+                <p className="mt-4 font-display text-xl font-bold">{s.title}</p>
                 <p className="mt-1 text-sm text-muted">{s.text}</p>
                 {i < STEPS.length - 1 && (
                   <span aria-hidden="true" className="absolute -right-2.5 top-1/2 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-card text-xs text-muted lg:flex">
