@@ -343,11 +343,22 @@
       "notes": "Branch feature/premium-ui-ux-redesign (not merged)."
     },
     {
-      "id": "pastel-theme-cursor-fx",
-      "title": "Pastel palette and cursor effects (glow, sparkles, magnetic buttons, card tilt)",
-      "status": "implemented",
-      "tests": [],
-      "notes": "Branch feature/premium-ui-ux-redesign. Checked by hand in the browser; effects are off for touch and reduced motion. e2e covers the pages with the new theme."
+      "id": "aurora-theme-cursor-fx",
+      "title": "Aurora theme (dark default, light variant), spotlight and card-glow cursor effects, new logo",
+      "status": "tested",
+      "tests": [
+        "tests/e2e/nisha.spec.ts"
+      ],
+      "notes": "Branch feature/premium-ui-ux-redesign. Replaced the pastel theme. Effects off for touch and reduced motion."
+    },
+    {
+      "id": "real-locality-map",
+      "title": "Real street map of compared localities (Leaflet + OpenStreetMap) with 2 km catchments",
+      "status": "tested",
+      "tests": [
+        "tests/e2e/nisha.spec.ts"
+      ],
+      "notes": "Branch feature/premium-ui-ux-redesign. Uses coordinates already in the run; no extra Qloo calls."
     },
     {
       "id": "github",

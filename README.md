@@ -74,10 +74,10 @@ data marked "(sample)". With a Qloo key the same screens show real Qloo places a
 The app is a short journey: **landing page → Your idea (`/discover`) → Agents at work
 (`/agents`) → Recommendation (`/recommendation`) → Pitch & Pilot (`/plan`)**. The step bar in
 the header lets you move back and forth; the finished run and your form inputs survive a refresh
-or the browser back button (kept in this browser tab only). A sun/moon button in the header
-switches between light and dark mode; it follows your system setting until you choose. With a
-mouse, the pages also react to the cursor (a soft pastel glow, sparkles, magnetic buttons and
-tilting cards); these effects are off on touch screens and when your system asks for reduced motion.
+or the browser back button (kept in this browser tab only). The app opens in a dark "aurora" theme; a sun/moon button in the header switches to light mode
+and remembers the choice. With a mouse, a soft spotlight and glowing card edges follow the
+cursor (off on touch screens and when your system asks for reduced motion). The locality
+comparison uses a real street map (OpenStreetMap) with each area's 2 km catchment.
 
 | Landing | Your idea |
 |---|---|

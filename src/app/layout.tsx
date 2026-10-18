@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { SiteHeader } from "@/components/site-header";
 import { APP_NAME, TEAM_CREDIT } from "@/lib/brand";
@@ -11,7 +11,7 @@ import { loadSnapshotFromDisk } from "@/server/qloo/recorded";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const display = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap", axes: ["SOFT", "opsz"] });
+const display = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-display-face", display: "swap", weight: ["500", "600", "700", "800"] });
 
 const description =
   "Find one small business bet worth testing: a specific concept, locality, audience and pilot, grounded in Qloo's taste graph.";
@@ -26,10 +26,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbf8ff" },
-    { media: "(prefers-color-scheme: dark)", color: "#15121f" },
-  ],
+  themeColor: "#07070d",
   width: "device-width",
   initialScale: 1,
 };
