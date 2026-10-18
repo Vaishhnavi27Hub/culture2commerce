@@ -59,7 +59,7 @@ export function ComparisonPanel({ comparison }: { comparison: StrategyComparison
   ];
   return (
     <section aria-labelledby="comparison-heading" className="animate-rise card overflow-hidden !rounded-[1.75rem]">
-      <div className="bg-brand p-5 text-white sm:p-7">
+      <div className="bg-hero p-5 text-white sm:p-7">
         <p className="text-xs font-bold uppercase tracking-wider text-white/70">Solo vs partnership</p>
         <h2 id="comparison-heading" className="mt-1 text-2xl font-semibold sm:text-3xl">
           {comparison.recommended === "none"
@@ -158,7 +158,7 @@ export function PartnerStrategyCard({ result, onOpenPlan }: { result: RunResult;
     );
   }
   return (
-    <section aria-labelledby="partner-hero" className="animate-rise relative overflow-hidden rounded-[1.75rem] bg-brand text-white shadow-[var(--shadow-lift)]">
+    <section aria-labelledby="partner-hero" className="animate-rise relative overflow-hidden rounded-[1.75rem] bg-hero text-white shadow-[var(--shadow-lift)]">
       <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-spark/25 blur-3xl" />
       <div className="relative p-5 sm:p-8">
         <div className="flex flex-wrap items-center gap-2">
@@ -233,7 +233,7 @@ export function OutreachPanel({ initial }: { initial: { email: { subject: string
               ["short", "WhatsApp / DM"],
             ] as const
           ).map(([value, label]) => (
-            <button key={value} type="button" aria-pressed={tab === value} onClick={() => setTab(value)} className={`rounded-md px-3 py-1 text-xs font-semibold ${tab === value ? "bg-brand text-white" : "text-muted"}`}>
+            <button key={value} type="button" aria-pressed={tab === value} onClick={() => setTab(value)} className={`rounded-md px-3 py-1 text-xs font-semibold ${tab === value ? "bg-brand text-on-brand" : "text-muted"}`}>
               {label}
             </button>
           ))}
@@ -348,7 +348,7 @@ function PartnerCard({ partner, result, selected, onSelect }: { partner: Partner
             <button type="button" onClick={onSelect} className="rounded-xl border border-line bg-card px-3 py-1.5 text-sm font-semibold hover:border-brand">
               Cost the collaboration options
             </button>
-            <button type="button" onClick={() => setShowMessage((s) => !s)} className="rounded-xl bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-dark">
+            <button type="button" onClick={() => setShowMessage((s) => !s)} className="rounded-xl bg-brand px-3 py-1.5 text-sm font-semibold text-on-brand hover:bg-brand-dark">
               {showMessage ? "Hide message" : "Write an outreach message"}
             </button>
           </div>

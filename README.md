@@ -71,9 +71,19 @@ ready-to-send outreach drafts.
 These were captured by the end-to-end test in offline mode, so every venue is bundled sample
 data marked "(sample)". With a Qloo key the same screens show real Qloo places and affinities.
 
-| Input | Live agent workflow |
+The app is a short journey: **landing page → Your idea (`/discover`) → Agents at work
+(`/agents`) → Recommendation (`/recommendation`) → Pitch & Pilot (`/plan`)**. The step bar in
+the header lets you move back and forth; the finished run and your form inputs survive a refresh
+or the browser back button (kept in this browser tab only). A sun/moon button in the header
+switches between light and dark mode; it follows your system setting until you choose.
+
+| Landing | Your idea |
 |---|---|
-| ![Input screen](docs/screenshots/1-input.png) | ![Agent workflow](docs/screenshots/2-agents.png) |
+| ![Landing page](docs/screenshots/0-landing.png) | ![Input screen](docs/screenshots/1-input.png) |
+
+| Agents at work | Dark mode and phone width |
+|---|---|
+| ![Agent workflow](docs/screenshots/2-agents.png) | ![Dark mode](docs/screenshots/7-dark-discover.png) ![Phone](docs/screenshots/8-mobile-landing.png) |
 
 | Recommendation, scores and evidence | Pilot plan and results |
 |---|---|
@@ -208,8 +218,8 @@ data. Any OpenAI-compatible provider works with `LLM_PROVIDER=openai_compatible`
 | Command | What it does | Calls Qloo? |
 |---|---|---|
 | `npm run dev` | Start the app | When you run a scenario |
-| `npm test` | Unit, contract and integration tests (201) | No |
-| `npm run test:e2e` | Playwright tests of the Nisha flow and the partner example | No |
+| `npm test` | Unit, contract and integration tests (202) | No |
+| `npm run test:e2e` | Playwright tests: Nisha journey across all pages, partner example, theme toggle, phone width | No |
 | `npm run test:live` | A handful of real API tests | Yes, about 6 calls |
 | `npm run qloo:check` | Three live calls with pass/fail and latency | Yes, 3 calls |
 | `npm run qloo:record` | Refresh the private snapshot | Yes, about 90 calls |
@@ -243,8 +253,8 @@ The run endpoint is rate-limited per visitor to protect the Qloo quota.
 ## Project layout
 
 ```
-src/app/            pages, API routes (/api/run, /api/meta), /dev status page
-src/components/     input form, agent pipeline, recommendation, comparison, pilot plan
+src/app/            routes (/, /discover, /agents, /recommendation, /plan), API routes, /dev page
+src/components/     pages, shared run state, header and theme toggle, form, agents, recommendation, plan
 src/server/agents/  the four agents
 src/server/         orchestrator, scoring, Qloo clients, market estimates, LLM layer
 src/lib/            shared Zod schemas and helpers

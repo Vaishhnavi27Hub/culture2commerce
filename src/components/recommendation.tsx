@@ -3,12 +3,12 @@
 import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
 import { useRef, useState } from "react";
 import { CATEGORY_LABEL, CATEGORY_ORDER, type ConceptCategory } from "@/lib/categories";
-import { budgetSplit, winnerReasons } from "@/lib/explain";
+import { budgetSplit } from "@/lib/explain";
 import { inr, score, splitAudience } from "@/lib/format";
 import type { Evidence, RunResult, ScoredOption, Weights } from "@/lib/schemas";
 import { ConfidenceBadge, SourceBadge, VerdictBadge } from "./badges";
 import { ChartFrame, HBarChart, StackedBar } from "./charts";
-import { ArrowIcon, ClockIcon, Disclosure, EmptyState, FilterChips, IdeaIcon, Kpi, PeopleIcon, PinIcon, SearchIcon, SparkIcon, WalletIcon } from "./ui";
+import { AlertIcon, ArrowIcon, ClockIcon, Disclosure, EmptyState, FilterChips, FlagIcon, Kpi, PinIcon, SearchIcon, SparkIcon, Stagger, StaggerItem, WalletIcon } from "./ui";
 
 // ---------------------------------------------------------------------------
 // Score bars and the scoring explanation
@@ -374,86 +374,144 @@ function ScoreRing({ value }: { value: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center" aria-hidden="true">
         <span className="font-display text-3xl font-semibold tabular-nums">{score(value)}</span>
-        <span className="text-[10px] uppercase tracking-wider text-white/65">of 100</span>
+        <span className="text-[10px] uppercase tracking-wider text-white/70">of 100</span>
       </div>
     </div>
   );
+}
+
+/** Two or three plain sentences built only from the run's own numbers. */
+export function executiveSummary(result: RunResult, winner: ScoredOption): string[] {
+  const out: string[] = [];
+  const cb = winner.culturalBreakdown;
+  if (cb.meanAffinity !== undefined) {
+    out.push(
+      `Qloo links ${winner.locality}’s regular crowd to existing ${winner.conceptLabel.toLowerCase()}-type places (mean affinity ${cb.meanAffinity.toFixed(2)}${
+        cb.localityLift !== undefined && cb.localityLift > 0.004 ? `, ${cb.localityLift.toFixed(3)} above the other areas compared` : ""
+      }), for a cultural fit of ${score(winner.scores.culturalFit)}/100.`,
+    );
+  } else {
+    out.push(`Cultural data was limited for this option, so its cultural fit is neutral (${score(winner.scores.culturalFit)}/100).`);
+  }
+  out.push(
+    winner.verdict === "accepted"
+      ? `The pilot fits your budget: about ${inr(winner.totalCostInr)} of ${inr(result.input.budgetInr)}.`
+      : (winner.verdictReasons[0] ?? "It was marked down on cost."),
+  );
+  const next = result.options.find((o) => o.id !== winner.id && o.verdict !== "rejected");
+  if (next) {
+    const gap = winner.scores.final - next.scores.final;
+    out.push(
+      gap < 3
+        ? `It only narrowly leads ${next.conceptLabel.toLowerCase()} in ${next.locality} (${score(gap)} points), so that is a reasonable alternative.`
+        : `It leads the next option, ${next.conceptLabel.toLowerCase()} in ${next.locality}, by ${score(gap)} points.`,
+    );
+  }
+  return out;
+}
+
+/** The single most important caveat: the first factor that lowered confidence, or a cost warning. */
+export function mainCaveat(winner: ScoredOption): string {
+  const lowered = winner.confidence.reasons.find((r) => r.effect === "cap") ?? winner.confidence.reasons.find((r) => r.effect === "down");
+  return lowered?.text ?? winner.verdictReasons[1] ?? "Costs are planning estimates; verify them locally before spending.";
 }
 
 export function WinnerCard({ result, winner, onOpenPlan }: { result: RunResult; winner: ScoredOption; onOpenPlan: () => void }) {
   const plan = result.pilotPlan;
   const narrative = result.narrative;
   const audience = splitAudience(winner.targetAudience);
-  const reasons = winnerReasons(result, winner);
+  const summary = executiveSummary(result, winner);
+  const verdictLabel = winner.verdict === "accepted" ? "Fits budget" : winner.verdict === "downgraded" ? "Over budget" : "Ruled out";
   return (
     <section aria-labelledby="winner-heading" className="overflow-hidden rounded-[1.75rem] shadow-[var(--shadow-lift)]">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="relative bg-brand text-white"
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="relative bg-hero text-white"
       >
         <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-spark/25 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 left-1/3 h-60 w-60 rounded-full bg-lavender/15 blur-3xl" />
         <div className="relative p-5 sm:p-8">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-spark px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink">Your best bet</span>
-            <ConfidenceBadge level={winner.confidence.level} />
-          </div>
-          <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">Your top opportunity</p>
+          <div className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <h2 id="winner-heading" className="max-w-2xl text-3xl font-semibold leading-tight sm:text-[2.6rem]">
-                {narrative?.headline ?? `${winner.conceptLabel} in ${winner.locality}`}
+                {winner.conceptLabel}
               </h2>
-              <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/85">
-                {reasons.map((r, i) => (
-                  <li key={r} className="flex items-center gap-1.5">
-                    <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${i === 0 ? "bg-spark" : "bg-white/50"}`} />
-                    {i === 0 ? r : r.charAt(0).toUpperCase() + r.slice(1)}
-                  </li>
-                ))}
-              </ul>
+              <p className="mt-1 flex items-center gap-1.5 text-lg text-white/85">
+                <PinIcon /> {winner.locality}, {result.input.city}
+              </p>
+              <p className="mt-1 text-sm text-white/70">For {audience.who.charAt(0).toLowerCase() + audience.who.slice(1)}</p>
             </div>
-            <ScoreRing value={winner.scores.final} />
+            <div className="flex items-center gap-3 sm:flex-col sm:items-center sm:text-center">
+              <ScoreRing value={winner.scores.final} />
+              <p className="max-w-[11rem] text-xs leading-4 text-white/70">
+                <span className="font-semibold text-white">Overall score.</span> Cultural fit, feasibility and risk combined with fixed weights. Not a success probability.
+              </p>
+            </div>
           </div>
 
-          <div className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <Kpi tone="dark" icon={<IdeaIcon />} label="Concept" value={winner.conceptLabel} />
-            <Kpi tone="dark" icon={<PinIcon />} label="Locality" value={`${winner.locality}, ${result.input.city}`} />
-            <Kpi tone="dark" icon={<PeopleIcon />} label="Target audience" value={audience.who} />
-            <Kpi
-              tone="dark"
-              icon={<ClockIcon />}
-              label="Pilot experiment"
-              value={plan ? `${plan.weekends} ${plan.weekends === 1 ? "weekend" : "weekends"} · ${inr(plan.totalCostInr)}` : "Not available"}
-              hint={plan ? `Continue at ${plan.rule.continueUnits} ${plan.unitLabel}s sold or ${inr(plan.rule.continueRevenueInr)}.` : "The pilot plan could not be built for this run."}
-            />
+          <div className="mt-6 max-w-3xl">
+            <h3 className="font-display text-xl font-semibold">Why this opportunity?</h3>
+            <p className="mt-1.5 text-[15px] leading-relaxed text-white/90">{summary.join(" ")}</p>
           </div>
 
-          {plan && (
-            <button type="button" onClick={onOpenPlan} className="no-print mt-6 inline-flex items-center gap-2 rounded-xl bg-spark px-5 py-3 text-sm font-bold text-ink shadow-lg transition hover:-translate-y-px hover:brightness-105 active:translate-y-px">
-              See the pilot plan <ArrowIcon />
-            </button>
-          )}
+          <Stagger className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <StaggerItem>
+              <Kpi tone="dark" icon={<SparkIcon />} label="Cultural fit" value={`${score(winner.scores.culturalFit)} / 100`} hint="From Qloo affinities for this area" />
+            </StaggerItem>
+            <StaggerItem>
+              <Kpi tone="dark" icon={<WalletIcon />} label="Pilot investment" value={inr(plan?.totalCostInr ?? winner.totalCostInr)} hint={`Estimate · ${winner.budgetUsedPct}% of ${inr(result.input.budgetInr)}`} />
+            </StaggerItem>
+            <StaggerItem>
+              <Kpi
+                tone="dark"
+                icon={<ClockIcon />}
+                label="Pilot duration"
+                value={`${result.input.weekends} ${result.input.weekends === 1 ? "weekend" : "weekends"}`}
+                hint={plan ? `${plan.days} selling days` : `${result.input.weekends * 2} selling days`}
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <Kpi tone="dark" icon={<FlagIcon />} label="Feasibility" value={verdictLabel} hint={`${winner.confidence.level} confidence in the data`} />
+            </StaggerItem>
+          </Stagger>
+
+          <div className="mt-5 flex gap-2.5 rounded-2xl border border-white/15 bg-white/[0.06] p-3.5 text-sm">
+            <span aria-hidden="true" className="mt-0.5 text-spark">
+              <AlertIcon />
+            </span>
+            <p>
+              <span className="font-semibold">Important consideration: </span>
+              <span className="text-white/85">{mainCaveat(winner)}</span>
+            </p>
+          </div>
+
+          <div className="no-print mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
+            {plan && (
+              <button type="button" onClick={onOpenPlan} className="inline-flex items-center justify-center gap-2 rounded-xl bg-spark px-5 py-3 text-sm font-bold text-[#1d2925] shadow-lg transition hover:-translate-y-px hover:brightness-105 active:translate-y-px">
+                View Pilot Plan <ArrowIcon />
+              </button>
+            )}
+            <a href="#analysis" className="inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-white/90 underline-offset-4 hover:underline">
+              Explore the evidence
+            </a>
+          </div>
         </div>
       </motion.div>
-      {(narrative || audience.detail) && (
+      {narrative && (
         <div className="border-x border-b border-line bg-card p-3 sm:p-4">
-          <Disclosure tone="lavender" icon={<SparkIcon />} title="Why this recommendation?" hint="The signals and reasoning behind this pick">
+          <Disclosure tone="lavender" icon={<SparkIcon />} title="Read the full explanation" hint={narrative.source === "llm" ? "Wording polished by an LLM; numbers unchanged" : "Written from templates"}>
             {audience.detail && (
               <p>
                 <span className="font-semibold">Audience:</span> {winner.targetAudience}.
               </p>
             )}
-            {narrative && (
-              <>
-                <p className="mt-2 leading-6">{narrative.whyThis}</p>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <SourceBadge source={narrative.source} long />
-                  {narrative.note && <span className="text-xs text-muted">{narrative.note}</span>}
-                </div>
-              </>
-            )}
+            <p className="mt-2 leading-6">{narrative.whyThis}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <SourceBadge source={narrative.source} long />
+              {narrative.note && <span className="text-xs text-muted">{narrative.note}</span>}
+            </div>
           </Disclosure>
         </div>
       )}
@@ -552,7 +610,7 @@ export function RankedOptions({
                     className={`w-full rounded-2xl border p-3.5 text-left transition-all ${selected ? "border-brand bg-brand-soft/70 shadow-sm" : "border-line bg-card hover:-translate-y-px hover:border-brand/50 hover:shadow-[var(--shadow-card)]"}`}
                   >
                     <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${o.id === result.winnerId ? "bg-spark text-ink" : "bg-brand text-white"}`}>{o.rank}</span>
+                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${o.id === result.winnerId ? "bg-spark text-[#1d2925]" : "bg-brand text-on-brand"}`}>{o.rank}</span>
                       <span className="font-semibold">
                         {o.conceptLabel} <span className="font-normal text-muted">in {o.locality}</span>
                       </span>

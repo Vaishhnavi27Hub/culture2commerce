@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { CATEGORY_LABEL, CATEGORY_ORDER, type ConceptCategory } from "@/lib/categories";
 import { BROWNIE_EXAMPLE, NISHA_EXAMPLE } from "@/lib/nisha";
 import { runInputSchema, type LaunchMode, type RiskPreference, type RunInput } from "@/lib/schemas";
@@ -20,9 +20,12 @@ interface Props {
   busy: boolean;
   serverIssues: { field: string; message: string }[];
   onSubmit: (input: RunInput) => void;
+  /** Saved form state to restore (e.g. after navigating back). */
+  draft?: FormState;
+  onDraftChange?: (draft: FormState) => void;
 }
 
-interface FormState {
+export interface FormState {
   city: string;
   suggest: boolean;
   localities: string[];
@@ -94,7 +97,7 @@ function Legend({ n, children }: { n?: number; children: React.ReactNode }) {
   return (
     <legend className="flex items-center gap-2.5 font-display text-xl font-semibold">
       {n !== undefined && (
-        <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-full bg-brand font-sans text-xs font-bold text-white">
+        <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-full bg-brand font-sans text-xs font-bold text-on-brand">
           {n}
         </span>
       )}
@@ -103,8 +106,11 @@ function Legend({ n, children }: { n?: number; children: React.ReactNode }) {
   );
 }
 
-export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSubmit }: Props) {
-  const [form, setForm] = useState<FormState>(EMPTY);
+export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSubmit, draft, onDraftChange }: Props) {
+  const [form, setForm] = useState<FormState>(draft ?? EMPTY);
+  useEffect(() => {
+    onDraftChange?.(form);
+  }, [form, onDraftChange]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"all" | ConceptCategory>("all");
@@ -220,197 +226,8 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
       </div>
       </div>
 
-      <fieldset className="space-y-3">
-        <Legend>How do you want to start your business?</Legend>
-        <div role="radiogroup" aria-label="Launch mode" className="grid gap-2 sm:grid-cols-3">
-          {MODE_OPTIONS.map((opt) => (
-            <label
-              key={opt.value}
-              className={choiceClass(form.mode === opt.value)}
-            >
-              <input suppressHydrationWarning
-                type="radio"
-                name={id("mode")}
-                className="mt-1 accent-[var(--color-brand)]"
-                checked={form.mode === opt.value}
-                onChange={() => set("mode", opt.value)}
-              />
-              <span>
-                <span className="block text-sm font-semibold">{opt.label}</span>
-                <span className="block text-xs text-muted">{opt.help}</span>
-              </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
       <fieldset className="space-y-5">
-        <Legend n={1}>Where</Legend>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label htmlFor={id("city")} className="text-sm font-semibold">
-              City
-            </label>
-            <input suppressHydrationWarning
-              id={id("city")}
-              className={inputClass}
-              value={form.city}
-              maxLength={60}
-              autoComplete="address-level2"
-              onChange={(e) => setForm((f) => ({ ...f, city: e.target.value, localities: [] }))}
-              aria-invalid={Boolean(errors.city)}
-              aria-describedby={describedBy("city", true)}
-            />
-            <p id={id("city-help")} className="mt-1.5 text-xs text-muted">
-              Bengaluru has locality-level estimates. Other cities work with generic estimates and lower confidence.
-            </p>
-            {errorText("city")}
-          </div>
-
-          <div role="group" aria-labelledby={id("locality-label")} aria-describedby={describedBy("localities")}>
-            <p id={id("locality-label")} className="text-sm font-semibold">
-              Locality
-            </p>
-            <div className="mt-1 inline-flex rounded-xl border border-line bg-card p-1">
-              {[
-                { value: true, label: "Suggest for me" },
-                { value: false, label: "I’ll choose" },
-              ].map((opt) => (
-                <button suppressHydrationWarning
-                  key={opt.label}
-                  type="button"
-                  aria-pressed={form.suggest === opt.value}
-                  onClick={() => set("suggest", opt.value)}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${form.suggest === opt.value ? "bg-brand text-white" : "text-muted hover:text-ink"}`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            {form.suggest ? (
-              <p className="mt-2 text-xs text-muted">The Local Researcher will compare up to three areas for you.</p>
-            ) : (
-              <div className="mt-2 space-y-2">
-                <p className="text-xs text-muted">
-                  Pick up to {MAX_LOCALITIES} to compare ({form.localities.length} chosen).
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {[...new Set([...suggestions, ...form.localities])].map((name) => {
-                    const on = form.localities.includes(name);
-                    return (
-                      <button suppressHydrationWarning
-                        key={name}
-                        type="button"
-                        aria-pressed={on}
-                        disabled={!on && form.localities.length >= MAX_LOCALITIES}
-                        onClick={() => toggleLocality(name)}
-                        className={`rounded-full border px-3 py-1.5 text-sm font-medium disabled:opacity-40 ${
-                          on ? "border-brand bg-brand text-white" : "border-line bg-card text-ink hover:border-brand"
-                        }`}
-                      >
-                        {name}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="flex gap-2">
-                  <label htmlFor={id("custom-locality")} className="sr-only">
-                    Add another locality
-                  </label>
-                  <input suppressHydrationWarning
-                    id={id("custom-locality")}
-                    className={`${inputClass} mt-0`}
-                    placeholder="Add another locality"
-                    value={form.customLocality}
-                    maxLength={60}
-                    onChange={(e) => set("customLocality", e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addCustomLocality();
-                      }
-                    }}
-                  />
-                  <button suppressHydrationWarning
-                    type="button"
-                    onClick={addCustomLocality}
-                    disabled={!form.customLocality.trim() || form.localities.length >= MAX_LOCALITIES}
-                    className="shrink-0 rounded-xl border border-line bg-card px-3 text-sm font-semibold hover:border-brand disabled:opacity-40"
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-            )}
-            {errorText("localities")}
-          </div>
-        </div>
-      </fieldset>
-
-      <fieldset className="space-y-5">
-        <Legend n={2}>Your limits</Legend>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label htmlFor={id("budget")} className="text-sm font-semibold">
-              Budget (₹)
-            </label>
-            <input suppressHydrationWarning
-              id={id("budget")}
-              className={inputClass}
-              inputMode="numeric"
-              value={form.budget}
-              onChange={(e) => set("budget", e.target.value.replace(/[^\d]/g, "").slice(0, 7))}
-              aria-invalid={Boolean(errors.budget)}
-              aria-describedby={describedBy("budget", true)}
-            />
-            <p id={id("budget-help")} className="mt-1.5 text-xs text-muted">
-              Everything you can spend on the pilot, including stall fees and stock.
-            </p>
-            {errorText("budget")}
-          </div>
-          <div>
-            <label htmlFor={id("weekends")} className="text-sm font-semibold">
-              Duration
-            </label>
-            <select suppressHydrationWarning id={id("weekends")} className={inputClass} value={form.weekends} onChange={(e) => set("weekends", Number(e.target.value))}>
-              {[1, 2, 3, 4, 6, 8].map((n) => (
-                <option key={n} value={n}>
-                  {n} {n === 1 ? "weekend" : "weekends"} (Saturday and Sunday)
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div role="radiogroup" aria-labelledby={id("risk-label")}>
-          <p id={id("risk-label")} className="text-sm font-semibold">
-            Risk preference
-          </p>
-          <div className="mt-1 grid gap-2 sm:grid-cols-3">
-            {RISK_OPTIONS.map((opt) => (
-              <label
-                key={opt.value}
-                className={choiceClass(form.risk === opt.value)}
-              >
-                <input suppressHydrationWarning
-                  type="radio"
-                  name={id("risk")}
-                  className="mt-1 accent-[var(--color-brand)]"
-                  checked={form.risk === opt.value}
-                  onChange={() => set("risk", opt.value)}
-                />
-                <span>
-                  <span className="block text-sm font-semibold">{opt.label}</span>
-                  <span className="block text-xs text-muted">{opt.help}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-      </fieldset>
-
-      <fieldset className="space-y-5">
-        <Legend n={3}>What you might sell</Legend>
+        <Legend n={1}>Your opportunity</Legend>
         <div role="group" aria-labelledby={id("concepts-label")} aria-describedby={describedBy("conceptIds")}>
           <p id={id("concepts-label")} className="text-sm font-semibold">
             Business ideas to compare <span className="font-normal text-muted">(pick 1 to {MAX_CONCEPTS})</span>
@@ -553,6 +370,194 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
         )}
       </fieldset>
 
+      <fieldset className="space-y-5">
+        <Legend n={2}>Location</Legend>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor={id("city")} className="text-sm font-semibold">
+              City
+            </label>
+            <input suppressHydrationWarning
+              id={id("city")}
+              className={inputClass}
+              value={form.city}
+              maxLength={60}
+              autoComplete="address-level2"
+              onChange={(e) => setForm((f) => ({ ...f, city: e.target.value, localities: [] }))}
+              aria-invalid={Boolean(errors.city)}
+              aria-describedby={describedBy("city", true)}
+            />
+            <p id={id("city-help")} className="mt-1.5 text-xs text-muted">
+              Bengaluru has locality-level estimates. Other cities work with generic estimates and lower confidence.
+            </p>
+            {errorText("city")}
+          </div>
+
+          <div role="group" aria-labelledby={id("locality-label")} aria-describedby={describedBy("localities")}>
+            <p id={id("locality-label")} className="text-sm font-semibold">
+              Locality
+            </p>
+            <div className="mt-1 inline-flex rounded-xl border border-line bg-card p-1">
+              {[
+                { value: true, label: "Suggest for me" },
+                { value: false, label: "I’ll choose" },
+              ].map((opt) => (
+                <button suppressHydrationWarning
+                  key={opt.label}
+                  type="button"
+                  aria-pressed={form.suggest === opt.value}
+                  onClick={() => set("suggest", opt.value)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${form.suggest === opt.value ? "bg-brand text-on-brand" : "text-muted hover:text-ink"}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {form.suggest ? (
+              <p className="mt-2 text-xs text-muted">The Local Researcher will compare up to three areas for you.</p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                <p className="text-xs text-muted">
+                  Pick up to {MAX_LOCALITIES} to compare ({form.localities.length} chosen).
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[...new Set([...suggestions, ...form.localities])].map((name) => {
+                    const on = form.localities.includes(name);
+                    return (
+                      <button suppressHydrationWarning
+                        key={name}
+                        type="button"
+                        aria-pressed={on}
+                        disabled={!on && form.localities.length >= MAX_LOCALITIES}
+                        onClick={() => toggleLocality(name)}
+                        className={`rounded-full border px-3 py-1.5 text-sm font-medium disabled:opacity-40 ${
+                          on ? "border-brand bg-brand text-on-brand" : "border-line bg-card text-ink hover:border-brand"
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-2">
+                  <label htmlFor={id("custom-locality")} className="sr-only">
+                    Add another locality
+                  </label>
+                  <input suppressHydrationWarning
+                    id={id("custom-locality")}
+                    className={`${inputClass} mt-0`}
+                    placeholder="Add another locality"
+                    value={form.customLocality}
+                    maxLength={60}
+                    onChange={(e) => set("customLocality", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCustomLocality();
+                      }
+                    }}
+                  />
+                  <button suppressHydrationWarning
+                    type="button"
+                    onClick={addCustomLocality}
+                    disabled={!form.customLocality.trim() || form.localities.length >= MAX_LOCALITIES}
+                    className="shrink-0 rounded-xl border border-line bg-card px-3 text-sm font-semibold hover:border-brand disabled:opacity-40"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            )}
+            {errorText("localities")}
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset className="space-y-5">
+        <Legend n={3}>Budget and launch</Legend>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor={id("budget")} className="text-sm font-semibold">
+              Budget (₹)
+            </label>
+            <input suppressHydrationWarning
+              id={id("budget")}
+              className={inputClass}
+              inputMode="numeric"
+              value={form.budget}
+              onChange={(e) => set("budget", e.target.value.replace(/[^\d]/g, "").slice(0, 7))}
+              aria-invalid={Boolean(errors.budget)}
+              aria-describedby={describedBy("budget", true)}
+            />
+            <p id={id("budget-help")} className="mt-1.5 text-xs text-muted">
+              Everything you can spend on the pilot, including stall fees and stock.
+            </p>
+            {errorText("budget")}
+          </div>
+          <div>
+            <label htmlFor={id("weekends")} className="text-sm font-semibold">
+              Duration
+            </label>
+            <select suppressHydrationWarning id={id("weekends")} className={inputClass} value={form.weekends} onChange={(e) => set("weekends", Number(e.target.value))}>
+              {[1, 2, 3, 4, 6, 8].map((n) => (
+                <option key={n} value={n}>
+                  {n} {n === 1 ? "weekend" : "weekends"} (Saturday and Sunday)
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div role="radiogroup" aria-labelledby={id("risk-label")}>
+          <p id={id("risk-label")} className="text-sm font-semibold">
+            Risk preference
+          </p>
+          <div className="mt-1 grid gap-2 sm:grid-cols-3">
+            {RISK_OPTIONS.map((opt) => (
+              <label
+                key={opt.value}
+                className={choiceClass(form.risk === opt.value)}
+              >
+                <input suppressHydrationWarning
+                  type="radio"
+                  name={id("risk")}
+                  className="mt-1 accent-[var(--color-brand)]"
+                  checked={form.risk === opt.value}
+                  onChange={() => set("risk", opt.value)}
+                />
+                <span>
+                  <span className="block text-sm font-semibold">{opt.label}</span>
+                  <span className="block text-xs text-muted">{opt.help}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <p id={id("mode-label")} className="text-sm font-semibold">How do you want to start?</p>
+        <div role="radiogroup" aria-labelledby={id("mode-label")} className="grid gap-2 sm:grid-cols-3">
+          {MODE_OPTIONS.map((opt) => (
+            <label
+              key={opt.value}
+              className={choiceClass(form.mode === opt.value)}
+            >
+              <input suppressHydrationWarning
+                type="radio"
+                name={id("mode")}
+                className="mt-1 accent-[var(--color-brand)]"
+                checked={form.mode === opt.value}
+                onChange={() => set("mode", opt.value)}
+              />
+              <span>
+                <span className="block text-sm font-semibold">{opt.label}</span>
+                <span className="block text-xs text-muted">{opt.help}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        </div>
+      </fieldset>
+
       {(errors.form || serverIssues.length > 0) && (
         <div role="alert" className="rounded-xl border border-bad/30 bg-bad-soft p-3 text-sm text-bad">
           {errors.form && <p>{errors.form}</p>}
@@ -563,6 +568,15 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
           ))}
         </div>
       )}
+
+      <p className="rounded-2xl border border-line bg-paper/70 p-3 text-sm text-muted" aria-live="polite">
+        <span className="font-semibold text-ink">Ready to run: </span>
+        {form.conceptIds.length === 0
+          ? "pick at least one idea"
+          : `${form.conceptIds.length} ${form.conceptIds.length === 1 ? "idea" : "ideas"}`}{" "}
+        in {form.suggest ? `areas Qloo suggests in ${form.city || "your city"}` : form.localities.length ? form.localities.join(", ") : "localities you choose"} · ₹{Number(form.budget || 0).toLocaleString("en-IN")} ·{" "}
+        {form.weekends} {form.weekends === 1 ? "weekend" : "weekends"} · {MODE_OPTIONS.find((m) => m.value === form.mode)?.label.toLowerCase()}
+      </p>
 
       <button suppressHydrationWarning
         type="submit"

@@ -37,6 +37,23 @@
   --color-bad: #b42318;
   --color-bad-soft: #fdecea;
 
+  /* Informational states. */
+  --color-info: #245a85;
+  --color-info-soft: #e3eef8;
+
+  /* Text on top of brand, leaf or bad fills (white in light mode, deep green in dark mode). */
+  --color-on-brand: #ffffff;
+
+  /* Dark feature surfaces (winner card, comparison header): dark green in both themes. */
+  --color-hero: #123d32;
+
+  /* Nested or selected panels. */
+  --color-elevated: #fffaf3;
+
+  /* Locality map background and grid. */
+  --color-map: #f4efe4;
+  --color-map-grid: #e6dccd;
+
   /* Chart series: validated for colour-vision deficiency (all pairs). Amber needs visible labels. */
   --color-series-1: #1f8a6a;
   --color-series-2: #6b5bd2;
@@ -52,8 +69,79 @@
   --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
 }
 
+/*
+ * Dark theme. The same token names are redefined, so every utility (bg-card, text-ink, …)
+ * follows the theme without per-component changes. The theme is set on <html data-theme>
+ * by an inline script before first paint (see src/lib/theme.ts), so there is no flash.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-ink: #f3f5f0;
+  --color-muted: #b5c4bc;
+  --color-paper: #101a17;
+  --color-card: #192621;
+  --color-elevated: #22332c;
+  --color-line: #35483f;
+
+  --color-brand: #76d6af;
+  --color-brand-dark: #9be3c6;
+  --color-brand-soft: #233d31;
+
+  --color-spark: #ff8b78;
+  --color-spark-dark: #ff8b78;
+  --color-spark-soft: #40251f;
+
+  --color-lavender: #2b2645;
+  --color-lavender-ink: #c4b5fd;
+  --color-sage: #233d31;
+
+  --color-leaf: #76d6af;
+  --color-leaf-soft: #1f3a2f;
+
+  --color-warn: #f5c56a;
+  --color-warn-soft: #3a2f15;
+  --color-bad: #ff8b85;
+  --color-bad-soft: #3d201e;
+  --color-info: #8ac8f5;
+  --color-info-soft: #1c3142;
+
+  --color-on-brand: #0b2a22;
+  --color-hero: #1d3a30;
+  --color-map: #16221e;
+  --color-map-grid: #2a3a33;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px -4px rgb(0 0 0 / 0.35);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.3), 0 16px 36px -12px rgb(0 0 0 / 0.5);
+}
+
+:root {
+  color-scheme: light;
+}
+
+/* Logo variants: the dark-mode logo uses light text. */
+:root[data-theme="dark"] .logo-light {
+  display: none !important;
+}
+@media (min-width: 640px) {
+  :root[data-theme="dark"] .logo-dark {
+    display: block;
+  }
+}
+:root[data-theme="dark"] .hero-city {
+  filter: brightness(0.86) saturate(0.95);
+}
+
 html {
   scroll-behavior: smooth;
+}
+
+/* Theme changes fade colours briefly; skipped for reduced motion. */
+html.theme-transition,
+html.theme-transition * {
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease !important;
 }
 
 body {
@@ -74,6 +162,21 @@ h3 {
   outline: 3px solid var(--color-spark);
   outline-offset: 2px;
   border-radius: 6px;
+}
+
+/* Page headings receive focus after navigation for screen readers; they are not controls, so no ring. */
+h1[tabindex="-1"]:focus-visible {
+  outline: none;
+}
+
+.theme-icon-dark {
+  display: none;
+}
+:root[data-theme="dark"] .theme-icon-dark {
+  display: inline;
+}
+:root[data-theme="dark"] .theme-icon-light {
+  display: none;
 }
 
 /* Reusable surfaces. */
@@ -102,9 +205,9 @@ h3 {
   gap: 0.5rem;
   border-radius: 0.875rem;
   background: var(--color-brand);
-  color: #fff;
+  color: var(--color-on-brand);
   font-weight: 600;
-  box-shadow: 0 6px 18px -8px rgb(18 61 50 / 0.6);
+  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--color-brand) 60%, transparent);
   transition:
     transform 150ms ease,
     background-color 150ms ease,
@@ -186,7 +289,7 @@ h3 {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--color-line) 25%, #f5ede2 50%, var(--color-line) 75%);
+  background: linear-gradient(90deg, var(--color-line) 25%, var(--color-elevated) 50%, var(--color-line) 75%);
   background-size: 200% 100%;
   animation: c2c-shimmer 1.4s ease-in-out infinite;
   border-radius: 0.5rem;
@@ -223,6 +326,10 @@ h3 {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html.theme-transition,
+  html.theme-transition * {
+    transition: none !important;
+  }
   .animate-status,
   .animate-rise,
   .animate-float,
@@ -240,11 +347,23 @@ h3 {
 
 /* Printing the pilot plan: hide navigation and controls, keep the plan, open collapsed details. */
 @media print {
+  :root[data-theme="dark"] {
+    --color-ink: #1d2925;
+    --color-muted: #56645f;
+    --color-paper: #ffffff;
+    --color-card: #ffffff;
+    --color-elevated: #fffaf3;
+    --color-line: #eadfd1;
+    --color-brand: #123d32;
+    --color-brand-soft: #dce9dc;
+    --color-on-brand: #ffffff;
+  }
   .no-print {
     display: none !important;
   }
   body {
     background: #fff;
+    color: #1d2925;
   }
   /* Scroll reveals may not have run: show everything in its final state. */
   [style*="opacity"] {

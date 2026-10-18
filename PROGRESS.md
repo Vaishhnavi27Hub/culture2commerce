@@ -4,10 +4,12 @@ To resume in a new session, say: **"continue from PROGRESS.md"**.
 
 ## Current state
 
-- **Date:** 15 Oct 2026
-- **Last completed work:** Phase 2 enhancement (partner discovery, launch modes, neighbourhood
-  heatmap, collaboration models, pricing, comparison, outreach). Pushed to
-  https://github.com/Vaishhnavi27Hub/culture2commerce (`main`).
+- **Date:** 18 Oct 2026
+- **Last completed work:** UI/UX redesign on branch `feature/premium-ui-ux-redesign` (built on
+  `ui-premium-upgrade`): separate landing page and five-step journey (`/discover`, `/agents`,
+  `/recommendation`, `/plan`), light/dark theme toggle, plain-language agent cards with technical
+  details on demand, summary-first recommendation with collapsible analysis. Pushed as a feature
+  branch only; **not merged into `main`** (team review first). See DECISIONS D36.
 - **Next:** team review, then Vercel deployment (needs the user's confirmation and login).
 - **Waiting on the user:** team review; repo description and topics; make the repo public before submission; record the video.
 
@@ -25,12 +27,20 @@ See `docs/features.json` (single source of truth; `node scripts/progress.mjs lis
 - **UI upgrade (17 Oct):** new design system, CSS 3D landing hero, idea search and category
   filters, locality map and comparison chart, cultural affinity and budget charts, simplified
   Pitch & Pilot with progressive disclosure, pilot results dashboard. See DECISIONS D35.
-- **Pending:** deployment.
+- **UI/UX redesign (18 Oct, feature branch):** multi-page journey, dark mode, summary-first
+  recommendation, plain-language agents. Tested by e2e (4 tests).
+- **Pending:** team review and merge of the feature branch; deployment.
 
 ## Checks run (latest results)
 
 | Date | Command | Result |
 |---|---|---|
+| 18 Oct | `npm run lint` (feature branch) | Pass |
+| 18 Oct | `npm run typecheck` | Pass |
+| 18 Oct | `npm test` | Pass: 13 files, 202 of 202 tests |
+| 18 Oct | `npm run test:e2e` | Pass: 4 of 4 (Nisha journey across all pages incl. refresh/back; partner example; theme toggle persistence; no horizontal overflow at 375 px on all five pages) |
+| 18 Oct | `npm run build` with no Qloo key and LLM off | Pass |
+| 18 Oct | Partner example, live Qloo, in the browser (by hand) | Completed; landing → discover → agents → recommendation → plan, refresh kept the run; light and dark checked |
 | 15 Oct | `npm run lint` | Pass (exit 0, no warnings) |
 | 15 Oct | `npm run typecheck` | Pass (exit 0) |
 | 15 Oct | `npm test` | Pass: 13 files, 201 of 201 tests, no network |

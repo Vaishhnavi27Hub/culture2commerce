@@ -96,9 +96,9 @@ const STATUS_STYLE: Record<AgentStatus, string> = {
 };
 
 const STATUS_LABEL: Record<AgentStatus, string> = {
-  queued: "Queued",
-  running: "Running",
-  completed: "Done",
+  queued: "Waiting",
+  running: "In progress",
+  completed: "Completed",
   failed: "Failed",
   skipped: "Skipped",
 };
