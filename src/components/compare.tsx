@@ -185,8 +185,8 @@ function LocalityMap({ localities, selected, onSelect, best }: { localities: Loc
   const winnerScore = Math.max(...located.map((l) => best(l.name)?.scores.final ?? 0));
 
   return (
-    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-line bg-[#f4efe4]">
-      <div aria-hidden="true" className="absolute inset-0 opacity-60" style={{ backgroundImage: "linear-gradient(#e6dccd 1px, transparent 1px), linear-gradient(90deg, #e6dccd 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-line bg-map">
+      <div aria-hidden="true" className="absolute inset-0 opacity-60" style={{ backgroundImage: "linear-gradient(var(--color-map-grid) 1px, transparent 1px), linear-gradient(90deg, var(--color-map-grid) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
       <div aria-hidden="true" className="absolute -left-10 top-1/4 h-40 w-56 rounded-full bg-sage/70 blur-2xl" />
       <div aria-hidden="true" className="absolute bottom-0 right-6 h-32 w-40 rounded-full bg-lavender/60 blur-2xl" />
       <ul className="absolute inset-0">
@@ -212,13 +212,13 @@ function LocalityMap({ localities, selected, onSelect, best }: { localities: Loc
                 className="group absolute -translate-x-1/2 -translate-y-full rounded-full"
               >
                 <span className="relative flex flex-col items-center">
-                  <span className={`relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-white shadow-lg transition-transform group-hover:scale-110 ${isSel ? "scale-110 bg-spark text-ink" : lead ? "bg-brand text-white" : "bg-card text-brand"}`}>
+                  <span className={`relative flex h-9 w-9 items-center justify-center rounded-full border-2 border-card shadow-lg transition-transform group-hover:scale-110 ${isSel ? "scale-110 bg-spark text-[#1d2925]" : lead ? "bg-brand text-on-brand" : "bg-card text-brand"}`}>
                     {isSel && <span aria-hidden="true" className="animate-ping-soft absolute inset-0 rounded-full bg-spark" />}
                     <span className="relative">
                       <PinIcon />
                     </span>
                   </span>
-                  <span className={`mt-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm ${isSel ? "bg-ink text-white" : "bg-card/95 text-ink"}`}>
+                  <span className={`mt-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm ${isSel ? "bg-hero text-white" : "bg-card/95 text-ink"}`}>
                     {l.name}
                     {top && <span className="ml-1 tabular-nums opacity-70">{score(top.scores.final)}</span>}
                   </span>

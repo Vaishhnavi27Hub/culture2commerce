@@ -1,26 +1,30 @@
 import { AGENT_NAMES, type AgentEvent, type AgentName, type AgentTrace } from "./schemas";
 
 /** Static description of each agent for the workflow view. */
-export const AGENT_INFO: Record<AgentName, { step: number; role: string; handsOver: string; usesQloo: boolean }> = {
+export const AGENT_INFO: Record<AgentName, { step: number; purpose: string; role: string; handsOver: string; usesQloo: boolean }> = {
   "Local Researcher": {
+    purpose: "Research locally",
     step: 1,
     role: "Finds candidate areas, their most popular venues, existing competitors, stall fees and permit notes.",
     handsOver: "Locality profiles with anchor venues",
     usesQloo: true,
   },
   "Cultural Opportunity Finder": {
+    purpose: "Find cultural fit",
     step: 2,
     role: "Uses Qloo affinities to test how well each idea fits the people who spend time in each area.",
     handsOver: "Cultural-fit scores with evidence",
     usesQloo: true,
   },
   "Feasibility Critic": {
+    purpose: "Evaluate feasibility",
     step: 3,
     role: "Costs every option against your budget, then downgrades or rejects what does not fit.",
     handsOver: "Ranked options and the winner",
     usesQloo: false,
   },
   "Pilot Planner": {
+    purpose: "Plan a pilot",
     step: 4,
     role: "Turns the winner into a small experiment with quantities, prices, a schedule and a continue, pivot or stop rule.",
     handsOver: "Pilot plan",

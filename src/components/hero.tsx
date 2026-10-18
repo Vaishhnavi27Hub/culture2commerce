@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from "motion/react";
+import Link from "next/link";
 import { forwardRef } from "react";
 import { ArrowIcon } from "./ui";
 
@@ -146,7 +147,7 @@ const TAGS = [
   { text: "Live music", dot: "#123d32", pos: "left-[30%] bottom-[2%]" },
 ];
 
-export function CityHero({ onDiscover, onExplore, children }: { onDiscover: () => void; onExplore: () => void; children?: React.ReactNode }) {
+export function CityHero({ discoverHref, learnHref, children }: { discoverHref: string; learnHref: string; children?: React.ReactNode }) {
   const reduce = useReducedMotion();
   const px = useMotionValue(0);
   const py = useMotionValue(0);
@@ -186,15 +187,15 @@ export function CityHero({ onDiscover, onExplore, children }: { onDiscover: () =
           </motion.p>
           {children}
           <motion.p initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.15 }} className="mt-5 max-w-xl text-lg leading-relaxed text-muted">
-            Discover what people love, find the right locality, and test your next business idea with confidence.
+            Four AI agents. Local cultural insights. One actionable business opportunity, with a small pilot to test it.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.25 }} className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={onDiscover} className="btn-primary px-6 py-3.5 text-base">
-              Discover My Opportunity <ArrowIcon />
-            </button>
-            <button type="button" onClick={onExplore} className="btn-secondary px-6 py-3.5 text-base">
-              Explore Opportunities
-            </button>
+            <Link href={discoverHref} className="btn-primary px-6 py-3.5 text-base">
+              Discover Opportunity <ArrowIcon />
+            </Link>
+            <Link href={learnHref} className="inline-flex items-center justify-center rounded-[0.875rem] px-4 py-3.5 text-base font-semibold text-brand underline-offset-4 hover:underline">
+              See how it works
+            </Link>
           </motion.div>
           <motion.dl initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.4 }} className="mt-8 grid max-w-lg grid-cols-3 gap-3 text-sm">
             {[
@@ -217,7 +218,7 @@ export function CityHero({ onDiscover, onExplore, children }: { onDiscover: () =
           className="relative mx-auto h-[300px] w-full max-w-[460px] sm:h-[440px]"
           aria-hidden="true"
         >
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="hero-city absolute inset-0 flex items-center justify-center">
             <div className="animate-float origin-center scale-[0.68] sm:scale-100" style={{ perspective: 1400 }}>
               <motion.div style={{ transform, transformStyle: "preserve-3d" }}>
                 <CityScene />
@@ -254,7 +255,7 @@ export const HeroHeadline = forwardRef<HTMLHeadingElement>(function HeroHeadline
       transition={{ duration: 0.6, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
       className="mt-5 text-[2.6rem] font-semibold leading-[1.02] tracking-tight text-brand outline-none sm:text-6xl lg:text-[4.1rem]"
     >
-      Turn cultural signals into <span className="italic text-spark-dark">business opportunities.</span>
+      Find the next big thing <span className="italic text-spark-dark">in your neighbourhood.</span>
     </motion.h1>
   );
 });

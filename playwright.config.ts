@@ -8,7 +8,9 @@ const PORT = 3100;
 
 export default defineConfig({
   testDir: "tests/e2e",
-  timeout: 90_000,
+  timeout: 120_000,
+  // Each route compiles on first visit under `next dev`, so navigations can take several seconds.
+  expect: { timeout: 20_000 },
   retries: 0,
   reporter: [["list"]],
   use: { baseURL: `http://localhost:${PORT}`, trace: "off" },

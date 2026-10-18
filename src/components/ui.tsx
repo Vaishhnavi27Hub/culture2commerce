@@ -95,7 +95,7 @@ export function Disclosure({
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-black/[0.02]"
+        className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-ink/[0.03]"
       >
         {icon && (
           <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card text-brand shadow-sm">
@@ -159,7 +159,7 @@ export function Segmented<T extends string>({
             type="button"
             {...(role === "tablist" ? { role: "tab", "aria-selected": on } : { "aria-pressed": on })}
             onClick={() => onChange(v)}
-            className={`relative rounded-lg font-semibold transition-colors ${size === "sm" ? "px-3 py-1 text-xs" : "px-3.5 py-1.5 text-sm"} ${on ? "text-white" : "text-muted hover:text-ink"}`}
+            className={`relative rounded-lg font-semibold transition-colors ${size === "sm" ? "px-3 py-1 text-xs" : "px-3.5 py-1.5 text-sm"} ${on ? "text-on-brand" : "text-muted hover:text-ink"}`}
           >
             {on && <motion.span layoutId={layoutId} className="absolute inset-0 rounded-lg bg-brand" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
             <span className="relative">{text}</span>
@@ -183,12 +183,12 @@ export function FilterChips<T extends string>({ options, value, onChange, label 
             type="button"
             aria-pressed={on}
             onClick={() => onChange(o.value)}
-            className={`relative rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${on ? "border-brand text-white" : "border-line bg-card text-ink hover:border-brand/60"}`}
+            className={`relative rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${on ? "border-brand text-on-brand" : "border-line bg-card text-ink hover:border-brand/60"}`}
           >
             {on && <motion.span layoutId={layoutId} className="absolute inset-0 rounded-full bg-brand" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
             <span className="relative">
               {o.label}
-              {o.count !== undefined && <span className={on ? "text-white/75" : "text-muted"}> ({o.count})</span>}
+              {o.count !== undefined && <span className={on ? "text-on-brand/75" : "text-muted"}> ({o.count})</span>}
             </span>
           </button>
         );

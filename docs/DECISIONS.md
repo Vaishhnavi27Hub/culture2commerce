@@ -208,3 +208,16 @@ app has no map provider. Every chart uses existing run data only and shows an em
 value is missing; there is no chart of page views or sign-ups because the app does not record
 them, and actual spend is not shown because it is not collected. Details on the recommendation
 and Pitch & Pilot screens are collapsed by default and open automatically for printing.
+
+## D36. Multi-page journey and dark mode
+The single-screen app became five routes (landing, `/discover`, `/agents`, `/recommendation`,
+`/plan`) so the landing page is not a form and browser back/refresh behave as expected. Run state
+lives in one client `RunProvider` in the root layout (no state library); the finished run and the
+form draft are kept in `sessionStorage`, so navigation never starts a second run or spends extra
+Qloo calls. Pages without a run show an empty state that links to `/discover`. The recommendation
+page leads with one summary card; the evidence sits in five collapsed sections. Agent cards are
+plain language first; Qloo parameters and call logs sit behind "View technical details".
+Dark mode uses a `data-theme` attribute on `<html>` set by a tiny inline head script (stored
+choice, else the system preference), so there is no flash of the wrong theme; colours are CSS
+variables overridden under `[data-theme="dark"]`. Brand-coloured surfaces that carry white text
+use a `hero` token that stays dark in both themes. Charts read the theme for their SVG text colours.
