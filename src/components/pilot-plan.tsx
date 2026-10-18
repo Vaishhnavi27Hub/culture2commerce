@@ -155,7 +155,7 @@ function PilotSteps({ steps }: { steps: Step[] }) {
           <StaggerItem as="li" key={s.name} className="relative">
             <div className="card lift h-full p-4">
               <div className="flex items-center gap-3">
-                <span aria-hidden="true" className={`flex h-10 w-10 items-center justify-center rounded-full ${i === 1 ? "bg-spark text-[#1d2925]" : "bg-brand text-on-brand"}`}>
+                <span aria-hidden="true" className={`flex h-10 w-10 items-center justify-center rounded-full ${i === 1 ? "bg-spark text-[#2b2540]" : "bg-brand text-on-brand"}`}>
                   {icons[i]}
                 </span>
                 <div>

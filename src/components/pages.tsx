@@ -414,8 +414,8 @@ export function PlanPage() {
             value={showPartner ? "partner" : "solo"}
             onChange={setPlanTab}
             options={[
-              ["solo", <>On your own{result.comparison?.recommended === "solo" && <span className="ml-1.5 rounded-full bg-spark px-1.5 py-0.5 text-[10px] text-[#1d2925]">Recommended</span>}</>],
-              ["partner", <>With a partner{result.comparison?.recommended === "partner" && <span className="ml-1.5 rounded-full bg-spark px-1.5 py-0.5 text-[10px] text-[#1d2925]">Recommended</span>}</>],
+              ["solo", <>On your own{result.comparison?.recommended === "solo" && <span className="ml-1.5 rounded-full bg-spark px-1.5 py-0.5 text-[10px] text-[#2b2540]">Recommended</span>}</>],
+              ["partner", <>With a partner{result.comparison?.recommended === "partner" && <span className="ml-1.5 rounded-full bg-spark px-1.5 py-0.5 text-[10px] text-[#2b2540]">Recommended</span>}</>],
             ]}
           />
         )}

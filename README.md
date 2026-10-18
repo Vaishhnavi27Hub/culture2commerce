@@ -75,7 +75,9 @@ The app is a short journey: **landing page → Your idea (`/discover`) → Agent
 (`/agents`) → Recommendation (`/recommendation`) → Pitch & Pilot (`/plan`)**. The step bar in
 the header lets you move back and forth; the finished run and your form inputs survive a refresh
 or the browser back button (kept in this browser tab only). A sun/moon button in the header
-switches between light and dark mode; it follows your system setting until you choose.
+switches between light and dark mode; it follows your system setting until you choose. With a
+mouse, the pages also react to the cursor (a soft pastel glow, sparkles, magnetic buttons and
+tilting cards); these effects are off on touch screens and when your system asks for reduced motion.
 
 | Landing | Your idea |
 |---|---|

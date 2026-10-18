@@ -221,3 +221,17 @@ Dark mode uses a `data-theme` attribute on `<html>` set by a tiny inline head sc
 choice, else the system preference), so there is no flash of the wrong theme; colours are CSS
 variables overridden under `[data-theme="dark"]`. Brand-coloured surfaces that carry white text
 use a `hero` token that stays dark in both themes. Charts read the theme for their SVG text colours.
+
+## D37. Pastel palette and cursor effects
+The forest-green and coral palette was replaced by pastels (lavender, peach, mint, sky, pink)
+at the team's request. Pastels are too light to carry text, so a deep violet (#5b4bc4, 6.3:1 on
+white) is used for text, buttons and links, and a darker pink (#b8365f) for small highlight
+text; token names did not change, so components follow automatically. Pages sit on a slowly
+drifting pastel mesh (one CSS pseudo-element). Pointer effects live in one client component
+(`cursor-effects.tsx`): a colour-shifting glow behind the content, a light sparkle trail, a ring
+that grows over clickable things, magnetic buttons that wiggle on arrival, confetti on clicks,
+and cards that tilt toward the pointer. They run only for a mouse or trackpad and never with
+prefers-reduced-motion; the native cursor is never hidden, the layers ignore pointer events,
+and one animation frame loop runs only while something is moving. Logos and icons were
+recoloured to match. e2e screenshots are written after the tests finish, because writing into
+the project during a `next dev` run triggered a Fast Refresh rebuild that stalled a reload.

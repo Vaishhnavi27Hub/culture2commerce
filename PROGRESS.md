@@ -29,12 +29,17 @@ See `docs/features.json` (single source of truth; `node scripts/progress.mjs lis
   Pitch & Pilot with progressive disclosure, pilot results dashboard. See DECISIONS D35.
 - **UI/UX redesign (18 Oct, feature branch):** multi-page journey, dark mode, summary-first
   recommendation, plain-language agents. Tested by e2e (4 tests).
+- **Pastel theme and cursor effects (18 Oct, feature branch):** new pastel palette (light and
+  dark), drifting backdrop, cursor glow, sparkles, magnetic buttons, card tilt; logos recoloured.
+  See DECISIONS D37.
 - **Pending:** team review and merge of the feature branch; deployment.
 
 ## Checks run (latest results)
 
 | Date | Command | Result |
 |---|---|---|
+| 18 Oct | Pastel theme + cursor effects: lint, typecheck, `npm test` (202/202), `npm run test:e2e` (4/4, three clean cold runs in a row) | Pass |
+| 18 Oct | Cursor effects in the browser (by hand, production build) | Glow, ring, magnetic button and wiggle confirmed; light and dark checked |
 | 18 Oct | `npm run lint` (feature branch) | Pass |
 | 18 Oct | `npm run typecheck` | Pass |
 | 18 Oct | `npm test` | Pass: 13 files, 202 of 202 tests |

@@ -343,6 +343,13 @@
       "notes": "Branch feature/premium-ui-ux-redesign (not merged)."
     },
     {
+      "id": "pastel-theme-cursor-fx",
+      "title": "Pastel palette and cursor effects (glow, sparkles, magnetic buttons, card tilt)",
+      "status": "implemented",
+      "tests": [],
+      "notes": "Branch feature/premium-ui-ux-redesign. Checked by hand in the browser; effects are off for touch and reduced motion. e2e covers the pages with the new theme."
+    },
+    {
       "id": "github",
       "title": "GitHub repository",
       "status": "implemented",
