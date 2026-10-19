@@ -390,8 +390,39 @@ export const CONCEPTS: Concept[] = [
 
 const byId = new Map(CONCEPTS.map((c) => [c.id, c]));
 
+/** Prefix for an idea the user typed themselves, e.g. "custom:Handmade candles". */
+export const CUSTOM_PREFIX = "custom:";
+
+/** Words that point a custom idea at the most similar catalogue concept (used for cost estimates). */
+const TEMPLATE_HINTS: [RegExp, string][] = [
+  [/coffee|tea|chai|juice|drink|smoothie|lemonade/i, "coffee-popup"],
+  [/cake|bak|brownie|cookie|dessert|sweet|bread|food|snack|chocolate|pastr|momo|biryani|kitchen/i, "baked-goods"],
+  [/cloth|thrift|fashion|tee|t-shirt|apparel|wear|vintage|sneaker|shoe|bag/i, "thrift-stall"],
+  [/jewel|earring|necklace|bracelet|bead|accessor|resin/i, "handmade-jewellery"],
+  [/plant|garden|succulent|flower|candle|decor|home|pottery|ceramic|soap/i, "plant-stall"],
+  [/workshop|class|lesson|course|session|painting|craft/i, "art-workshop"],
+  [/game|quiz|event|music|comedy|karaoke|puzzle/i, "board-game-evening"],
+];
+
+function customConcept(id: string): Concept | undefined {
+  const label = id.slice(CUSTOM_PREFIX.length).replace(/[^\p{L}\p{N} &'\-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 32);
+  if (label.length < 2) return undefined;
+  const templateId = TEMPLATE_HINTS.find(([re]) => re.test(label))?.[1] ?? "art-prints";
+  const template = byId.get(templateId)!;
+  const words = label.toLowerCase().split(" ").filter((w) => w.length >= 3);
+  return {
+    ...template,
+    id,
+    label: label.charAt(0).toUpperCase() + label.slice(1),
+    tagline: `Your own idea. Costs are modelled on a similar ${template.label.toLowerCase()}.`,
+    // Match Qloo tags on the user's own words first, then on the similar concept's words.
+    keywords: [...new Set([...words, ...template.keywords])],
+    skillKeywords: [...new Set([...words, ...template.skillKeywords])],
+  };
+}
+
 export function getConcept(id: string): Concept | undefined {
-  return byId.get(id);
+  return byId.get(id) ?? (id.startsWith(CUSTOM_PREFIX) ? customConcept(id) : undefined);
 }
 
 /** Small public view of the catalogue for the input form. */

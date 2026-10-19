@@ -1,10 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { AgentTrace, QlooCall } from "@/lib/schemas";
 import { AGENT_INFO } from "@/lib/trace";
-import { SourceBadge, StatusBadge } from "./badges";
+import { EstimateHint, SourceBadge, StatusBadge } from "./badges";
 import { Disclosure } from "./ui";
 
 const METHOD_LABEL: Record<string, string> = {
@@ -16,6 +16,8 @@ const METHOD_LABEL: Record<string, string> = {
   getTasteTags: "Genres the audience over-indexes on",
   getBrandAffinity: "Brands the audience favours",
   getDemographics: "Audience demographics",
+  getNearbyAffinityPlaces: "Nearby places with a similar crowd",
+  getNeighbourhoodHeatmap: "Where the audience is (neighbourhood heatmap)",
 };
 
 /** Shortens long ID lists so a call fits on one line. The API key is never part of a call record. */
@@ -27,6 +29,45 @@ function shortParams(params: Record<string, string>): string {
       return `${key}=${shown.length > 70 ? `${shown.slice(0, 67)}…` : shown}`;
     })
     .join("  ");
+}
+
+/** "sample data" / "recorded snapshot" when calls did not come from the live API; nothing for live. */
+function callSourceNote(calls: QlooCall[]): string | undefined {
+  if (calls.length === 0) return undefined;
+  if (calls.every((c) => c.source === "live")) return undefined;
+  if (calls.every((c) => c.source === "sample")) return "sample data";
+  if (calls.every((c) => c.source === "recorded")) return "recorded snapshot";
+  return "some from fallback data";
+}
+
+/** Plain-language list of what was asked, with counts. */
+function summariseCalls(calls: QlooCall[]): [string, number][] {
+  const counts = new Map<string, number>();
+  for (const c of calls) {
+    const label = METHOD_LABEL[c.method] ?? "Other lookup";
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return [...counts.entries()];
+}
+
+/** Rewrites internal fallback reasons (which can name config variables) as plain language. */
+function friendlyWarning(warning: string, calls: QlooCall[]): string {
+  if (!warning.startsWith("Qloo fallback used")) return warning;
+  const note = callSourceNote(calls);
+  if (note === "sample data") return "Live Qloo data was not available, so this step used built-in sample data.";
+  if (note === "recorded snapshot") return "Live Qloo data was not available, so this step used a recorded Qloo snapshot.";
+  return "Some Qloo lookups were not available live, so fallback data filled the gaps.";
+}
+
+const uniqueStrings = (items: string[]) => [...new Set(items)];
+
+/** Developer-only details are shown when the URL contains ?debug. */
+function useDebugView(): boolean {
+  const [debug, setDebug] = useState(false);
+  useEffect(() => {
+    setDebug(new URLSearchParams(window.location.search).has("debug"));
+  }, []);
+  return debug;
 }
 
 function QlooCallRow({ call }: { call: QlooCall }) {
@@ -50,6 +91,7 @@ function QlooCallRow({ call }: { call: QlooCall }) {
 
 function AgentCard({ trace, next }: { trace: AgentTrace; next: AgentTrace | undefined }) {
   const info = AGENT_INFO[trace.agent];
+  const debug = useDebugView();
   const [showAllCalls, setShowAllCalls] = useState(false);
   const calls = showAllCalls ? trace.qlooCalls : trace.qlooCalls.slice(0, 4);
   const latestNote = trace.notes.at(-1);
@@ -65,7 +107,8 @@ function AgentCard({ trace, next }: { trace: AgentTrace; next: AgentTrace | unde
           : active
             ? latestNote
             : undefined;
-  const userWarnings = trace.status === "skipped" ? [] : trace.warnings;
+  // Plain-language warnings for everyone; the raw technical reason is kept for the ?debug view.
+  const userWarnings = trace.status === "skipped" ? [] : uniqueStrings(trace.warnings.map((w) => (debug ? w : friendlyWarning(w, trace.qlooCalls))));
 
   return (
     <motion.li
@@ -134,8 +177,23 @@ function AgentCard({ trace, next }: { trace: AgentTrace; next: AgentTrace | unde
             </p>
           )}
 
-          {(trace.status !== "queued" || trace.qlooCalls.length > 0) && (
-            <Disclosure className="mt-3" title="View technical details" hint={`Inputs, outputs, activity log${trace.qlooCalls.length ? ` and ${trace.qlooCalls.length} Qloo calls` : ""}`}>
+          {/* Compact facts: real Qloo call count from this run, timing, and an estimate hint where relevant. */}
+          {trace.status !== "queued" && (
+            <p className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+              {(info.usesQloo || trace.qlooCalls.length > 0) && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper/60 px-2.5 py-0.5 font-semibold text-ink">
+                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-brand to-info" />
+                  Qloo calls: {trace.qlooCalls.length}
+                  {callSourceNote(trace.qlooCalls) && <span className="font-normal text-muted">· {callSourceNote(trace.qlooCalls)}</span>}
+                </span>
+              )}
+              {trace.durationMs !== undefined && <span>{trace.durationMs < 1000 ? `${trace.durationMs} ms` : `${(trace.durationMs / 1000).toFixed(1)} s`}</span>}
+              {trace.dataSources.includes("estimate") && <EstimateHint text="Uses cost estimates" />}
+            </p>
+          )}
+
+          {(trace.status === "completed" || trace.status === "failed" || trace.status === "skipped" || trace.notes.length > 1) && (
+            <Disclosure className="mt-3" title="What this agent did" hint="What it received, what it produced and the steps it took">
               <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-xl bg-card p-3">
@@ -147,10 +205,9 @@ function AgentCard({ trace, next }: { trace: AgentTrace; next: AgentTrace | unde
                     <p className="mt-1">{trace.outputSummary ?? (trace.error ? `Nothing: ${trace.error}` : "Not finished yet.")}</p>
                   </div>
                 </div>
-                {trace.durationMs !== undefined && <p className="text-xs text-muted">Took {trace.durationMs < 1000 ? `${trace.durationMs} ms` : `${(trace.durationMs / 1000).toFixed(1)} s`}.</p>}
                 {trace.notes.length > 0 && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-muted">Activity log</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted">Steps</p>
                     <ul className="mt-1 list-disc space-y-0.5 pl-5">
                       {trace.notes.map((note, i) => (
                         <li key={i}>{note}</li>
@@ -158,31 +215,35 @@ function AgentCard({ trace, next }: { trace: AgentTrace; next: AgentTrace | unde
                     </ul>
                   </div>
                 )}
-                {trace.dataSources.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wide text-muted">Data used</span>
-                    {trace.dataSources.map((s) => (
-                      <SourceBadge key={s} source={s} long />
-                    ))}
+                {trace.qlooCalls.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted">What it asked Qloo</p>
+                    <ul className="mt-1 flex flex-wrap gap-1.5">
+                      {summariseCalls(trace.qlooCalls).map(([label, count]) => (
+                        <li key={label} className="rounded-full border border-line bg-card px-2.5 py-0.5 text-xs">
+                          {label}
+                          {count > 1 && <span className="text-muted"> ×{count}</span>}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
-                {trace.qlooCalls.length > 0 ? (
+                {!info.usesQloo && trace.status === "completed" && <p className="text-muted">This agent makes no Qloo calls. It works with what the earlier agents found, plus cost estimates.</p>}
+                {/* Raw request details (endpoints and parameters) are for developers only: add ?debug to the URL. */}
+                {debug && trace.qlooCalls.length > 0 && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-muted">Qloo calls ({trace.qlooCalls.length})</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted">Developer view · raw Qloo requests</p>
                     <ul className="mt-1.5 space-y-1.5">
                       {calls.map((call, i) => (
                         <QlooCallRow key={i} call={call} />
                       ))}
                     </ul>
                     {trace.qlooCalls.length > 4 && (
-                      <button type="button" onClick={() => setShowAllCalls((s) => !s)} className="mt-2 text-sm font-semibold text-brand hover:underline">
+                      <button type="button" onClick={() => setShowAllCalls((v) => !v)} className="mt-2 text-sm font-semibold text-brand hover:underline">
                         {showAllCalls ? "Show fewer calls" : `Show all ${trace.qlooCalls.length} calls`}
                       </button>
                     )}
                   </div>
-                ) : (
-                  trace.status === "completed" &&
-                  !info.usesQloo && <p className="text-muted">This agent makes no Qloo calls. It works only with what the earlier agents found, plus cost estimates.</p>
                 )}
               </div>
             </Disclosure>
@@ -201,7 +262,7 @@ export function AgentPipeline({ traces, running }: { traces: AgentTrace[]; runni
 
   return (
     <section aria-labelledby="pipeline-heading">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-spark-dark">Four agents, one recommendation</p>
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-spark-dark">Your Agents at Work</p>
       <h1 id="pipeline-heading" tabIndex={-1} className="text-3xl font-semibold outline-none sm:text-4xl">
         {running ? "Discovering your opportunity" : "Your agents have finished"}
       </h1>

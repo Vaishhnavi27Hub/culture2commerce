@@ -4,15 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { APP_NAME } from "@/lib/brand";
 import { RunSourceBadge } from "./badges";
+import { BrandLogo } from "./brand-logo";
 import { useRun } from "./run-provider";
 import { ThemeToggle } from "./theme-toggle";
 
 /** The journey's steps, each a real page, so the browser back button works naturally. */
 export const STEPS = [
   { href: "/discover", label: "Your idea", short: "Idea" },
-  { href: "/agents", label: "Agents at work", short: "Agents" },
+  { href: "/agents", label: "Your Agents at Work", short: "Agents" },
   { href: "/recommendation", label: "Recommendation", short: "Result" },
-  { href: "/plan", label: "Pitch & Pilot", short: "Pilot" },
+  { href: "/plan", label: "Launch Plan", short: "Plan" },
 ] as const;
 
 function Stepper() {
@@ -77,12 +78,8 @@ export function SiteHeader() {
     <header className="no-print sticky top-0 z-30 border-b border-line/60 bg-paper/70 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-2.5 sm:gap-3 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2 rounded-lg" aria-label={`${APP_NAME} home`}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo, swapped for dark mode by CSS */}
-          <img src="/brand/logo-full.svg" alt="" width={212} height={36} className="logo-light hidden h-8 w-auto sm:block sm:h-9" />
-          {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
-          <img src="/brand/logo-full-dark.svg" alt="" width={212} height={36} className="logo-dark hidden h-8 w-auto sm:h-9" />
-          {/* eslint-disable-next-line @next/next/no-img-element -- compact mark on small screens */}
-          <img src="/brand/logo-mark.svg" alt="" width={32} height={32} className="h-8 w-8 sm:hidden" />
+          <BrandLogo className="hidden sm:inline-flex" />
+          <BrandLogo showWordmark={false} className="inline-flex sm:hidden" />
           <span className="sr-only">{APP_NAME}</span>
         </Link>
 

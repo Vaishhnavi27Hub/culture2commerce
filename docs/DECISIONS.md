@@ -251,3 +251,24 @@ no key, attribution shown; CARTO tiles were tried but now require a key), recolo
 filter in dark mode. Pins sit at Qloo's coordinates with the 2 km competitor radius drawn around
 each; clicking a pin selects the area. No Qloo calls were added. Logos and icons were redrawn
 as a gradient tile with a dark market-stall glyph.
+
+## D39. Demo polish: living neighbourhood, summary-first recommendation, quieter labels
+- Homepage: new caption; the CSS 3D neighbourhood sits beside the hero text with added pop-up
+  booths, a food cart and a kiosk. Eight people walk along the pavements continuously using
+  compositor-only CSS animations (transform and opacity), paused by an IntersectionObserver when
+  the scene is off screen and replaced by a still scene under prefers-reduced-motion.
+- Only the example report graph reacts to hover (a guide dot follows the curve); the surrounding
+  cards no longer move. The header logo is inline SVG with a soft pulse and a slow sheen.
+- Renamed "Pitch & Pilot" to "Launch Plan" and "Agents at work" to "Your Agents at Work".
+  Removed the user-facing JSON trace download, the "Written by LLM" label and the promotional footer.
+- Agent cards show plain-language summaries and the real Qloo call count; raw requests (endpoints
+  and parameters) appear only with `?debug` in the URL. Fallback warnings are rewritten in plain
+  language (they could name config variables).
+- Estimates are disclosed with a small info hint instead of loud badges; a short note at the
+  bottom of each page says cost figures are estimates to verify before committing money.
+- Recommendation: one card answers what, why (two sentences), can I afford it (pilot budget and
+  what is left), how long, for whom, and at what test price, with one "View My Pilot Plan" button.
+  The full reasoning is behind "See why we recommend this"; detail moved into five sections
+  (Why this recommendation?, View detailed budget, Explore other opportunities, Explore
+  neighbourhoods, How Qloo influenced this decision). Each concept has a themed inline-SVG
+  illustration (no network or licence issues); photos can be configured in CONCEPT_PHOTOS.

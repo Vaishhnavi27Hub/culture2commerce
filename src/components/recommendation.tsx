@@ -6,9 +6,10 @@ import { CATEGORY_LABEL, CATEGORY_ORDER, type ConceptCategory } from "@/lib/cate
 import { budgetSplit } from "@/lib/explain";
 import { inr, score, splitAudience } from "@/lib/format";
 import type { Evidence, RunResult, ScoredOption, Weights } from "@/lib/schemas";
-import { ConfidenceBadge, SourceBadge, VerdictBadge } from "./badges";
+import { ConfidenceBadge, EstimateHint, SourceBadge, VerdictBadge } from "./badges";
+import { ConceptImage } from "./concept-art";
 import { ChartFrame, HBarChart, StackedBar } from "./charts";
-import { AlertIcon, ArrowIcon, ClockIcon, Disclosure, EmptyState, FilterChips, FlagIcon, Kpi, PinIcon, SearchIcon, SparkIcon, Stagger, StaggerItem, WalletIcon } from "./ui";
+import { AlertIcon, ArrowIcon, ChevronIcon, ClockIcon, Disclosure, EmptyState, FilterChips, PeopleIcon, PinIcon, SearchIcon, SparkIcon, WalletIcon } from "./ui";
 
 // ---------------------------------------------------------------------------
 // Score bars and the scoring explanation
@@ -416,105 +417,182 @@ export function mainCaveat(winner: ScoredOption): string {
   return lowered?.text ?? winner.verdictReasons[1] ?? "Costs are planning estimates; verify them locally before spending.";
 }
 
-export function WinnerCard({ result, winner, onOpenPlan }: { result: RunResult; winner: ScoredOption; onOpenPlan: () => void }) {
+/** At most two short sentences: cultural relevance, then whether the pilot is affordable. */
+export function shortWhy(result: RunResult, winner: ScoredOption): string[] {
+  const fit = winner.scores.culturalFit;
+  const strength = fit >= 75 ? "a strong" : fit >= 60 ? "a clear" : "some";
+  const first =
+    winner.culturalBreakdown.meanAffinity !== undefined
+      ? `People who spend time in ${winner.locality} show ${strength} taste affinity for places like ${article(winner.conceptLabel)} ${winner.conceptLabel.toLowerCase()} (cultural fit ${score(fit)}/100).`
+      : `It ranked highest overall in ${winner.locality}, although Qloo had little cultural data for this idea there.`;
+  const second =
+    winner.verdict === "accepted"
+      ? `A small pilot fits your budget at about ${inr(result.pilotPlan?.totalCostInr ?? winner.totalCostInr)}.`
+      : (winner.verdictReasons[0] ?? "Costs need a closer look before you commit.");
+  return [first, second];
+}
+
+const article = (word: string) => (/^[aeiou]/i.test(word) ? "an" : "a");
+
+/** The suggested test price: Qloo-informed pricing for this concept when available, otherwise the plan's unit price. */
+function testPrice(result: RunResult, winner: ScoredOption): string | undefined {
+  const p = result.pricing;
+  if (p && p.conceptId === winner.conceptId && p.rangeInr[1] > 0) {
+    const [lo, hi] = p.rangeInr;
+    return `${lo === hi ? inr(lo) : `${inr(lo)}–${inr(hi)}`} per ${winner.unitLabel}`;
+  }
+  if (winner.unitPriceInr > 0) return `About ${inr(winner.unitPriceInr)} per ${winner.unitLabel}`;
+  return undefined;
+}
+
+export function WinnerCard({ result, winner, category, onOpenPlan }: { result: RunResult; winner: ScoredOption; category?: string; onOpenPlan: () => void }) {
+  const [open, setOpen] = useState(false);
   const plan = result.pilotPlan;
   const narrative = result.narrative;
+  const cost = plan?.totalCostInr ?? winner.totalCostInr;
+  const left = result.input.budgetInr - cost;
+  const price = testPrice(result, winner);
   const audience = splitAudience(winner.targetAudience);
-  const summary = executiveSummary(result, winner);
-  const verdictLabel = winner.verdict === "accepted" ? "Fits budget" : winner.verdict === "downgraded" ? "Over budget" : "Ruled out";
+  const whyId = "winner-why";
   return (
     <section aria-labelledby="winner-heading" className="overflow-hidden rounded-[1.75rem] shadow-[var(--shadow-lift)]">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="relative bg-hero text-white"
+        className="bg-hero relative grid text-white md:grid-cols-[1.15fr_1fr]"
       >
-        <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-spark/25 blur-3xl" />
+        {/* Picture of the recommended business (first on small screens). */}
+        <div className="relative order-first aspect-[16/10] bg-gradient-to-b from-[#1f1846] via-[#16122e] to-[#0a0817] md:order-last md:aspect-auto md:min-h-full">
+          <ConceptImage conceptId={winner.conceptId} category={category} label={winner.conceptLabel} className="absolute inset-0" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#141230]/70 via-transparent to-transparent md:bg-gradient-to-r md:from-[#1d1840] md:via-transparent" />
+        </div>
+
         <div className="relative p-5 sm:p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">Your top opportunity</p>
-          <div className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <h2 id="winner-heading" className="max-w-2xl text-3xl font-semibold leading-tight sm:text-[2.6rem]">
-                {winner.conceptLabel}
-              </h2>
-              <p className="mt-1 flex items-center gap-1.5 text-lg text-white/85">
-                <PinIcon /> {winner.locality}, {result.input.city}
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">Your Top Recommendation</p>
+            <span className="rounded-full bg-gradient-to-r from-[#c4b5fd] to-[#7dd3fc] px-2.5 py-0.5 text-[11px] font-bold text-[#0b0b14]">Top pick</span>
+          </div>
+          <h2 id="winner-heading" className="mt-2 text-3xl font-bold leading-tight sm:text-[2.4rem]">
+            {winner.conceptLabel}
+          </h2>
+          <p className="mt-1 flex items-center gap-1.5 text-white/80">
+            <PinIcon /> {winner.locality}, {result.input.city}
+          </p>
+
+          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/90">{shortWhy(result, winner).join(" ")}</p>
+
+          {/* The two numbers that matter most for a first decision. */}
+          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-[1.1rem] bg-white/10 p-3.5">
+              <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/70">
+                <WalletIcon /> Estimated pilot budget
               </p>
-              <p className="mt-1 text-sm text-white/70">For {audience.who.charAt(0).toLowerCase() + audience.who.slice(1)}</p>
+              <p className="mt-1 font-display text-2xl font-bold tabular-nums">{inr(cost)}</p>
+              <p className="text-xs text-white/70">{left >= 0 ? `${inr(left)} left of your ${inr(result.input.budgetInr)}` : `${inr(-left)} over your ${inr(result.input.budgetInr)}`}</p>
             </div>
-            <div className="flex items-center gap-3 sm:flex-col sm:items-center sm:text-center">
-              <ScoreRing value={winner.scores.final} />
-              <p className="max-w-[11rem] text-xs leading-4 text-white/70">
-                <span className="font-semibold text-white">Overall score.</span> Cultural fit, feasibility and risk combined with fixed weights. Not a success probability.
+            <div className="rounded-[1.1rem] bg-white/10 p-3.5">
+              <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/70">
+                <ClockIcon /> Pilot duration
               </p>
+              <p className="mt-1 font-display text-2xl font-bold">
+                {result.input.weekends} {result.input.weekends === 1 ? "weekend" : "weekends"}
+              </p>
+              <p className="text-xs text-white/70">{plan ? `${plan.days} selling days` : `${result.input.weekends * 2} selling days`}</p>
             </div>
           </div>
 
-          <div className="mt-6 max-w-3xl">
-            <h3 className="font-display text-xl font-semibold">Why this opportunity?</h3>
-            <p className="mt-1.5 text-[15px] leading-relaxed text-white/90">{summary.join(" ")}</p>
-          </div>
-
-          <Stagger className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <StaggerItem>
-              <Kpi tone="dark" icon={<SparkIcon />} label="Cultural fit" value={`${score(winner.scores.culturalFit)} / 100`} hint="From Qloo affinities for this area" />
-            </StaggerItem>
-            <StaggerItem>
-              <Kpi tone="dark" icon={<WalletIcon />} label="Pilot investment" value={inr(plan?.totalCostInr ?? winner.totalCostInr)} hint={`Estimate · ${winner.budgetUsedPct}% of ${inr(result.input.budgetInr)}`} />
-            </StaggerItem>
-            <StaggerItem>
-              <Kpi
-                tone="dark"
-                icon={<ClockIcon />}
-                label="Pilot duration"
-                value={`${result.input.weekends} ${result.input.weekends === 1 ? "weekend" : "weekends"}`}
-                hint={plan ? `${plan.days} selling days` : `${result.input.weekends * 2} selling days`}
-              />
-            </StaggerItem>
-            <StaggerItem>
-              <Kpi tone="dark" icon={<FlagIcon />} label="Feasibility" value={verdictLabel} hint={`${winner.confidence.level} confidence in the data`} />
-            </StaggerItem>
-          </Stagger>
-
-          <div className="mt-5 flex gap-2.5 rounded-2xl border border-white/15 bg-white/[0.06] p-3.5 text-sm">
-            <span aria-hidden="true" className="mt-0.5 text-spark">
-              <AlertIcon />
-            </span>
-            <p>
-              <span className="font-semibold">Important consideration: </span>
-              <span className="text-white/85">{mainCaveat(winner)}</span>
-            </p>
-          </div>
+          <dl className="mt-4 space-y-2 text-sm">
+            <div className="flex gap-2">
+              <dt className="mt-0.5 shrink-0 text-white/60">
+                <PeopleIcon />
+                <span className="sr-only">Target audience</span>
+              </dt>
+              <dd>
+                <span className="font-semibold">Audience: </span>
+                <span className="text-white/85">
+                  {audience.who}
+                  {audience.detail ? ` ${audience.detail}` : ""}
+                </span>
+              </dd>
+            </div>
+            {price && (
+              <div className="flex gap-2">
+                <dt className="mt-0.5 shrink-0 text-white/60">
+                  <SparkIcon />
+                  <span className="sr-only">Suggested test price</span>
+                </dt>
+                <dd>
+                  <span className="font-semibold">Suggested test price: </span>
+                  <span className="text-white/85">{price}</span>{" "}
+                  <EstimateHint text="estimate to test" detail="A starting price to test at the stall, based on local price levels and costs. Not a confirmed market price." className="text-white/55" />
+                </dd>
+              </div>
+            )}
+          </dl>
 
           <div className="no-print mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
             {plan && (
-              <button type="button" onClick={onOpenPlan} className="inline-flex items-center justify-center gap-2 rounded-xl bg-spark px-5 py-3 text-sm font-bold text-[#2b2540] shadow-lg transition hover:-translate-y-px hover:brightness-105 active:translate-y-px">
-                View Pilot Plan <ArrowIcon />
+              <button type="button" onClick={onOpenPlan} className="btn-primary px-6 py-3 text-sm">
+                View My Pilot Plan <ArrowIcon />
               </button>
             )}
-            <a href="#analysis" className="inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-white/90 underline-offset-4 hover:underline">
-              Explore the evidence
-            </a>
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls={whyId}
+              onClick={() => setOpen((o) => !o)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-3 text-sm font-semibold text-white/85 hover:text-white"
+            >
+              See why we recommend this
+              <motion.span aria-hidden="true" animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <ChevronIcon />
+              </motion.span>
+            </button>
           </div>
         </div>
       </motion.div>
-      {narrative && (
-        <div className="border-x border-b border-line bg-card p-3 sm:p-4">
-          <Disclosure tone="lavender" icon={<SparkIcon />} title="Read the full explanation" hint={narrative.source === "llm" ? "Wording polished by an LLM; numbers unchanged" : "Written from templates"}>
-            {audience.detail && (
-              <p>
-                <span className="font-semibold">Audience:</span> {winner.targetAudience}.
-              </p>
-            )}
-            <p className="mt-2 leading-6">{narrative.whyThis}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <SourceBadge source={narrative.source} long />
-              {narrative.note && <span className="text-xs text-muted">{narrative.note}</span>}
+
+      {/* Detailed reasoning, only on request. */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            id={whyId}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden border-x border-b border-line bg-card"
+          >
+            <div className="grid gap-5 p-5 text-sm sm:grid-cols-[auto_1fr] sm:p-6">
+              <div className="flex items-center gap-3 sm:flex-col sm:text-center">
+                <ScoreRing value={winner.scores.final} />
+                <p className="max-w-[11rem] text-xs leading-4 text-muted">
+                  <span className="font-semibold text-ink">Overall score.</span> Cultural fit, feasibility and risk with fixed weights. Not a success probability.
+                </p>
+              </div>
+              <div className="space-y-3">
+                <ul className="list-disc space-y-1.5 pl-5 leading-relaxed">
+                  {executiveSummary(result, winner).map((s) => (
+                    <li key={s}>{s}</li>
+                  ))}
+                </ul>
+                {narrative?.whyThis && <p className="leading-relaxed text-muted">{narrative.whyThis}</p>}
+                <p className="flex gap-2 rounded-xl bg-paper p-3">
+                  <span aria-hidden="true" className="text-spark-dark">
+                    <AlertIcon />
+                  </span>
+                  <span>
+                    <span className="font-semibold">Worth checking: </span>
+                    {mainCaveat(winner)}
+                  </span>
+                </p>
+                <p className="text-xs text-muted">Cultural affinity shows who already enjoys similar places; it is not proof that people will buy.</p>
+              </div>
             </div>
-          </Disclosure>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
@@ -714,7 +792,7 @@ export function OptionDetail({ result, option, weights }: { result: RunResult; o
           <FeasibilityBreakdown option={option} budgetInr={result.input.budgetInr} />
         </div>
 
-        <Disclosure tone="card" icon={<SparkIcon />} title="Why this recommendation?" hint="Score formula, data confidence and every signal used">
+        <Disclosure tone="card" icon={<SparkIcon />} title="Why it scored this way" hint="Score formula, data confidence and every signal used">
           <div className="space-y-4">
             <ScoreBreakdown option={option} weights={weights} />
             <ConfidencePanel option={option} />

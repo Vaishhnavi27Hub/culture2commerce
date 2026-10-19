@@ -218,7 +218,7 @@ export function DiscoverPage() {
 }
 
 // ---------------------------------------------------------------------------
-// 3. Agents at work
+// 3. Your Agents at Work
 // ---------------------------------------------------------------------------
 
 export function AgentsPage() {
@@ -294,7 +294,7 @@ export function RecommendationPage() {
   const soloCard =
     mode !== "partner" &&
     (winner ? (
-      <WinnerCard result={result} winner={winner} onOpenPlan={() => openPlan("solo")} />
+      <WinnerCard result={result} winner={winner} category={categoryOf(winner.conceptId)} onOpenPlan={() => openPlan("solo")} />
     ) : (
       <div className="rounded-2xl border border-bad/30 bg-bad-soft p-5">
         <h2 className="text-2xl font-semibold text-bad">No solo option fits this budget</h2>
@@ -324,10 +324,10 @@ export function RecommendationPage() {
       </div>
 
       <section id="analysis" aria-labelledby="analysis-heading" className="mt-12 scroll-mt-24">
-        <SectionHeading id="analysis-heading" eyebrow="Supporting analysis" title="The evidence behind it" subtitle="Open any section for the details. Nothing here changes the recommendation above." />
+        <SectionHeading id="analysis-heading" eyebrow="Go deeper" title="Explore the details" subtitle="Open any section for the full analysis. Nothing here changes the recommendation above." />
         <div className="mt-5 space-y-3">
           {winner && (
-            <Disclosure tone="card" icon={<SparkIcon />} title="Cultural evidence and reasoning" hint="Qloo signals, evidence strength and how cultural fit is scored">
+            <Disclosure tone="card" icon={<SparkIcon />} title="Why this recommendation?" hint="Cultural signals, scoring method and the venues behind it">
               <div id="analysis-cultural" className="space-y-5">
                 <CulturalAffinityChart option={winner} />
                 {result.weights && <ScoreBreakdown option={winner} weights={result.weights} />}
@@ -336,11 +336,10 @@ export function RecommendationPage() {
                   <p className="mb-2 font-semibold">Evidence trail</p>
                   <EvidenceTrail option={winner} />
                 </div>
-                <WithWithoutQloo result={result} winner={winner} />
               </div>
             </Disclosure>
           )}
-          <Disclosure tone="card" icon={<WalletIcon />} title="Feasibility, costs and risks" hint="Budget fit, cost breakdown, price positioning and what still needs checking">
+          <Disclosure tone="card" icon={<WalletIcon />} title="View detailed budget" hint="Itemised costs, assumptions, margins and price positioning">
             <div className="space-y-5">
               {winner && <FeasibilityBreakdown option={winner} budgetInr={result.input.budgetInr} />}
               {winner && winner.verdictReasons.length > 0 && (
@@ -351,21 +350,26 @@ export function RecommendationPage() {
                 </ul>
               )}
               <PricingPanel result={result} />
-              <p className="rounded-xl border border-warn/30 bg-warn-soft p-3 text-warn">Stall fees, costs and commissions are illustrative estimates. Verify them locally before spending.</p>
+              <p className="text-xs text-muted">Stall fees, costs and commissions are planning estimates. Verify them locally before spending.</p>
             </div>
           </Disclosure>
-          <Disclosure tone="card" icon={<ChartIcon />} title="Compare other opportunities" hint={`All ${result.options.length} options, ranked, with the reasons for each score`}>
+          <Disclosure tone="card" icon={<ChartIcon />} title="Explore other opportunities" hint={`All ${result.options.length} options ranked, including why some were downgraded or ruled out`}>
             <div className="grid gap-6 xl:grid-cols-[minmax(0,24rem)_1fr]">
               <RankedOptions result={result} selectedId={selected?.id ?? ""} onSelect={setSelectedId} categoryOf={categoryOf} />
               {selected && result.weights && <OptionDetail result={result} option={selected} weights={result.weights} />}
             </div>
           </Disclosure>
-          <Disclosure tone="card" icon={<PinIcon />} title="Locality analysis" hint="How the answer changes by area, and where the idea’s audience is">
+          <Disclosure tone="card" icon={<PinIcon />} title="Explore neighbourhoods" hint="How the answer changes by area, on a real map, and where the audience is">
             <div className="space-y-6">
               <LocalityCompare result={result} />
               <NeighbourhoodPanel result={result} />
             </div>
           </Disclosure>
+          {winner && (
+            <Disclosure tone="card" icon={<FlagIcon />} title="How Qloo influenced this decision" hint="Generic advice without Qloo, compared with the culturally informed answer">
+              <WithWithoutQloo result={result} winner={winner} />
+            </Disclosure>
+          )}
           {hasPartner && (
             <Disclosure tone="card" icon={<PeopleIcon />} title="Partner strategy" hint="Potential partners, collaboration options and the solo vs partner comparison">
               <div id="analysis-partner" className="space-y-6">
@@ -383,7 +387,7 @@ export function RecommendationPage() {
 }
 
 // ---------------------------------------------------------------------------
-// 5. Pitch & Pilot
+// 5. Launch Plan
 // ---------------------------------------------------------------------------
 
 export function PlanPage() {
@@ -399,7 +403,7 @@ export function PlanPage() {
   return (
     <PageShell>
       <h1 ref={heading} tabIndex={-1} className="sr-only">
-        Pitch and pilot plan
+        Launch Plan
       </h1>
       <div className="no-print mb-5 flex flex-wrap items-center justify-between gap-3">
         <Link href="/recommendation" className="inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-ink">

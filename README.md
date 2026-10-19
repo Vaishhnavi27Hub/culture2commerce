@@ -71,8 +71,8 @@ ready-to-send outreach drafts.
 These were captured by the end-to-end test in offline mode, so every venue is bundled sample
 data marked "(sample)". With a Qloo key the same screens show real Qloo places and affinities.
 
-The app is a short journey: **landing page → Your idea (`/discover`) → Agents at work
-(`/agents`) → Recommendation (`/recommendation`) → Pitch & Pilot (`/plan`)**. The step bar in
+The app is a short journey: **landing page → Your idea (`/discover`) → Your Agents at Work
+(`/agents`) → Recommendation (`/recommendation`) → Launch Plan (`/plan`)**. The step bar in
 the header lets you move back and forth; the finished run and your form inputs survive a refresh
 or the browser back button (kept in this browser tab only). The app opens in a dark "aurora" theme; a sun/moon button in the header switches to light mode
 and remembers the choice. With a mouse, a soft spotlight and glowing card edges follow the
@@ -83,7 +83,7 @@ comparison uses a real street map (OpenStreetMap) with each area's 2 km catchmen
 |---|---|
 | ![Landing page](docs/screenshots/0-landing.png) | ![Input screen](docs/screenshots/1-input.png) |
 
-| Agents at work | Dark mode and phone width |
+| Your Agents at Work | Dark mode and phone width |
 |---|---|
 | ![Agent workflow](docs/screenshots/2-agents.png) | ![Dark mode](docs/screenshots/7-dark-discover.png) ![Phone](docs/screenshots/8-mobile-landing.png) |
 

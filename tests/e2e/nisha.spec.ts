@@ -30,9 +30,12 @@ test("Nisha's example runs end to end on the offline fallback", async ({ page })
 
   // Landing page: hero only, no form.
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("next big thing");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Turn cultural signals into your next big opportunity.");
   await expect(page.getByRole("button", { name: "Try Nisha’s example" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Four agents, one clear next step" })).toBeVisible();
+  await expect(page.getByText("Discover promising local business ideas, uncover what makes them relevant, and turn them into small, actionable pilots.")).toBeVisible();
+  await expect(page.locator(".walker")).toHaveCount(8);
+  await expect(page.locator("header .logo-swap").first()).toBeAttached();
   if (process.env.C2C_SCREENSHOTS) await page.waitForTimeout(1500); // let the hero entrance animation finish
   await shoot(page, "0-landing.png");
 
@@ -51,48 +54,61 @@ test("Nisha's example runs end to end on the offline fallback", async ({ page })
   }
   await expect(page.getByText("4 of 4 agents completed")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText(/0 live, 0 recorded and 30 sample Qloo calls/)).toBeVisible();
-  await expect(page.getByText("Qloo calls (12)")).toHaveCount(0);
-  await page.getByRole("button", { name: /View technical details/ }).first().click();
-  await expect(page.getByText("Qloo calls (12)")).toBeVisible();
+  await expect(page.getByText("Qloo calls: 12")).toBeVisible();
+  await expect(page.locator("main code")).toHaveCount(0);
+  await expect(page.getByText(/QLOO_API_KEY/)).toHaveCount(0);
+  await page.getByRole("button", { name: /What this agent did/ }).first().click();
+  await expect(page.getByText("What it asked Qloo")).toBeVisible();
+  await expect(page.locator("main code")).toHaveCount(0);
   await shoot(page, "2-agents.png", true);
 
   // Recommendation: summary first, analysis in collapsible sections.
   await page.getByRole("button", { name: /See the recommendation/ }).click();
   await expect(page).toHaveURL(/\/recommendation$/);
-  await expect(page.getByText("Your top opportunity")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Why this opportunity?" })).toBeVisible();
+  await expect(page.getByText("Your Top Recommendation")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Art print pop-up", level: 2 })).toBeVisible();
+  await expect(page.getByRole("img", { name: /Illustration of an art print pop-up stall/ })).toBeVisible();
+  await expect(page.getByText("Estimated pilot budget")).toBeVisible();
+  await expect(page.getByText("Pilot duration")).toBeVisible();
+  await expect(page.getByText(/Suggested test price:/)).toBeVisible();
+  await expect(page.getByText(/Not a success probability/)).toHaveCount(0);
+  await page.getByRole("button", { name: /See why we recommend this/ }).click();
   await expect(page.getByText(/Not a success probability/)).toBeVisible();
-  await expect(page.getByText("Important consideration:")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "The evidence behind it" })).toBeVisible();
+  await expect(page.getByText("Worth checking:")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Explore the details" })).toBeVisible();
 
-  await openSection(page, /Cultural evidence and reasoning/);
+  await openSection(page, /Why this recommendation\?/);
   await expect(page.getByText("Low confidence").first()).toBeVisible();
   await expect(page.getByText("High confidence")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Without Qloo vs With Qloo" })).toBeVisible();
   await expect(page.getByText("Evidence trail").first()).toBeVisible();
 
-  await openSection(page, /Locality analysis/);
+  await openSection(page, /How Qloo influenced this decision/);
+  await expect(page.getByRole("heading", { name: "Without Qloo vs With Qloo" })).toBeVisible();
+
+  await openSection(page, /Explore neighbourhoods/);
   await expect(page.getByRole("heading", { name: "How the answer changes by locality" })).toBeVisible();
   await expect(page.locator(".c2c-map .c2c-pin")).toHaveCount(3);
   await page.getByRole("button", { name: /^Jayanagar, best idea/ }).click();
   await expect(page.locator(".c2c-pin.is-selected")).toContainText("Jayanagar");
 
   // The over-budget coffee pop-up is listed as rejected, with its reason.
-  await openSection(page, /Compare other opportunities/);
+  await openSection(page, /Explore other opportunities/);
   await page.getByRole("button", { name: /Show all 9 options/ }).click();
   const coffee = page.getByRole("button", { name: /Coffee pop-up in/ }).first();
   await expect(coffee).toContainText("Rejected");
   await expect(coffee).toContainText("₹15,000 budget");
   await shoot(page, "3-recommendation.png", true);
 
-  // Pitch & Pilot: plan and results.
-  await page.getByRole("button", { name: /View Pilot Plan/ }).click();
+  // Launch Plan: plan and results.
+  await page.getByRole("button", { name: /View My Pilot Plan/ }).click();
   await expect(page).toHaveURL(/\/plan$/);
   await expect(page.getByRole("heading", { name: /2-weekend pilot/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Decision rule" })).toBeVisible();
   await expect(page.getByText("No pilot results yet")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Download run trace (JSON)" })).toBeVisible();
-  await expect(page.getByText("Estimates for planning only, not financial or legal advice.").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /Download run trace/ })).toHaveCount(0);
+  await expect(page.getByText("Written by LLM")).toHaveCount(0);
+  await expect(page.getByText("Cost figures are estimates and should be verified before making financial commitments.", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("Built for the Qloo Agentic Hackathon")).toHaveCount(0);
 
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: /Download my pilot plan/ }).click();
@@ -111,7 +127,7 @@ test("Nisha's example runs end to end on the offline fallback", async ({ page })
   await expect(page.getByRole("heading", { name: /2-weekend pilot/ })).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/\/recommendation$/);
-  await expect(page.getByText("Your top opportunity")).toBeVisible();
+  await expect(page.getByText("Your Top Recommendation")).toBeVisible();
 
   // Edit inputs: the form keeps what was entered.
   await page.goto("/discover");
@@ -150,9 +166,9 @@ test("the partner example compares both approaches and drafts outreach messages"
   await expect(firstCard.locator("textarea")).toHaveValue(/Happy to drop by with samples/);
   await shoot(page, "5-partners.png", true);
 
-  await openSection(page, /Locality analysis/);
+  await openSection(page, /Explore neighbourhoods/);
   await expect(page.getByRole("heading", { name: "Where your idea's audience is" })).toBeVisible();
-  await openSection(page, /Feasibility, costs and risks/);
+  await openSection(page, /View detailed budget/);
   await expect(page.getByRole("heading", { name: "Price positioning" })).toBeVisible();
 
   // Partner pilot plan.
@@ -199,4 +215,24 @@ test("pages fit a phone screen and keep the theme toggle reachable", async ({ pa
   await page.goto("/");
   await page.waitForTimeout(1500); // let the hero entrance animation finish before the screenshot
   await shoot(page, "8-mobile-landing.png");
+});
+
+test("continuous animations stop for reduced-motion users", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await expect(page.locator(".walker")).toHaveCount(8);
+  const names = await page.evaluate(() => ({
+    walker: getComputedStyle(document.querySelector(".walker")!).animationName,
+    logo: getComputedStyle(document.querySelector("header .logo-swap > span")!).animationName,
+    float: getComputedStyle(document.querySelector(".animate-float")!).animationName,
+  }));
+  expect(names).toEqual({ walker: "none", logo: "none", float: "none" });
+});
+
+test("users can add their own business idea and it is selected", async ({ page }) => {
+  await page.goto("/discover");
+  await page.getByLabel("Add your own business idea").fill("Handmade candles");
+  await page.getByRole("button", { name: "+ Add idea" }).click();
+  await expect(page.getByRole("checkbox", { name: /Handmade candles/ })).toBeChecked();
+  await expect(page.locator("label").filter({ hasText: "Handmade candles" })).toContainText("Your idea");
 });
