@@ -25,6 +25,11 @@ interface Props {
   onDraftChange?: (draft: FormState) => void;
 }
 
+/** Same prefix the server uses for ideas the user typed themselves. */
+const CUSTOM_PREFIX = "custom:";
+const customLabel = (cid: string) => cid.slice(CUSTOM_PREFIX.length);
+type GridIdea = { id: string; label: string; tagline: string; category?: ConceptOption["category"] };
+
 export interface FormState {
   city: string;
   suggest: boolean;
@@ -182,6 +187,18 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
     setForm((f) => ({ ...f, customLocality: "" }));
   };
 
+  // Ideas the user typed themselves; kept in the id ("custom:<label>") so drafts restore them.
+  const [customIdeas, setCustomIdeas] = useState<string[]>(() => form.conceptIds.filter((c) => c.startsWith(CUSTOM_PREFIX)));
+  const [customText, setCustomText] = useState("");
+  const addCustomIdea = () => {
+    const label = customText.replace(/[^\p{L}\p{N} &'-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 32);
+    if (label.length < 2) return;
+    const cid = CUSTOM_PREFIX + label;
+    if (!customIdeas.includes(cid)) setCustomIdeas((list) => [...list, cid]);
+    if (!form.conceptIds.includes(cid) && form.conceptIds.length < MAX_CONCEPTS) set("conceptIds", [...form.conceptIds, cid]);
+    setCustomText("");
+  };
+
   const toggleConcept = (conceptId: string) => {
     const has = form.conceptIds.includes(conceptId);
     if (!has && form.conceptIds.length >= MAX_CONCEPTS) return;
@@ -262,9 +279,13 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
           </div>
           {(() => {
             const q = query.trim().toLowerCase();
-            const shown = concepts.filter(
-              (c) => (category === "all" || c.category === category) && (!q || `${c.label} ${c.tagline} ${CATEGORY_LABEL[c.category]}`.toLowerCase().includes(q)),
-            );
+            const custom: GridIdea[] = category === "all" ? customIdeas.map((cid) => ({ id: cid, label: customLabel(cid), tagline: "Your own idea. Costs are modelled on a similar stall." })).filter((c) => !q || c.label.toLowerCase().includes(q)) : [];
+            const shown: GridIdea[] = [
+              ...custom,
+              ...concepts.filter(
+                (c) => (category === "all" || c.category === category) && (!q || `${c.label} ${c.tagline} ${CATEGORY_LABEL[c.category]}`.toLowerCase().includes(q)),
+              ),
+            ];
             const hidden = form.conceptIds.filter((cid) => !shown.some((c) => c.id === cid));
             return (
               <>
@@ -293,7 +314,7 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
                           <span className="min-w-0 flex-1">
                             <span className="flex flex-wrap items-center justify-between gap-x-2">
                               <span className="text-sm font-semibold">{c.label}</span>
-                              <span className="text-[11px] font-medium text-muted">{CATEGORY_LABEL[c.category]}</span>
+                              <span className={`text-[11px] font-medium ${c.category ? "text-muted" : "text-brand"}`}>{c.category ? CATEGORY_LABEL[c.category] : "Your idea"}</span>
                             </span>
                             <span className="block text-xs text-muted">{c.tagline}</span>
                           </span>
@@ -304,12 +325,35 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
                 </motion.div>
                 {hidden.length > 0 && (
                   <p className="mt-2 text-xs text-muted">
-                    Also selected (hidden by the filter): {hidden.map((cid) => concepts.find((c) => c.id === cid)?.label ?? cid).join(", ")}.
+                    Also selected (hidden by the filter): {hidden.map((cid) => concepts.find((c) => c.id === cid)?.label ?? customLabel(cid)).join(", ")}.
                   </p>
                 )}
               </>
             );
           })()}
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <label htmlFor={id("custom-idea")} className="sr-only">
+              Add your own business idea
+            </label>
+            <input
+              suppressHydrationWarning
+              id={id("custom-idea")}
+              value={customText}
+              maxLength={32}
+              onChange={(e) => setCustomText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustomIdea();
+                }
+              }}
+              placeholder="Add your own idea, e.g. Handmade candles"
+              className="min-w-0 flex-1 rounded-xl border border-line bg-card px-3.5 py-2.5 text-sm"
+            />
+            <button type="button" onClick={addCustomIdea} disabled={customText.trim().length < 2 || form.conceptIds.length >= MAX_CONCEPTS} className="btn-secondary px-4 py-2.5 text-sm disabled:opacity-40">
+              + Add idea
+            </button>
+          </div>
           {errorText("conceptIds")}
         </div>
 

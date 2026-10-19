@@ -36,12 +36,20 @@ See `docs/features.json` (single source of truth; `node scripts/progress.mjs lis
   (default) with light variant, new hero with product preview, professional cursor effects
   (spotlight, card glow, magnetic buttons), Leaflet + OpenStreetMap locality map, redrawn logos.
   No Qloo calls used for this work. See DECISIONS D38.
+- **Headline, own-idea option, logo moment (19 Oct, feature branch):** hero headline is now "Turn cultural signals into your next big opportunity."; users can add their own business idea (server costs it like the most similar stall, Qloo matches their words); the logo "2" slides into an arrow and back. Tests: 204/204 unit, 6/6 e2e.
+- **Demo polish (19 Oct, feature branch):** hero caption, living neighbourhood
+  (stalls, walking people), graph-only hover, animated logo, Launch Plan / Your Agents at Work
+  renames, simpler agent cards, quieter estimate labels, footer removed, summary-first
+  recommendation with concept illustrations. See DECISIONS D39.
 - **Pending:** team review and merge of the feature branch; deployment.
 
 ## Checks run (latest results)
 
 | Date | Command | Result |
 |---|---|---|
+| 19 Oct | Demo polish: `npm run lint`, `npm run typecheck`, `npm test` (202/202), `npm run build` | Pass |
+| 19 Oct | `npm run test:e2e` (5/5, three cold runs; new checks: caption, walkers, logo, plain agent cards, recommendation card, no JSON button / LLM label / footer, reduced motion) | Pass |
+| 19 Oct | Browser check (production build, sample data, 0 Qloo calls): walkers move without hover; graph hover leaves the card still; no page errors; no horizontal overflow at 390 px and 820 px | Pass |
 | 18 Oct | Aurora theme + real map: lint, typecheck, `npm test` (202/202), `npm run test:e2e` (4/4 on three cold runs; now also checks map pins and pin selection) | Pass |
 | 18 Oct | Aurora theme, cursor effects and map in the browser (by hand, production build, sample data, 0 Qloo calls) | Hero, spotlight, card glow, map tiles, pins and pin selection confirmed; light and dark checked |
 | 18 Oct | Pastel theme + cursor effects: lint, typecheck, `npm test` (202/202), `npm run test:e2e` (4/4, three clean cold runs in a row) | Pass |

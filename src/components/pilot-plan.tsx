@@ -7,13 +7,13 @@ import { downloadText, partnerPlanToMarkdown, planToMarkdown, slugify } from "@/
 import { inr, score, splitAudience } from "@/lib/format";
 import { evaluatePilot } from "@/lib/pilot";
 import { pilotActualsSchema, type PartnerPlan, type PilotPlan, type RunResult } from "@/lib/schemas";
-import { SourceBadge } from "./badges";
+import { EstimateHint } from "./badges";
 import { ChartFrame, Funnel, HBarChart, StackedBar } from "./charts";
 import { OutreachPanel } from "./partners";
 import { AlertIcon, ArrowIcon, ChartIcon, CheckIcon, ClockIcon, Disclosure, EmptyState, FlagIcon, IdeaIcon, Kpi, ListIcon, PeopleIcon, PinIcon, SparkIcon, Stagger, StaggerItem, WalletIcon } from "./ui";
 
 /**
- * Pitch & Pilot: the recommendation first, the details only on request.
+ * Launch Plan: the recommendation first, the details only on request.
  * A founder should see what to test, where, for whom, for how much and how to judge it within seconds;
  * the schedule, checklist, permits, risks and alternatives stay one click away.
  */
@@ -233,7 +233,7 @@ function Goals({ metrics, extra }: { metrics: { metric: string; target: string }
   );
 }
 
-function PlanActions({ onDownload, onTrace, onEdit }: { onDownload: () => void; onTrace: () => void; onEdit?: () => void }) {
+function PlanActions({ onDownload, onEdit }: { onDownload: () => void; onEdit?: () => void }) {
   return (
     <div className="no-print flex flex-col gap-3 rounded-[1.25rem] border border-brand/15 bg-brand-soft/60 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
@@ -252,9 +252,6 @@ function PlanActions({ onDownload, onTrace, onEdit }: { onDownload: () => void; 
             Edit assumptions
           </button>
         )}
-        <button type="button" onClick={onTrace} className="btn-secondary px-3.5 py-2.5 text-sm">
-          Download run trace (JSON)
-        </button>
       </div>
     </div>
   );
@@ -463,7 +460,7 @@ export function PilotPlanView({ result, plan, onSaveResults, onEditInputs }: { r
   return (
     <div className="space-y-6">
       <RecommendedPilot
-        eyebrow="Pitch & Pilot · recommended next step"
+        eyebrow="Launch Plan · recommended next step"
         title={plan.title}
         reason={reasons.length > 0 ? `${reasons.join(", ")}.` : undefined}
         fields={
@@ -480,14 +477,13 @@ export function PilotPlanView({ result, plan, onSaveResults, onEditInputs }: { r
 
       <PlanActions
         onDownload={() => downloadText(`${base}-pilot-plan.md`, planToMarkdown(plan, result), "text/markdown")}
-        onTrace={() => downloadText(`${base}-run-trace.json`, JSON.stringify(result, null, 2), "application/json")}
         {...(onEditInputs ? { onEdit: onEditInputs } : {})}
       />
 
       <PilotSteps steps={steps} />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_1.1fr]">
-        <Card title="Budget" icon={<WalletIcon />} id="budget-heading" badge={<SourceBadge source="estimate" long />}>
+        <Card title="Budget" icon={<WalletIcon />} id="budget-heading" badge={<EstimateHint text="Estimates · verify before spending" />}>
           <StackedBar
             ariaLabel="Pilot budget"
             total={split.scale}
@@ -574,7 +570,7 @@ export function PilotPlanView({ result, plan, onSaveResults, onEditInputs }: { r
           {plan.venueSuggestion && (
             <p className="mt-3 rounded-xl bg-paper p-3">
               <span className="font-semibold">Suggested venue type:</span> {plan.venueSuggestion.type.toLowerCase()}. {plan.venueSuggestion.description} About {inr(plan.venueSuggestion.feePerDayInr)} per day.{" "}
-              <SourceBadge source="estimate" />
+              <EstimateHint />
             </p>
           )}
         </Disclosure>
@@ -640,9 +636,6 @@ export function PilotPlanView({ result, plan, onSaveResults, onEditInputs }: { r
         {result.narrative && (
           <Disclosure tone="lavender" icon={<SparkIcon />} title="Pilot pitch" hint="A written summary you can share">
             <p className="leading-6">{result.narrative.pilotPitch}</p>
-            <div className="mt-2">
-              <SourceBadge source={result.narrative.source} long />
-            </div>
           </Disclosure>
         )}
       </section>
@@ -669,7 +662,7 @@ export function PartnerPlanView({ result, plan, onEditInputs }: { result: RunRes
   return (
     <div className="space-y-6">
       <RecommendedPilot
-        eyebrow="Pitch & Pilot · partner pilot"
+        eyebrow="Launch Plan · partner pilot"
         title={plan.title}
         reason={first?.why}
         fields={
@@ -685,7 +678,6 @@ export function PartnerPlanView({ result, plan, onEditInputs }: { result: RunRes
 
       <PlanActions
         onDownload={() => downloadText(`${base}-plan.md`, partnerPlanToMarkdown(plan), "text/markdown")}
-        onTrace={() => downloadText(`${base}-run-trace.json`, JSON.stringify(result, null, 2), "application/json")}
         {...(onEditInputs ? { onEdit: onEditInputs } : {})}
       />
 
@@ -713,7 +705,7 @@ export function PartnerPlanView({ result, plan, onEditInputs }: { result: RunRes
       </Card>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title="Budget" icon={<WalletIcon />} id="partner-budget-heading" badge={<SourceBadge source="estimate" long />}>
+        <Card title="Budget" icon={<WalletIcon />} id="partner-budget-heading" badge={<EstimateHint text="Estimates · verify before spending" />}>
           <StackedBar
             ariaLabel="Partner pilot budget"
             total={Math.max(plan.budgetInr, plan.upfrontInr)}

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { SiteHeader } from "@/components/site-header";
-import { APP_NAME, TEAM_CREDIT } from "@/lib/brand";
+import { APP_NAME } from "@/lib/brand";
 import { THEME_SCRIPT } from "@/lib/theme";
 import { listConceptOptions } from "@/server/data/concepts";
 import { knownLocalities } from "@/server/data/local-market";
@@ -54,14 +54,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             {children}
           </main>
         </Providers>
-        <footer className="no-print mt-8 bg-hero text-white/80">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p>
-              <span className="font-semibold text-white">{TEAM_CREDIT}</span> · Built for the Qloo Agentic Hackathon
-            </p>
-            <p>Cultural signals from Qloo. Costs are illustrative estimates.</p>
-          </div>
-        </footer>
       </body>
     </html>
   );

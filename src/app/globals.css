@@ -149,6 +149,44 @@
   color-scheme: light;
 }
 
+/* Animated inline logo (brand-logo.tsx): wordmark follows the theme; a soft pulse and a slow sheen. */
+/* The "2" in the wordmark slides up into an arrow and back (Culture → Commerce). */
+.logo-swap {
+  display: inline-flex;
+  flex-direction: column;
+  height: 1.15em;
+  overflow: hidden;
+  vertical-align: bottom;
+  align-items: center;
+  margin: 0;
+}
+.logo-swap > span {
+  display: block;
+  height: 1.15em;
+  line-height: 1.15em;
+  animation: c2c-logo-swap 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+/* The arrow is drawn smaller so the slot stays as narrow as the "2" (no gaps around it). */
+.logo-swap > span:nth-child(2) {
+  font-size: 0.72em;
+  height: calc(1.15em / 0.72);
+  line-height: calc(1.15em / 0.72);
+}
+@keyframes c2c-logo-swap {
+  0%,
+  62% {
+    transform: translateY(0);
+  }
+  70%,
+  88% {
+    transform: translateY(-100%);
+  }
+  96%,
+  100% {
+    transform: translateY(-200%);
+  }
+}
+
 /* Logo variants: the dark-mode logo uses light text. */
 :root[data-theme="dark"] .logo-light {
   display: none !important;
@@ -488,7 +526,8 @@ h1[tabindex="-1"]:focus-visible {
   .lift:hover {
     transform: none;
   }
-  body::before {
+  body::before,
+  .logo-swap > span {
     animation: none;
   }
 }
@@ -633,4 +672,190 @@ h1[tabindex="-1"]:focus-visible {
 .leaflet-marker-icon:focus-visible .c2c-pin-dot {
   outline: 3px solid #f0abfc;
   outline-offset: 3px;
+}
+
+/* Hero neighbourhood: people walking along the pavements (hero.tsx). Compositor-only animations
+   (transform and opacity). Pavements: y=152 / y=190 beside the horizontal street, x=152 / x=190
+   beside the vertical one. The base transform (--x/--y) is where each person stands when motion
+   is reduced or paused. */
+.walker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+  transform: translate3d(var(--x), var(--y), 0);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+.walker-bob {
+  animation: c2c-step 0.6s ease-in-out infinite alternate;
+}
+@keyframes c2c-step {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-1.6px);
+  }
+}
+.walk-east {
+  animation-name: c2c-walk-east;
+}
+@keyframes c2c-walk-east {
+  0% {
+    transform: translate3d(-6px, 190px, 0);
+    opacity: 0;
+  }
+  6%,
+  94% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(346px, 190px, 0);
+    opacity: 0;
+  }
+}
+.walk-west {
+  animation-name: c2c-walk-west;
+}
+@keyframes c2c-walk-west {
+  0% {
+    transform: translate3d(346px, 152px, 0);
+    opacity: 0;
+  }
+  6%,
+  94% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(-6px, 152px, 0);
+    opacity: 0;
+  }
+}
+.walk-south {
+  animation-name: c2c-walk-south;
+}
+@keyframes c2c-walk-south {
+  0% {
+    transform: translate3d(190px, -6px, 0);
+    opacity: 0;
+  }
+  6%,
+  94% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(190px, 346px, 0);
+    opacity: 0;
+  }
+}
+.walk-north {
+  animation-name: c2c-walk-north;
+}
+@keyframes c2c-walk-north {
+  0% {
+    transform: translate3d(152px, 346px, 0);
+    opacity: 0;
+  }
+  6%,
+  94% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(152px, -6px, 0);
+    opacity: 0;
+  }
+}
+/* Walks in from the east, turns at the corner and heads north. */
+.walk-turn {
+  animation-name: c2c-walk-turn;
+}
+@keyframes c2c-walk-turn {
+  0% {
+    transform: translate3d(346px, 190px, 0);
+    opacity: 0;
+  }
+  5%,
+  95% {
+    opacity: 1;
+  }
+  45% {
+    transform: translate3d(190px, 190px, 0);
+  }
+  100% {
+    transform: translate3d(190px, -6px, 0);
+    opacity: 0;
+  }
+}
+/* Browsing the market: stroll between stalls, pausing at each end (played alternately). */
+.walk-market-a {
+  animation-name: c2c-walk-market-a;
+  animation-timing-function: ease-in-out;
+}
+@keyframes c2c-walk-market-a {
+  0%,
+  14% {
+    transform: translate3d(36px, 146px, 0);
+  }
+  86%,
+  100% {
+    transform: translate3d(140px, 146px, 0);
+  }
+}
+.walk-market-b {
+  animation-name: c2c-walk-market-b;
+  animation-timing-function: ease-in-out;
+}
+@keyframes c2c-walk-market-b {
+  0%,
+  14% {
+    transform: translate3d(204px, 146px, 0);
+  }
+  86%,
+  100% {
+    transform: translate3d(292px, 146px, 0);
+  }
+}
+.walk-booths {
+  animation-name: c2c-walk-booths;
+  animation-timing-function: ease-in-out;
+}
+@keyframes c2c-walk-booths {
+  0%,
+  18% {
+    transform: translate3d(40px, 308px, 0);
+  }
+  82%,
+  100% {
+    transform: translate3d(124px, 308px, 0);
+  }
+}
+/* Off screen: pause. Reduced motion: everyone stands still at their base spot. */
+[data-paused="true"] .walker,
+[data-paused="true"] .walker-bob {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .walker,
+  .walker-bob {
+    animation: none;
+  }
+}
+
+/* Example report chart: the line glows a little while hovered (the card itself never moves). */
+.report-chart[data-hover="true"] .report-line {
+  filter: drop-shadow(0 0 6px rgb(240 171 252 / 0.55));
+}
+
+/* Night sky behind the business illustration (concept-art.tsx); continuous at any frame size. */
+.concept-sky {
+  overflow: hidden;
+  background:
+    radial-gradient(60% 55% at 85% 8%, rgb(124 58 237 / 0.5), transparent 70%),
+    radial-gradient(50% 50% at 5% 95%, rgb(13 148 136 / 0.4), transparent 70%),
+    linear-gradient(180deg, #1f1846 0%, #120f28 70%, #0a0817 100%);
+}
+.concept-sky > svg {
+  overflow: visible;
 }
