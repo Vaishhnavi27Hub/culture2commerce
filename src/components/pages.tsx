@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { DISCLAIMER, TEAM_CREDIT } from "@/lib/brand";
 import { AgentPipeline } from "./agent-pipeline";
-import { LocalityCompare, WithWithoutQloo } from "./compare";
 import { LandingHero } from "./hero";
 import { InputForm } from "./input-form";
-import { CollabCalculator, ComparisonPanel, NeighbourhoodPanel, PartnerList, PartnerStrategyCard, PricingPanel } from "./partners";
+import { PartnerStrategyCard } from "./partners";
 import { PartnerPlanView, PilotPlanView } from "./pilot-plan";
-import { ConfidencePanel, CulturalAffinityChart, EvidenceTrail, FeasibilityBreakdown, OptionDetail, RankedOptions, ScoreBreakdown, WinnerCard } from "./recommendation";
+import { WinnerCard } from "./recommendation";
+import { ResultsStory } from "./results-story";
 import { useRun } from "./run-provider";
-import { ArrowIcon, ChartIcon, ClockIcon, Disclosure, FlagIcon, PeopleIcon, PinIcon, Reveal, SectionHeading, Segmented, SparkIcon, Stagger, StaggerItem, WalletIcon } from "./ui";
+import { ArrowIcon, ChartIcon, ClockIcon, FlagIcon, PeopleIcon, PinIcon, Reveal, SectionHeading, Segmented, SparkIcon, Stagger, StaggerItem, WalletIcon } from "./ui";
 
 /**
  * The five pages of the journey. Each is a thin view over the shared run state in RunProvider,
@@ -192,7 +192,7 @@ export function DiscoverPage() {
   const { config, hydrated, running, issues, start, draft, setDraft } = useRun();
   const heading = useFocusHeading();
   return (
-    <PageShell wide={false}>
+    <PageShell>
       <Link href="/" className="inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-ink">
         <span aria-hidden="true">←</span> Back to home
       </Link>
@@ -323,65 +323,19 @@ export function RecommendationPage() {
         )}
       </div>
 
-      <section id="analysis" aria-labelledby="analysis-heading" className="mt-12 scroll-mt-24">
-        <SectionHeading id="analysis-heading" eyebrow="Go deeper" title="Explore the details" subtitle="Open any section for the full analysis. Nothing here changes the recommendation above." />
-        <div className="mt-5 space-y-3">
-          {winner && (
-            <Disclosure tone="card" icon={<SparkIcon />} title="Why this recommendation?" hint="Cultural signals, scoring method and the venues behind it">
-              <div id="analysis-cultural" className="space-y-5">
-                <CulturalAffinityChart option={winner} />
-                {result.weights && <ScoreBreakdown option={winner} weights={result.weights} />}
-                <ConfidencePanel option={winner} />
-                <div>
-                  <p className="mb-2 font-semibold">Evidence trail</p>
-                  <EvidenceTrail option={winner} />
-                </div>
-              </div>
-            </Disclosure>
-          )}
-          <Disclosure tone="card" icon={<WalletIcon />} title="View detailed budget" hint="Itemised costs, assumptions, margins and price positioning">
-            <div className="space-y-5">
-              {winner && <FeasibilityBreakdown option={winner} budgetInr={result.input.budgetInr} />}
-              {winner && winner.verdictReasons.length > 0 && (
-                <ul className="list-disc space-y-1 pl-5">
-                  {winner.verdictReasons.map((r) => (
-                    <li key={r}>{r}</li>
-                  ))}
-                </ul>
-              )}
-              <PricingPanel result={result} />
-              <p className="text-xs text-muted">Stall fees, costs and commissions are planning estimates. Verify them locally before spending.</p>
-            </div>
-          </Disclosure>
-          <Disclosure tone="card" icon={<ChartIcon />} title="Explore other opportunities" hint={`All ${result.options.length} options ranked, including why some were downgraded or ruled out`}>
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,24rem)_1fr]">
-              <RankedOptions result={result} selectedId={selected?.id ?? ""} onSelect={setSelectedId} categoryOf={categoryOf} />
-              {selected && result.weights && <OptionDetail result={result} option={selected} weights={result.weights} />}
-            </div>
-          </Disclosure>
-          <Disclosure tone="card" icon={<PinIcon />} title="Explore neighbourhoods" hint="How the answer changes by area, on a real map, and where the audience is">
-            <div className="space-y-6">
-              <LocalityCompare result={result} />
-              <NeighbourhoodPanel result={result} />
-            </div>
-          </Disclosure>
-          {winner && (
-            <Disclosure tone="card" icon={<FlagIcon />} title="How Qloo influenced this decision" hint="Generic advice without Qloo, compared with the culturally informed answer">
-              <WithWithoutQloo result={result} winner={winner} />
-            </Disclosure>
-          )}
-          {hasPartner && (
-            <Disclosure tone="card" icon={<PeopleIcon />} title="Partner strategy" hint="Potential partners, collaboration options and the solo vs partner comparison">
-              <div id="analysis-partner" className="space-y-6">
-                {result.comparison && <ComparisonPanel comparison={result.comparison} />}
-                {mode === "both" && (partnerFirst ? soloCard : partnerCard)}
-                {result.partners.length > 0 && <PartnerList result={result} selectedId={partnerId} onSelect={setPartnerId} />}
-                <CollabCalculator result={result} partnerId={partnerId} />
-              </div>
-            </Disclosure>
-          )}
-        </div>
-      </section>
+      <ResultsStory
+        result={result}
+        winner={winner}
+        selected={selected!}
+        setSelectedId={setSelectedId}
+        partnerId={partnerId}
+        setPartnerId={setPartnerId}
+        weights={result.weights}
+        categoryOf={categoryOf}
+        hasPartner={hasPartner}
+        soloCard={mode === "both" ? (partnerFirst ? soloCard : partnerCard) : undefined}
+        partnerCard={mode === "both" ? (partnerFirst ? partnerCard : soloCard) : undefined}
+      />
     </PageShell>
   );
 }

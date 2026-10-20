@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { CATEGORY_LABEL, CATEGORY_ORDER, type ConceptCategory } from "@/lib/categories";
 import { BROWNIE_EXAMPLE, NISHA_EXAMPLE } from "@/lib/nisha";
 import { runInputSchema, type LaunchMode, type RiskPreference, type RunInput } from "@/lib/schemas";
@@ -108,6 +108,179 @@ function Legend({ n, children }: { n?: number; children: React.ReactNode }) {
       )}
       {children}
     </legend>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// City autocomplete — uses free Nominatim API (OpenStreetMap)
+// ---------------------------------------------------------------------------
+
+interface PlaceSuggestion {
+  display: string;
+  city: string;
+}
+
+function useDebouncedValue<T>(value: T, ms: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return debounced;
+}
+
+function CityAutocomplete({
+  value,
+  onChange,
+  id: inputId,
+  className,
+  ariaInvalid,
+  ariaDescribedby,
+}: {
+  value: string;
+  onChange: (city: string) => void;
+  id: string;
+  className: string;
+  ariaInvalid: boolean;
+  ariaDescribedby: string | undefined;
+}) {
+  const [text, setText] = useState(value);
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const listId = `${inputId}-suggestions`;
+
+  useEffect(() => { setText(value); }, [value]);
+
+  const debounced = useDebouncedValue(text, 400);
+
+  const fetchSuggestions = useCallback(async (q: string, signal: AbortSignal) => {
+    if (q.trim().length < 2) { setSuggestions([]); return; }
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?` +
+        `q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=5&featuretype=city&accept-language=en`;
+      const res = await fetch(url, { signal, headers: { "User-Agent": "Culture2Commerce/1.0" } });
+      if (!res.ok) return;
+      const data = await res.json() as Array<{
+        display_name: string;
+        address?: { city?: string; town?: string; village?: string; state?: string; country?: string };
+        type?: string;
+        class?: string;
+      }>;
+      const results: PlaceSuggestion[] = data
+        .map((r) => {
+          const addr = r.address ?? {};
+          const city = addr.city || addr.town || addr.village || "";
+          const parts = [city, addr.state, addr.country].filter(Boolean);
+          return { display: parts.join(", ") || r.display_name, city: city || r.display_name.split(",")[0]?.trim() || "" };
+        })
+        .filter((r) => r.city.length > 0);
+      const seen = new Set<string>();
+      const deduped = results.filter((r) => {
+        const key = r.display.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      if (!signal.aborted) {
+        setSuggestions(deduped);
+        setOpen(deduped.length > 0);
+        setActive(-1);
+      }
+    } catch {
+      // network error or aborted — ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    if (debounced !== value) {
+      fetchSuggestions(debounced, ctrl.signal);
+    }
+    return () => ctrl.abort();
+  }, [debounced, value, fetchSuggestions]);
+
+  const select = (s: PlaceSuggestion) => {
+    setText(s.city);
+    onChange(s.city);
+    setOpen(false);
+    setSuggestions([]);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!open || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive((i) => (i + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+    } else if (e.key === "Enter" && active >= 0) {
+      e.preventDefault();
+      select(suggestions[active]!);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <input
+        suppressHydrationWarning
+        id={inputId}
+        className={className}
+        value={text}
+        maxLength={60}
+        autoComplete="off"
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
+        onChange={(e) => {
+          setText(e.target.value);
+          onChange(e.target.value);
+        }}
+        onFocus={() => { if (suggestions.length > 0) setOpen(true); }}
+        onKeyDown={handleKeyDown}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedby}
+      />
+      {open && suggestions.length > 0 && (
+        <ul
+          id={listId}
+          role="listbox"
+          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-auto rounded-xl border border-line bg-card shadow-lg"
+        >
+          {suggestions.map((s, i) => (
+            <li
+              key={s.display}
+              id={`${listId}-${i}`}
+              role="option"
+              aria-selected={i === active}
+              className={`cursor-pointer px-3 py-2.5 text-sm ${
+                i === active ? "bg-brand-soft text-brand" : "text-ink hover:bg-paper"
+              }`}
+              onMouseDown={(e) => { e.preventDefault(); select(s); }}
+              onMouseEnter={() => setActive(i)}
+            >
+              <span className="font-semibold">{s.city}</span>
+              {s.display !== s.city && (
+                <span className="ml-1 text-muted">{s.display.slice(s.city.length)}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -421,18 +594,16 @@ export function InputForm({ concepts, knownLocalities, busy, serverIssues, onSub
             <label htmlFor={id("city")} className="text-sm font-semibold">
               City
             </label>
-            <input suppressHydrationWarning
+            <CityAutocomplete
               id={id("city")}
               className={inputClass}
               value={form.city}
-              maxLength={60}
-              autoComplete="address-level2"
-              onChange={(e) => setForm((f) => ({ ...f, city: e.target.value, localities: [] }))}
-              aria-invalid={Boolean(errors.city)}
-              aria-describedby={describedBy("city", true)}
+              onChange={(city) => setForm((f) => ({ ...f, city, localities: [] }))}
+              ariaInvalid={Boolean(errors.city)}
+              ariaDescribedby={describedBy("city", true)}
             />
             <p id={id("city-help")} className="mt-1.5 text-xs text-muted">
-              Bengaluru has locality-level estimates. Other cities work with generic estimates and lower confidence.
+              Start typing and pick your city from the dropdown. Bengaluru has locality-level estimates.
             </p>
             {errorText("city")}
           </div>

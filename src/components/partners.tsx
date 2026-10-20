@@ -583,14 +583,27 @@ export function PricingPanel({ result }: { result: RunResult }) {
   );
 }
 
+const ADMIN_DISPLAY_FILTER = new Set([
+  "india", "bharat",
+  "andhra pradesh", "arunachal pradesh", "assam", "bihar", "chhattisgarh",
+  "goa", "gujarat", "haryana", "himachal pradesh", "jharkhand", "karnataka",
+  "kerala", "madhya pradesh", "maharashtra", "manipur", "meghalaya", "mizoram",
+  "nagaland", "odisha", "punjab", "rajasthan", "sikkim", "tamil nadu",
+  "telangana", "tripura", "uttar pradesh", "uttarakhand", "west bengal",
+  "delhi", "chandigarh", "puducherry", "jammu and kashmir", "ladakh",
+]);
+
 export function NeighbourhoodPanel({ result }: { result: RunResult }) {
-  if (result.neighbourhoods.length === 0) {
+  const filtered = result.neighbourhoods
+    .filter((n) => !ADMIN_DISPLAY_FILTER.has(n.name.trim().toLowerCase()))
+    .map((n, i) => ({ ...n, rank: i + 1 }));
+  if (filtered.length === 0) {
     if (result.localitySource === "curated_fallback" || result.localitySource === "city_only") {
       return <p className="rounded-xl border border-warn/30 bg-warn-soft p-3 text-sm text-warn">Qloo returned no neighbourhood ranking for this city, so {result.localitySource === "city_only" ? "the city was analysed as one area" : "a fixed starter list of areas was used"}.</p>;
     }
     return null;
   }
-  const analysed = result.neighbourhoods.filter((n) => n.selected).length;
+  const analysed = filtered.filter((n) => n.selected).length;
   return (
     <Section
       id="neighbourhoods-heading"
@@ -600,16 +613,16 @@ export function NeighbourhoodPanel({ result }: { result: RunResult }) {
       <ChartFrame
         title="Audience affinity by neighbourhood"
         caption={`Qloo heatmap affinity (0 to 1). Coral bars are the ${analysed} ${analysed === 1 ? "area" : "areas"} analysed in depth.`}
-        table={{ headers: ["Rank", "Neighbourhood", "Affinity", "Analysed"], rows: result.neighbourhoods.map((n) => [n.rank, n.name, n.affinity.toFixed(3), n.selected ? "Yes" : "No"]) }}
+        table={{ headers: ["Rank", "Neighbourhood", "Affinity", "Analysed"], rows: filtered.map((n) => [n.rank, n.name, n.affinity.toFixed(3), n.selected ? "Yes" : "No"]) }}
         footer={
           <span className="flex flex-wrap items-center gap-2">
-            <SourceBadge source={result.neighbourhoods[0]!.source} long />
+            <SourceBadge source={filtered[0]!.source} long />
             <span>Affinity values are relative; small differences are not meaningful on their own.</span>
           </span>
         }
       >
         <HBarChart
-          data={result.neighbourhoods.map((n) => ({ label: `${n.rank}. ${n.name}`, value: n.affinity, highlight: n.selected }))}
+          data={filtered.map((n) => ({ label: `${n.rank}. ${n.name}`, value: n.affinity, highlight: n.selected }))}
           domain={[0, 1]}
           format={(n) => n.toFixed(3)}
           valueName="Qloo affinity"
