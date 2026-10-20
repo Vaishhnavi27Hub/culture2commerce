@@ -40,8 +40,7 @@ export function ResultsStory({
   weights,
   categoryOf,
   hasPartner,
-  soloCard,
-  partnerCard,
+  otherCard,
 }: {
   result: RunResult;
   winner: ScoredOption | undefined;
@@ -52,8 +51,7 @@ export function ResultsStory({
   weights: RunResult["weights"];
   categoryOf: (conceptId: string) => ConceptCategory | undefined;
   hasPartner: boolean;
-  soloCard: React.ReactNode;
-  partnerCard: React.ReactNode;
+  otherCard: React.ReactNode;
 }) {
   return (
     <div className="mt-10 space-y-6">
@@ -106,8 +104,7 @@ export function ResultsStory({
           </p>
           <div className="mt-6 space-y-6">
             {result.comparison && <ComparisonPanel comparison={result.comparison} />}
-            {soloCard}
-            {partnerCard}
+            {otherCard}
             {result.partners.length > 0 && (
               <PartnerList result={result} selectedId={partnerId} onSelect={setPartnerId} />
             )}
