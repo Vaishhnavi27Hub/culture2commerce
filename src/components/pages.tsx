@@ -333,8 +333,7 @@ export function RecommendationPage() {
         weights={result.weights}
         categoryOf={categoryOf}
         hasPartner={hasPartner}
-        soloCard={mode === "both" ? (partnerFirst ? soloCard : partnerCard) : undefined}
-        partnerCard={mode === "both" ? (partnerFirst ? partnerCard : soloCard) : undefined}
+        otherCard={mode === "both" ? (partnerFirst ? soloCard : partnerCard) : undefined}
       />
     </PageShell>
   );
