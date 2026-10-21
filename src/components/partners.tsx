@@ -6,6 +6,8 @@ import { inr, score } from "@/lib/format";
 import { buildOutreach } from "@/lib/outreach";
 import type { CollabOption, PartnerCandidate, PartnerType, RunResult, StrategyComparison } from "@/lib/schemas";
 import { SourceBadge, VerdictBadge } from "./badges";
+import { ChartFrame, HBarChart } from "./charts";
+import { ArrowIcon, FilterChips } from "./ui";
 
 const TYPE_LABEL: Record<PartnerType, string> = {
   similar: "Similar business",
@@ -26,7 +28,7 @@ function TypeBadge({ type }: { type: PartnerType }) {
 function Section({ id, title, subtitle, children }: { id: string; title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <section aria-labelledby={id}>
-      <h3 id={id} className="text-xl font-bold">
+      <h3 id={id} className="text-2xl font-semibold">
         {title}
       </h3>
       {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
@@ -56,10 +58,10 @@ export function ComparisonPanel({ comparison }: { comparison: StrategyComparison
     { label: "Time to launch", get: (s) => s.timeToLaunch },
   ];
   return (
-    <section aria-labelledby="comparison-heading" className="animate-rise overflow-hidden rounded-3xl border border-line bg-card shadow-sm">
-      <div className="bg-ink p-5 text-white sm:p-6">
+    <section aria-labelledby="comparison-heading" className="animate-rise card overflow-hidden !rounded-[1.75rem]">
+      <div className="bg-hero p-5 text-white sm:p-7">
         <p className="text-xs font-bold uppercase tracking-wider text-white/70">Solo vs partnership</p>
-        <h2 id="comparison-heading" className="mt-1 text-2xl font-bold sm:text-3xl">
+        <h2 id="comparison-heading" className="mt-1 text-2xl font-semibold sm:text-3xl">
           {comparison.recommended === "none"
             ? "Neither approach fits yet"
             : comparison.recommended === "solo"
@@ -156,18 +158,19 @@ export function PartnerStrategyCard({ result, onOpenPlan }: { result: RunResult;
     );
   }
   return (
-    <section aria-labelledby="partner-hero" className="animate-rise overflow-hidden rounded-3xl bg-ink text-white shadow-lg">
-      <div className="p-5 sm:p-7">
+    <section aria-labelledby="partner-hero" className="animate-rise relative overflow-hidden rounded-[1.75rem] bg-hero text-white shadow-[var(--shadow-lift)]">
+      <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-spark/25 blur-3xl" />
+      <div className="relative p-5 sm:p-8">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-spark px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink">Best partnership</span>
           <span className="rounded-full border border-white/30 px-2 py-0.5 text-xs font-semibold">{TYPE_LABEL[partner.partnerType]}</span>
         </div>
         <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-          <h2 id="partner-hero" className="max-w-2xl text-3xl font-bold leading-tight sm:text-4xl">
+          <h2 id="partner-hero" className="max-w-2xl text-3xl font-semibold leading-tight sm:text-4xl">
             {best.label} with {partner.name}
           </h2>
           <p className="text-right">
-            <span className="font-display text-5xl font-bold tabular-nums">{score(best.score)}</span>
+            <span className="font-display text-5xl font-semibold tabular-nums">{score(best.score)}</span>
             <span className="text-white/70"> / 100</span>
           </p>
         </div>
@@ -191,8 +194,8 @@ export function PartnerStrategyCard({ result, onOpenPlan }: { result: RunResult;
         </ul>
         <p className="mt-3 text-xs text-white/70">A partner worth contacting, not a confirmed partner. Terms shown are example assumptions.</p>
         {result.partnerPlan && (
-          <button type="button" onClick={onOpenPlan} className="no-print mt-5 inline-flex items-center gap-2 rounded-xl bg-spark px-5 py-3 text-sm font-bold text-ink hover:brightness-110">
-            See the partner pilot and outreach messages <span aria-hidden="true">→</span>
+          <button type="button" onClick={onOpenPlan} className="no-print mt-5 inline-flex items-center gap-2 rounded-xl bg-spark px-5 py-3 text-sm font-bold text-ink shadow-lg transition hover:-translate-y-px hover:brightness-105 active:translate-y-px">
+            See the partner pilot and outreach messages <ArrowIcon />
           </button>
         )}
       </div>
@@ -230,7 +233,7 @@ export function OutreachPanel({ initial }: { initial: { email: { subject: string
               ["short", "WhatsApp / DM"],
             ] as const
           ).map(([value, label]) => (
-            <button key={value} type="button" aria-pressed={tab === value} onClick={() => setTab(value)} className={`rounded-md px-3 py-1 text-xs font-semibold ${tab === value ? "bg-brand text-white" : "text-muted"}`}>
+            <button key={value} type="button" aria-pressed={tab === value} onClick={() => setTab(value)} className={`rounded-md px-3 py-1 text-xs font-semibold ${tab === value ? "bg-brand text-on-brand" : "text-muted"}`}>
               {label}
             </button>
           ))}
@@ -278,7 +281,7 @@ function PartnerCard({ partner, result, selected, onSelect }: { partner: Partner
   );
   const panelId = `partner-${partner.id}`;
   return (
-    <li className={`rounded-2xl border bg-card ${selected ? "border-brand ring-2 ring-brand/15" : "border-line"}`}>
+    <li className={`rounded-2xl border bg-card shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-lift)] ${selected ? "border-brand ring-2 ring-brand/15" : "border-line"}`}>
       <button type="button" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((o) => !o)} className="flex w-full items-start gap-3 rounded-2xl p-4 text-left">
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2">
@@ -292,7 +295,7 @@ function PartnerCard({ partner, result, selected, onSelect }: { partner: Partner
           <span className="mt-1 block text-sm">{partner.reasons[0]}</span>
         </span>
         <span className="shrink-0 text-right">
-          <span className="block font-display text-xl font-bold tabular-nums">{score(partner.fitScore)}</span>
+          <span className="block font-display text-2xl font-semibold tabular-nums">{score(partner.fitScore)}</span>
           <span className="block text-[11px] text-muted">fit</span>
         </span>
       </button>
@@ -345,7 +348,7 @@ function PartnerCard({ partner, result, selected, onSelect }: { partner: Partner
             <button type="button" onClick={onSelect} className="rounded-xl border border-line bg-card px-3 py-1.5 text-sm font-semibold hover:border-brand">
               Cost the collaboration options
             </button>
-            <button type="button" onClick={() => setShowMessage((s) => !s)} className="rounded-xl bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-dark">
+            <button type="button" onClick={() => setShowMessage((s) => !s)} className="rounded-xl bg-brand px-3 py-1.5 text-sm font-semibold text-on-brand hover:bg-brand-dark">
               {showMessage ? "Hide message" : "Write an outreach message"}
             </button>
           </div>
@@ -373,19 +376,18 @@ export function PartnerList({ result, selectedId, onSelect }: { result: RunResul
           {result.admired.alternatives.length > 0 && <span> Other matches: {result.admired.alternatives.join(", ")}.</span>}
         </p>
       )}
-      <div className="no-print flex flex-wrap gap-1.5" role="group" aria-label="Filter partners by type">
-        {(
-          [
-            ["all", `All (${result.partners.length})`],
-            ["similar", `Similar (${counts.similar})`],
-            ["complementary", `Complementary (${counts.complementary})`],
-            ["host", `High-visibility hosts (${counts.host})`],
-          ] as const
-        ).map(([value, label]) => (
-          <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${filter === value ? "border-brand bg-brand text-white" : "border-line bg-card hover:border-brand"}`}>
-            {label}
-          </button>
-        ))}
+      <div className="no-print">
+        <FilterChips
+          label="Filter partners by type"
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { value: "all" as const, label: "All", count: result.partners.length },
+            { value: "similar" as const, label: "Similar", count: counts.similar },
+            { value: "complementary" as const, label: "Complementary", count: counts.complementary },
+            { value: "host" as const, label: "High-visibility hosts", count: counts.host },
+          ]}
+        />
       </div>
       {shown.length === 0 ? (
         <p className="mt-3 text-sm text-muted">No partners of this type were found near the localities analysed.</p>
@@ -433,9 +435,9 @@ function OptionCalculator({ option, budgetInr }: { option: CollabOption; budgetI
   const set = (k: keyof typeof a) => (n: number) => setA((prev) => ({ ...prev, [k]: n }));
   const changed = JSON.stringify(a) !== JSON.stringify(option.inputs.assumptions);
   return (
-    <div className="rounded-2xl border border-line bg-card p-4">
+    <div className="card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-display text-lg font-bold">{option.label}</p>
+        <p className="font-display text-xl font-semibold">{option.label}</p>
         <VerdictBadge verdict={option.verdict} />
       </div>
       <p className="mt-0.5 text-sm text-muted">{COLLAB_MODEL_INFO[option.model].summary}</p>
@@ -550,13 +552,13 @@ export function PricingPanel({ result }: { result: RunResult }) {
   const tierLabel = { budget: "Budget", mid: "Mid-range", premium: "Premium", unknown: "Not enough data" }[p.tier];
   return (
     <Section id="pricing-heading" title="Price positioning" subtitle={`For the ${p.locality} audience. An estimate to test, not a verified price.`}>
-      <div className="grid gap-4 rounded-2xl border border-line bg-card p-4 md:grid-cols-[1fr_16rem]">
+      <div className="card grid gap-4 p-4 sm:p-5 md:grid-cols-[1fr_16rem]">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-brand-dark">{tierLabel} positioning</span>
+            <span className="rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-brand">{tierLabel} positioning</span>
             <SourceBadge source={p.source} long />
           </div>
-          <p className="mt-2 font-display text-3xl font-bold tabular-nums">
+          <p className="mt-2 font-display text-3xl font-semibold tabular-nums">
             {inr(p.rangeInr[0])} to {inr(p.rangeInr[1])}
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
@@ -581,41 +583,52 @@ export function PricingPanel({ result }: { result: RunResult }) {
   );
 }
 
+const ADMIN_DISPLAY_FILTER = new Set([
+  "india", "bharat",
+  "andhra pradesh", "arunachal pradesh", "assam", "bihar", "chhattisgarh",
+  "goa", "gujarat", "haryana", "himachal pradesh", "jharkhand", "karnataka",
+  "kerala", "madhya pradesh", "maharashtra", "manipur", "meghalaya", "mizoram",
+  "nagaland", "odisha", "punjab", "rajasthan", "sikkim", "tamil nadu",
+  "telangana", "tripura", "uttar pradesh", "uttarakhand", "west bengal",
+  "delhi", "chandigarh", "puducherry", "jammu and kashmir", "ladakh",
+]);
+
 export function NeighbourhoodPanel({ result }: { result: RunResult }) {
-  if (result.neighbourhoods.length === 0) {
+  const filtered = result.neighbourhoods
+    .filter((n) => !ADMIN_DISPLAY_FILTER.has(n.name.trim().toLowerCase()))
+    .map((n, i) => ({ ...n, rank: i + 1 }));
+  if (filtered.length === 0) {
     if (result.localitySource === "curated_fallback" || result.localitySource === "city_only") {
       return <p className="rounded-xl border border-warn/30 bg-warn-soft p-3 text-sm text-warn">Qloo returned no neighbourhood ranking for this city, so {result.localitySource === "city_only" ? "the city was analysed as one area" : "a fixed starter list of areas was used"}.</p>;
     }
     return null;
   }
-  const max = Math.max(...result.neighbourhoods.map((n) => n.affinity));
-  const min = Math.min(...result.neighbourhoods.map((n) => n.affinity));
+  const analysed = filtered.filter((n) => n.selected).length;
   return (
     <Section
       id="neighbourhoods-heading"
       title="Where your idea's audience is"
       subtitle="Neighbourhoods Qloo associates most strongly with this idea's audience. This is cultural affinity, not measured demand or foot traffic; the top three were analysed."
     >
-      <ol className="space-y-1.5">
-        {result.neighbourhoods.map((n) => {
-          const width = max > min ? 30 + ((n.affinity - min) / (max - min)) * 70 : 100;
-          return (
-            <li key={n.name} className="flex items-center gap-3 text-sm">
-              <span className="w-6 text-right text-muted tabular-nums">{n.rank}</span>
-              <span className="w-44 shrink-0 font-medium [overflow-wrap:anywhere]">{n.name}</span>
-              <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-line" aria-hidden="true">
-                <span className={`block h-full rounded-full ${n.selected ? "bg-brand" : "bg-muted/40"}`} style={{ width: `${width}%` }} />
-              </span>
-              <span className="w-14 text-right tabular-nums">{n.affinity.toFixed(3)}</span>
-              <span className="hidden w-20 text-xs sm:block">{n.selected ? <span className="font-semibold text-brand">Analysed</span> : ""}</span>
-            </li>
-          );
-        })}
-      </ol>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
-        <SourceBadge source={result.neighbourhoods[0]!.source} long />
-        <span>Affinity values are relative; small differences are not meaningful on their own.</span>
-      </div>
+      <ChartFrame
+        title="Audience affinity by neighbourhood"
+        caption={`Qloo heatmap affinity (0 to 1). Coral bars are the ${analysed} ${analysed === 1 ? "area" : "areas"} analysed in depth.`}
+        table={{ headers: ["Rank", "Neighbourhood", "Affinity", "Analysed"], rows: filtered.map((n) => [n.rank, n.name, n.affinity.toFixed(3), n.selected ? "Yes" : "No"]) }}
+        footer={
+          <span className="flex flex-wrap items-center gap-2">
+            <SourceBadge source={filtered[0]!.source} long />
+            <span>Affinity values are relative; small differences are not meaningful on their own.</span>
+          </span>
+        }
+      >
+        <HBarChart
+          data={filtered.map((n) => ({ label: `${n.rank}. ${n.name}`, value: n.affinity, highlight: n.selected }))}
+          domain={[0, 1]}
+          format={(n) => n.toFixed(3)}
+          valueName="Qloo affinity"
+          highlightLabel="Analysed"
+        />
+      </ChartFrame>
     </Section>
   );
 }

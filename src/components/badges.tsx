@@ -96,9 +96,9 @@ const STATUS_STYLE: Record<AgentStatus, string> = {
 };
 
 const STATUS_LABEL: Record<AgentStatus, string> = {
-  queued: "Queued",
-  running: "Running",
-  completed: "Done",
+  queued: "Waiting",
+  running: "In progress",
+  completed: "Completed",
   failed: "Failed",
   skipped: "Skipped",
 };
@@ -108,6 +108,23 @@ export function StatusBadge({ status }: { status: AgentStatus }) {
     <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLE[status]}`}>
       <span aria-hidden="true" className={`h-2 w-2 rounded-full bg-current ${status === "running" ? "animate-status" : ""}`} />
       {STATUS_LABEL[status]}
+    </span>
+  );
+}
+
+/**
+ * Understated estimate disclosure: a small muted caption with an info icon and a tooltip,
+ * used instead of a loud badge where figures are planning estimates (not Qloo findings).
+ */
+export function EstimateHint({ text = "Estimate", detail = "Planning estimate from our curated cost data, not a Qloo finding. Verify locally before spending.", className = "text-muted" }: { text?: string; detail?: string; className?: string }) {
+  return (
+    <span title={detail} className={`inline-flex shrink-0 items-center gap-1 text-[11px] font-medium ${className}`}>
+      <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="8" cy="8" r="6.25" />
+        <path d="M8 7.2v3.6M8 5.1v.1" strokeLinecap="round" />
+      </svg>
+      {text}
+      <span className="sr-only">. {detail}</span>
     </span>
   );
 }

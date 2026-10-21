@@ -196,3 +196,79 @@ The optional LLM is not used for them, to keep partner-facing text predictable.
 ## D34. Per-run Qloo call budget
 `QLOO_RUN_CALL_BUDGET` (default 70) caps calls per run; refused calls are reported as a warning
 and agents continue with what they have.
+
+## D35. Premium UI pass: what was added and what was deliberately not
+Palette (ivory, forest green, coral, lavender for AI-written text, sage), Fraunces for headlines
+and Inter for body. Dependencies added: `motion` (transitions, reveals; `MotionConfig
+reducedMotion="user"`) and `recharts` (bar charts, loaded with `next/dynamic` so the landing page
+does not pay for it; first load of `/` is about 215 kB). The hero city is pure CSS 3D rather than
+three.js or Spline: no WebGL, no extra download, no external scene. The locality "map" places
+areas by their Qloo coordinates on a plain grid; it is labelled as not a street map, because the
+app has no map provider. Every chart uses existing run data only and shows an empty state when a
+value is missing; there is no chart of page views or sign-ups because the app does not record
+them, and actual spend is not shown because it is not collected. Details on the recommendation
+and Pitch & Pilot screens are collapsed by default and open automatically for printing.
+
+## D36. Multi-page journey and dark mode
+The single-screen app became five routes (landing, `/discover`, `/agents`, `/recommendation`,
+`/plan`) so the landing page is not a form and browser back/refresh behave as expected. Run state
+lives in one client `RunProvider` in the root layout (no state library); the finished run and the
+form draft are kept in `sessionStorage`, so navigation never starts a second run or spends extra
+Qloo calls. Pages without a run show an empty state that links to `/discover`. The recommendation
+page leads with one summary card; the evidence sits in five collapsed sections. Agent cards are
+plain language first; Qloo parameters and call logs sit behind "View technical details".
+Dark mode uses a `data-theme` attribute on `<html>` set by a tiny inline head script (stored
+choice, else the system preference), so there is no flash of the wrong theme; colours are CSS
+variables overridden under `[data-theme="dark"]`. Brand-coloured surfaces that carry white text
+use a `hero` token that stays dark in both themes. Charts read the theme for their SVG text colours.
+
+## D37. Pastel palette and cursor effects
+The forest-green and coral palette was replaced by pastels (lavender, peach, mint, sky, pink)
+at the team's request. Pastels are too light to carry text, so a deep violet (#5b4bc4, 6.3:1 on
+white) is used for text, buttons and links, and a darker pink (#b8365f) for small highlight
+text; token names did not change, so components follow automatically. Pages sit on a slowly
+drifting pastel mesh (one CSS pseudo-element). Pointer effects live in one client component
+(`cursor-effects.tsx`): a colour-shifting glow behind the content, a light sparkle trail, a ring
+that grows over clickable things, magnetic buttons that wiggle on arrival, confetti on clicks,
+and cards that tilt toward the pointer. They run only for a mouse or trackpad and never with
+prefers-reduced-motion; the native cursor is never hidden, the layers ignore pointer events,
+and one animation frame loop runs only while something is moving. Logos and icons were
+recoloured to match. e2e screenshots are written after the tests finish, because writing into
+the project during a `next dev` run triggered a Fast Refresh rebuild that stalled a reload.
+
+## D38. Aurora theme, professional pointer effects and a real map
+Replaces D37's pastel look at the team's request, matching a reference design: a near-black
+canvas lit by teal and violet glows, white headings in Plus Jakarta Sans, a lavender-to-sky
+gradient highlight, white pill buttons and violet glass cards. Dark is the default on first
+visit (the storage key moved to `c2c:theme-v2` so old choices do not carry over); light mode
+stays available through the toggle. The landing hero is now a centred headline with a product
+preview (an example report and floating stat cards, labelled illustrative) instead of the CSS
+city. Pointer effects were reduced to what B2B product sites use: a spotlight revealing a faint
+dot grid around the cursor, card edges and surfaces that light up under the pointer, and buttons
+that lean a few pixels toward it; sparkles, confetti, the cursor ring, wiggles and tilts were
+removed. The locality "map" is now a real Leaflet street map: standard OpenStreetMap tiles (free,
+no key, attribution shown; CARTO tiles were tried but now require a key), recoloured by a CSS
+filter in dark mode. Pins sit at Qloo's coordinates with the 2 km competitor radius drawn around
+each; clicking a pin selects the area. No Qloo calls were added. Logos and icons were redrawn
+as a gradient tile with a dark market-stall glyph.
+
+## D39. Demo polish: living neighbourhood, summary-first recommendation, quieter labels
+- Homepage: new caption; the CSS 3D neighbourhood sits beside the hero text with added pop-up
+  booths, a food cart and a kiosk. Eight people walk along the pavements continuously using
+  compositor-only CSS animations (transform and opacity), paused by an IntersectionObserver when
+  the scene is off screen and replaced by a still scene under prefers-reduced-motion.
+- Only the example report graph reacts to hover (a guide dot follows the curve); the surrounding
+  cards no longer move. The header logo is inline SVG with a soft pulse and a slow sheen.
+- Renamed "Pitch & Pilot" to "Launch Plan" and "Agents at work" to "Your Agents at Work".
+  Removed the user-facing JSON trace download, the "Written by LLM" label and the promotional footer.
+- Agent cards show plain-language summaries and the real Qloo call count; raw requests (endpoints
+  and parameters) appear only with `?debug` in the URL. Fallback warnings are rewritten in plain
+  language (they could name config variables).
+- Estimates are disclosed with a small info hint instead of loud badges; a short note at the
+  bottom of each page says cost figures are estimates to verify before committing money.
+- Recommendation: one card answers what, why (two sentences), can I afford it (pilot budget and
+  what is left), how long, for whom, and at what test price, with one "View My Pilot Plan" button.
+  The full reasoning is behind "See why we recommend this"; detail moved into five sections
+  (Why this recommendation?, View detailed budget, Explore other opportunities, Explore
+  neighbourhoods, How Qloo influenced this decision). Each concept has a themed inline-SVG
+  illustration (no network or licence issues); photos can be configured in CONCEPT_PHOTOS.
