@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
 import type { AgentTrace, QlooCall } from "@/lib/schemas";
 import { AGENT_INFO } from "@/lib/trace";
-import { SourceBadge, StatusBadge } from "./badges";
+import { EstimateHint, SourceBadge, StatusBadge } from "./badges";
+import { Disclosure } from "./ui";
 
 const METHOD_LABEL: Record<string, string> = {
   searchEntities: "Look up an entity",
@@ -14,6 +16,8 @@ const METHOD_LABEL: Record<string, string> = {
   getTasteTags: "Genres the audience over-indexes on",
   getBrandAffinity: "Brands the audience favours",
   getDemographics: "Audience demographics",
+  getNearbyAffinityPlaces: "Nearby places with a similar crowd",
+  getNeighbourhoodHeatmap: "Where the audience is (neighbourhood heatmap)",
 };
 
 /** Shortens long ID lists so a call fits on one line. The API key is never part of a call record. */
@@ -27,9 +31,48 @@ function shortParams(params: Record<string, string>): string {
     .join("  ");
 }
 
+/** "sample data" / "recorded snapshot" when calls did not come from the live API; nothing for live. */
+function callSourceNote(calls: QlooCall[]): string | undefined {
+  if (calls.length === 0) return undefined;
+  if (calls.every((c) => c.source === "live")) return undefined;
+  if (calls.every((c) => c.source === "sample")) return "sample data";
+  if (calls.every((c) => c.source === "recorded")) return "recorded snapshot";
+  return "some from fallback data";
+}
+
+/** Plain-language list of what was asked, with counts. */
+function summariseCalls(calls: QlooCall[]): [string, number][] {
+  const counts = new Map<string, number>();
+  for (const c of calls) {
+    const label = METHOD_LABEL[c.method] ?? "Other lookup";
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return [...counts.entries()];
+}
+
+/** Rewrites internal fallback reasons (which can name config variables) as plain language. */
+function friendlyWarning(warning: string, calls: QlooCall[]): string {
+  if (!warning.startsWith("Qloo fallback used")) return warning;
+  const note = callSourceNote(calls);
+  if (note === "sample data") return "Live Qloo data was not available, so this step used built-in sample data.";
+  if (note === "recorded snapshot") return "Live Qloo data was not available, so this step used a recorded Qloo snapshot.";
+  return "Some Qloo lookups were not available live, so fallback data filled the gaps.";
+}
+
+const uniqueStrings = (items: string[]) => [...new Set(items)];
+
+/** Developer-only details are shown when the URL contains ?debug. */
+function useDebugView(): boolean {
+  const [debug, setDebug] = useState(false);
+  useEffect(() => {
+    setDebug(new URLSearchParams(window.location.search).has("debug"));
+  }, []);
+  return debug;
+}
+
 function QlooCallRow({ call }: { call: QlooCall }) {
   return (
-    <li className="rounded-lg border border-line bg-paper p-2.5">
+    <li className="rounded-lg border border-line bg-card p-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm font-semibold">{METHOD_LABEL[call.method] ?? call.method}</span>
         <span className="flex items-center gap-2 text-xs text-muted">
@@ -46,174 +89,224 @@ function QlooCallRow({ call }: { call: QlooCall }) {
   );
 }
 
-function AgentCard({ trace, defaultOpen }: { trace: AgentTrace; defaultOpen: boolean }) {
+function AgentCard({ trace, next }: { trace: AgentTrace; next: AgentTrace | undefined }) {
   const info = AGENT_INFO[trace.agent];
-  const [open, setOpen] = useState(defaultOpen);
+  const debug = useDebugView();
   const [showAllCalls, setShowAllCalls] = useState(false);
-  const panelId = `agent-panel-${info.step}`;
   const calls = showAllCalls ? trace.qlooCalls : trace.qlooCalls.slice(0, 4);
   const latestNote = trace.notes.at(-1);
+  const active = trace.status === "running";
+  // Plain-language headline for the card: what this agent found, or what it is doing now.
+  const finding =
+    trace.status === "completed"
+      ? trace.outputSummary
+      : trace.status === "failed"
+        ? `Could not finish: ${trace.error ?? "unknown error"}`
+        : trace.status === "skipped"
+          ? (trace.warnings[0] ?? "Skipped because an earlier step did not finish.")
+          : active
+            ? latestNote
+            : undefined;
+  // Plain-language warnings for everyone; the raw technical reason is kept for the ?debug view.
+  const userWarnings = trace.status === "skipped" ? [] : uniqueStrings(trace.warnings.map((w) => (debug ? w : friendlyWarning(w, trace.qlooCalls))));
 
   return (
-    <li
-      className={`rounded-2xl border bg-card shadow-sm transition-colors ${
-        trace.status === "running" ? "border-brand ring-2 ring-brand/15" : trace.status === "failed" ? "border-bad/50" : "border-line"
+    <motion.li
+      layout="position"
+      className={`relative rounded-2xl border bg-card shadow-[var(--shadow-card)] transition-colors duration-300 ${
+        active ? "border-brand ring-2 ring-brand/20" : trace.status === "failed" ? "border-bad/50" : trace.status === "completed" ? "border-leaf/30" : "border-line"
       }`}
     >
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-start gap-3 rounded-2xl p-4 text-left"
-      >
+      <div className="flex items-start gap-3 p-4 sm:p-5">
         <span
           aria-hidden="true"
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-            trace.status === "completed" ? "bg-leaf text-white" : trace.status === "running" ? "bg-brand text-white" : trace.status === "failed" ? "bg-bad text-white" : "bg-line text-muted"
+          className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors duration-300 ${
+            trace.status === "completed" ? "bg-leaf text-on-brand" : active ? "bg-brand text-on-brand" : trace.status === "failed" ? "bg-bad text-on-brand" : "bg-line text-muted"
           }`}
         >
-          {trace.status === "completed" ? "✓" : info.step}
+          {active && <span className="animate-ping-soft absolute inset-0 rounded-full bg-brand/40" />}
+          <span className="relative">{trace.status === "completed" ? "✓" : trace.status === "failed" ? "!" : info.step}</span>
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="font-display text-base font-bold">{trace.agent}</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h3 className="font-display text-lg font-semibold leading-tight">{trace.agent}</h3>
             <StatusBadge status={trace.status} />
-            {trace.durationMs !== undefined && trace.status === "completed" && (
-              <span className="text-xs text-muted">{trace.durationMs < 1000 ? `${trace.durationMs} ms` : `${(trace.durationMs / 1000).toFixed(1)} s`}</span>
-            )}
-            {trace.qlooCalls.length > 0 && <span className="text-xs font-medium text-muted">{trace.qlooCalls.length} Qloo calls</span>}
-          </span>
-          <span className="mt-1 block text-sm text-muted">
-            {trace.status === "completed" && trace.outputSummary
-              ? trace.outputSummary
-              : trace.status === "failed"
-                ? `Failed: ${trace.error ?? "unknown error"}`
-                : trace.status === "skipped"
-                  ? (trace.warnings[0] ?? "Skipped")
-                  : trace.status === "running" && latestNote
-                    ? latestNote
-                    : info.role}
-          </span>
-        </span>
-        <span aria-hidden="true" className={`mt-1 text-muted transition-transform ${open ? "rotate-180" : ""}`}>
-          ▾
-        </span>
-      </button>
-
-      {open && (
-        <div id={panelId} className="space-y-4 border-t border-line px-4 pb-4 pt-3 text-sm">
-          <p className="text-muted">{info.role}</p>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl bg-paper p-3">
-              <p className="text-xs font-bold uppercase tracking-wide text-muted">Received</p>
-              <p className="mt-1">{trace.inputSummary ?? "Waiting for the previous agent."}</p>
-            </div>
-            <div className="rounded-xl bg-paper p-3">
-              <p className="text-xs font-bold uppercase tracking-wide text-muted">Produced</p>
-              <p className="mt-1">{trace.outputSummary ?? (trace.error ? `Nothing: ${trace.error}` : "Not finished yet.")}</p>
-            </div>
           </div>
+          <p className="mt-0.5 text-sm text-muted">
+            <span className="font-semibold text-ink">{info.purpose}.</span> {info.role}
+          </p>
 
-          {trace.notes.length > 0 && (
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted">What it did</p>
-              <ul className="mt-1 list-disc space-y-0.5 pl-5">
-                {trace.notes.map((note, i) => (
-                  <li key={i}>{note}</li>
-                ))}
-              </ul>
-            </div>
+          <AnimatePresence initial={false} mode="wait">
+            {finding && (
+              <motion.p
+                key={finding}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className={`mt-3 rounded-xl px-3 py-2.5 text-sm ${
+                  trace.status === "failed" ? "bg-bad-soft text-bad" : trace.status === "completed" ? "bg-leaf-soft text-ink" : trace.status === "skipped" ? "bg-paper text-muted" : "bg-brand-soft/60 text-ink"
+                }`}
+              >
+                {trace.status === "completed" && <span className="font-semibold">Found: </span>}
+                {finding}
+              </motion.p>
+            )}
+          </AnimatePresence>
+          {active && !latestNote && (
+            <span aria-hidden="true" className="mt-2 block space-y-1.5">
+              <span className="skeleton block h-2.5 w-3/4" />
+              <span className="skeleton block h-2.5 w-1/2" />
+            </span>
           )}
 
-          {trace.dataSources.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wide text-muted">Data used</span>
-              {trace.dataSources.map((s) => (
-                <SourceBadge key={s} source={s} long />
-              ))}
-            </div>
-          )}
-
-          {trace.warnings.length > 0 && trace.status !== "skipped" && (
-            <ul className="space-y-1 rounded-xl border border-warn/30 bg-warn-soft p-3 text-warn">
-              {trace.warnings.map((w, i) => (
-                <li key={i}>{w}</li>
+          {userWarnings.length > 0 && (
+            <ul className="mt-2 space-y-1 rounded-xl border border-warn/30 bg-warn-soft p-3 text-sm text-warn">
+              {userWarnings.map((w, i) => (
+                <li key={i} className="flex gap-1.5">
+                  <span aria-hidden="true">⚠</span>
+                  <span>{w}</span>
+                </li>
               ))}
             </ul>
           )}
 
-          {trace.qlooCalls.length > 0 ? (
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted">Qloo calls ({trace.qlooCalls.length})</p>
-              <ul className="mt-1.5 space-y-1.5">
-                {calls.map((call, i) => (
-                  <QlooCallRow key={i} call={call} />
-                ))}
-              </ul>
-              {trace.qlooCalls.length > 4 && (
-                <button type="button" onClick={() => setShowAllCalls((s) => !s)} className="mt-2 text-sm font-semibold text-brand hover:underline">
-                  {showAllCalls ? "Show fewer calls" : `Show all ${trace.qlooCalls.length} calls`}
-                </button>
+          {trace.status === "completed" && next && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-muted">
+              <span aria-hidden="true" className="text-leaf">↳</span> Handed to {next.agent}: {info.handsOver.toLowerCase()}
+            </p>
+          )}
+
+          {/* Compact facts: real Qloo call count from this run, timing, and an estimate hint where relevant. */}
+          {trace.status !== "queued" && (
+            <p className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+              {(info.usesQloo || trace.qlooCalls.length > 0) && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper/60 px-2.5 py-0.5 font-semibold text-ink">
+                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-brand to-info" />
+                  Qloo calls: {trace.qlooCalls.length}
+                  {callSourceNote(trace.qlooCalls) && <span className="font-normal text-muted">· {callSourceNote(trace.qlooCalls)}</span>}
+                </span>
               )}
-            </div>
-          ) : (
-            trace.status === "completed" &&
-            !info.usesQloo && <p className="text-muted">This agent makes no Qloo calls. It works only with what the earlier agents found, plus cost estimates.</p>
+              {trace.durationMs !== undefined && <span>{trace.durationMs < 1000 ? `${trace.durationMs} ms` : `${(trace.durationMs / 1000).toFixed(1)} s`}</span>}
+              {trace.dataSources.includes("estimate") && <EstimateHint text="Uses cost estimates" />}
+            </p>
+          )}
+
+          {(trace.status === "completed" || trace.status === "failed" || trace.status === "skipped" || trace.notes.length > 1) && (
+            <Disclosure className="mt-3" title="What this agent did" hint="What it received, what it produced and the steps it took">
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl bg-card p-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted">Received</p>
+                    <p className="mt-1">{trace.inputSummary ?? "Waiting for the previous agent."}</p>
+                  </div>
+                  <div className="rounded-xl bg-card p-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted">Produced</p>
+                    <p className="mt-1">{trace.outputSummary ?? (trace.error ? `Nothing: ${trace.error}` : "Not finished yet.")}</p>
+                  </div>
+                </div>
+                {trace.notes.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted">Steps</p>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                      {trace.notes.map((note, i) => (
+                        <li key={i}>{note}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {trace.qlooCalls.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted">What it asked Qloo</p>
+                    <ul className="mt-1 flex flex-wrap gap-1.5">
+                      {summariseCalls(trace.qlooCalls).map(([label, count]) => (
+                        <li key={label} className="rounded-full border border-line bg-card px-2.5 py-0.5 text-xs">
+                          {label}
+                          {count > 1 && <span className="text-muted"> ×{count}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {!info.usesQloo && trace.status === "completed" && <p className="text-muted">This agent makes no Qloo calls. It works with what the earlier agents found, plus cost estimates.</p>}
+                {/* Raw request details (endpoints and parameters) are for developers only: add ?debug to the URL. */}
+                {debug && trace.qlooCalls.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted">Developer view · raw Qloo requests</p>
+                    <ul className="mt-1.5 space-y-1.5">
+                      {calls.map((call, i) => (
+                        <QlooCallRow key={i} call={call} />
+                      ))}
+                    </ul>
+                    {trace.qlooCalls.length > 4 && (
+                      <button type="button" onClick={() => setShowAllCalls((v) => !v)} className="mt-2 text-sm font-semibold text-brand hover:underline">
+                        {showAllCalls ? "Show fewer calls" : `Show all ${trace.qlooCalls.length} calls`}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Disclosure>
           )}
         </div>
-      )}
-    </li>
+      </div>
+    </motion.li>
   );
 }
 
 export function AgentPipeline({ traces, running }: { traces: AgentTrace[]; running: boolean }) {
   const done = traces.filter((t) => t.status === "completed").length;
+  const finished = traces.filter((t) => t.status === "completed" || t.status === "failed" || t.status === "skipped").length;
   const totalCalls = traces.reduce((n, t) => n + t.qlooCalls.length, 0);
+  const activeAgent = traces.find((t) => t.status === "running");
 
   return (
     <section aria-labelledby="pipeline-heading">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h2 id="pipeline-heading" className="text-2xl font-bold">
-            Agent workflow
-          </h2>
-          <p className="mt-1 text-sm text-muted" aria-live="polite">
-            {running ? `Working… ${done} of 4 agents finished.` : `${done} of 4 agents finished · ${totalCalls} Qloo calls in total.`}
-          </p>
-        </div>
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-spark-dark">Your Agents at Work</p>
+      <h1 id="pipeline-heading" tabIndex={-1} className="text-3xl font-semibold outline-none sm:text-4xl">
+        {running ? "Discovering your opportunity" : "Your agents have finished"}
+      </h1>
+      <p className="mt-1.5 max-w-2xl text-muted">
+        Four AI agents work in sequence: each one hands its findings to the next, from local research to a pilot you can run.
+      </p>
+      <p className="mt-3 text-sm font-medium" aria-live="polite">
+        {running
+          ? `${done} of 4 agents finished${activeAgent ? ` · now: ${activeAgent.agent}` : ""}`
+          : `${done} of 4 agents completed${finished > done ? `, ${finished - done} did not` : ""} · ${totalCalls} Qloo calls in total`}
+      </p>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line/70" role="progressbar" aria-label="Agents finished" aria-valuemin={0} aria-valuemax={4} aria-valuenow={finished}>
+        <motion.div className="h-full rounded-full bg-gradient-to-r from-brand to-series-1" initial={false} animate={{ width: `${(finished / 4) * 100}%` }} transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} />
       </div>
 
-      {/* Compact flow strip: who hands what to whom. */}
-      <ol className="mt-4 hidden items-stretch gap-1 lg:flex" aria-label="How data flows between agents">
+      {/* Flow strip: who hands what to whom. */}
+      <ol className="mt-5 hidden items-stretch gap-1 lg:flex" aria-label="How information flows between agents">
         {traces.map((trace, i) => {
           const info = AGENT_INFO[trace.agent];
           return (
             <li key={trace.agent} className="flex flex-1 items-center gap-1">
               <div
-                className={`flex-1 rounded-xl border px-3 py-2 ${
+                className={`flex-1 rounded-xl border px-3 py-2 transition-colors duration-300 ${
                   trace.status === "completed" ? "border-leaf/40 bg-leaf-soft" : trace.status === "running" ? "border-brand bg-brand-soft" : trace.status === "failed" ? "border-bad/40 bg-bad-soft" : "border-line bg-card"
                 }`}
               >
                 <p className="text-xs font-bold">
-                  {info.step}. {trace.agent}
+                  {info.step}. {info.purpose}
                 </p>
                 <p className="mt-0.5 text-[11px] leading-4 text-muted">Hands over: {info.handsOver.toLowerCase()}</p>
               </div>
               {i < traces.length - 1 && (
-                <span aria-hidden="true" className={`text-lg ${trace.status === "completed" ? "text-leaf" : "text-line"}`}>
+                <motion.span aria-hidden="true" animate={{ opacity: trace.status === "completed" ? 1 : 0.35 }} transition={{ duration: 0.35 }} className={`text-lg ${trace.status === "completed" ? "text-leaf" : "text-muted"}`}>
                   →
-                </span>
+                </motion.span>
               )}
             </li>
           );
         })}
       </ol>
 
-      <ol className="mt-4 space-y-3">
-        {traces.map((trace) => (
-          <AgentCard key={trace.agent} trace={trace} defaultOpen={false} />
+      <ol className="mt-5 space-y-3">
+        {traces.map((trace, i) => (
+          <AgentCard key={trace.agent} trace={trace} next={traces[i + 1]} />
         ))}
       </ol>
     </section>

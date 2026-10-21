@@ -6,6 +6,8 @@
  * not a quote. Users are told to verify costs locally.
  */
 
+import type { ConceptCategory } from "@/lib/categories";
+
 export interface ConceptCostItem {
   item: string;
   amountInr: number;
@@ -18,6 +20,8 @@ export interface Concept {
   label: string;
   tagline: string;
   format: "stall" | "workshop" | "event";
+  /** Browsing category in the input form. */
+  category: ConceptCategory;
   /** Qloo place tags that describe existing businesses of this type. */
   qlooTagIds: string[];
   /** Lower-case fragments matched against Qloo tag, genre and brand-tag names. */
@@ -57,6 +61,7 @@ const tag = (s: string) => `urn:tag:genre:place:${s}`;
 export const CONCEPTS: Concept[] = [
   {
     id: "art-prints",
+    category: "art",
     label: "Art print pop-up",
     tagline: "Sell original illustrations as affordable prints and postcards.",
     format: "stall",
@@ -98,6 +103,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "thrift-stall",
+    category: "fashion",
     label: "Thrift clothing stall",
     tagline: "Curated second-hand and vintage clothing at student-friendly prices.",
     format: "stall",
@@ -138,6 +144,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "coffee-popup",
+    category: "food",
     label: "Coffee pop-up",
     tagline: "Specialty coffee served from a small counter.",
     format: "stall",
@@ -180,6 +187,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "board-game-evening",
+    category: "experiences",
     label: "Board-game evening",
     tagline: "A ticketed evening of hosted board games with snacks.",
     format: "event",
@@ -219,6 +227,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "art-workshop",
+    category: "experiences",
     label: "Art-print workshop",
     tagline: "A paid, hands-on session where people make their own print.",
     format: "workshop",
@@ -258,6 +267,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "baked-goods",
+    category: "food",
     label: "Home-baked goods stall",
     tagline: "Small-batch cookies, brownies and loaf cakes.",
     format: "stall",
@@ -298,6 +308,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "plant-stall",
+    category: "home",
     label: "Indoor plant stall",
     tagline: "Small potted plants and propagation jars for desks and balconies.",
     format: "stall",
@@ -336,6 +347,7 @@ export const CONCEPTS: Concept[] = [
   },
   {
     id: "handmade-jewellery",
+    category: "art",
     label: "Handmade jewellery stall",
     tagline: "Small-batch earrings, necklaces and bracelets.",
     format: "stall",
@@ -378,11 +390,42 @@ export const CONCEPTS: Concept[] = [
 
 const byId = new Map(CONCEPTS.map((c) => [c.id, c]));
 
+/** Prefix for an idea the user typed themselves, e.g. "custom:Handmade candles". */
+export const CUSTOM_PREFIX = "custom:";
+
+/** Words that point a custom idea at the most similar catalogue concept (used for cost estimates). */
+const TEMPLATE_HINTS: [RegExp, string][] = [
+  [/coffee|tea|chai|juice|drink|smoothie|lemonade/i, "coffee-popup"],
+  [/cake|bak|brownie|cookie|dessert|sweet|bread|food|snack|chocolate|pastr|momo|biryani|kitchen/i, "baked-goods"],
+  [/cloth|thrift|fashion|tee|t-shirt|apparel|wear|vintage|sneaker|shoe|bag/i, "thrift-stall"],
+  [/jewel|earring|necklace|bracelet|bead|accessor|resin/i, "handmade-jewellery"],
+  [/plant|garden|succulent|flower|candle|decor|home|pottery|ceramic|soap/i, "plant-stall"],
+  [/workshop|class|lesson|course|session|painting|craft/i, "art-workshop"],
+  [/game|quiz|event|music|comedy|karaoke|puzzle/i, "board-game-evening"],
+];
+
+function customConcept(id: string): Concept | undefined {
+  const label = id.slice(CUSTOM_PREFIX.length).replace(/[^\p{L}\p{N} &'\-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 32);
+  if (label.length < 2) return undefined;
+  const templateId = TEMPLATE_HINTS.find(([re]) => re.test(label))?.[1] ?? "art-prints";
+  const template = byId.get(templateId)!;
+  const words = label.toLowerCase().split(" ").filter((w) => w.length >= 3);
+  return {
+    ...template,
+    id,
+    label: label.charAt(0).toUpperCase() + label.slice(1),
+    tagline: `Your own idea. Costs are modelled on a similar ${template.label.toLowerCase()}.`,
+    // Match Qloo tags on the user's own words first, then on the similar concept's words.
+    keywords: [...new Set([...words, ...template.keywords])],
+    skillKeywords: [...new Set([...words, ...template.skillKeywords])],
+  };
+}
+
 export function getConcept(id: string): Concept | undefined {
-  return byId.get(id);
+  return byId.get(id) ?? (id.startsWith(CUSTOM_PREFIX) ? customConcept(id) : undefined);
 }
 
 /** Small public view of the catalogue for the input form. */
-export function listConceptOptions(): { id: string; label: string; tagline: string }[] {
-  return CONCEPTS.map(({ id, label, tagline }) => ({ id, label, tagline }));
+export function listConceptOptions(): { id: string; label: string; tagline: string; category: ConceptCategory }[] {
+  return CONCEPTS.map(({ id, label, tagline, category }) => ({ id, label, tagline, category }));
 }

@@ -30,3 +30,16 @@ export const RUN_SOURCE_LABEL: Record<"live" | "recorded" | "sample", string> = 
   recorded: "Recorded Qloo snapshot (offline fallback)",
   sample: "Sample data, not Qloo (offline fallback)",
 };
+
+/** Splits "People aged 25 to 29 who go to Indiranagar places like X and Y" into a short "who" and the detail. */
+export function splitAudience(text: string): { who: string; detail?: string } {
+  const i = text.indexOf(" who ");
+  if (i < 0) return { who: text };
+  return { who: text.slice(0, i), detail: text.slice(i + 1) };
+}
+
+/** First sentence of a paragraph, for compact summaries (the full text stays one click away). */
+export function firstSentence(text: string): string {
+  const m = text.match(/^.+?[.!?](\s|$)/);
+  return (m ? m[0] : text).trim();
+}

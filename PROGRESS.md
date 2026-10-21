@@ -4,10 +4,12 @@ To resume in a new session, say: **"continue from PROGRESS.md"**.
 
 ## Current state
 
-- **Date:** 15 Oct 2026
-- **Last completed work:** Phase 2 enhancement (partner discovery, launch modes, neighbourhood
-  heatmap, collaboration models, pricing, comparison, outreach). Pushed to
-  https://github.com/Vaishhnavi27Hub/culture2commerce (`main`).
+- **Date:** 18 Oct 2026
+- **Last completed work:** UI/UX redesign on branch `feature/premium-ui-ux-redesign` (built on
+  `ui-premium-upgrade`): separate landing page and five-step journey (`/discover`, `/agents`,
+  `/recommendation`, `/plan`), light/dark theme toggle, plain-language agent cards with technical
+  details on demand, summary-first recommendation with collapsible analysis. Pushed as a feature
+  branch only; **not merged into `main`** (team review first). See DECISIONS D36.
 - **Next:** team review, then Vercel deployment (needs the user's confirmation and login).
 - **Waiting on the user:** team review; repo description and topics; make the repo public before submission; record the video.
 
@@ -22,12 +24,42 @@ See `docs/features.json` (single source of truth; `node scripts/progress.mjs lis
   per-run call budget.
 - **Implemented (checked by hand or by running):** environment setup, Qloo discovery, Qloo
   scripts, branding, /dev page, docs, GitHub.
-- **Pending:** deployment.
+- **UI upgrade (17 Oct):** new design system, CSS 3D landing hero, idea search and category
+  filters, locality map and comparison chart, cultural affinity and budget charts, simplified
+  Pitch & Pilot with progressive disclosure, pilot results dashboard. See DECISIONS D35.
+- **UI/UX redesign (18 Oct, feature branch):** multi-page journey, dark mode, summary-first
+  recommendation, plain-language agents. Tested by e2e (4 tests).
+- **Pastel theme and cursor effects (18 Oct, feature branch):** new pastel palette (light and
+  dark), drifting backdrop, cursor glow, sparkles, magnetic buttons, card tilt; logos recoloured.
+  See DECISIONS D37.
+- **Aurora theme, real map, new logo (18 Oct, feature branch):** reference-style dark theme
+  (default) with light variant, new hero with product preview, professional cursor effects
+  (spotlight, card glow, magnetic buttons), Leaflet + OpenStreetMap locality map, redrawn logos.
+  No Qloo calls used for this work. See DECISIONS D38.
+- **Headline, own-idea option, logo moment (19 Oct, feature branch):** hero headline is now "Turn cultural signals into your next big opportunity."; users can add their own business idea (server costs it like the most similar stall, Qloo matches their words); the logo "2" slides into an arrow and back. Tests: 204/204 unit, 6/6 e2e.
+- **Demo polish (19 Oct, feature branch):** hero caption, living neighbourhood
+  (stalls, walking people), graph-only hover, animated logo, Launch Plan / Your Agents at Work
+  renames, simpler agent cards, quieter estimate labels, footer removed, summary-first
+  recommendation with concept illustrations. See DECISIONS D39.
+- **Pending:** team review and merge of the feature branch; deployment.
 
 ## Checks run (latest results)
 
 | Date | Command | Result |
 |---|---|---|
+| 19 Oct | Demo polish: `npm run lint`, `npm run typecheck`, `npm test` (202/202), `npm run build` | Pass |
+| 19 Oct | `npm run test:e2e` (5/5, three cold runs; new checks: caption, walkers, logo, plain agent cards, recommendation card, no JSON button / LLM label / footer, reduced motion) | Pass |
+| 19 Oct | Browser check (production build, sample data, 0 Qloo calls): walkers move without hover; graph hover leaves the card still; no page errors; no horizontal overflow at 390 px and 820 px | Pass |
+| 18 Oct | Aurora theme + real map: lint, typecheck, `npm test` (202/202), `npm run test:e2e` (4/4 on three cold runs; now also checks map pins and pin selection) | Pass |
+| 18 Oct | Aurora theme, cursor effects and map in the browser (by hand, production build, sample data, 0 Qloo calls) | Hero, spotlight, card glow, map tiles, pins and pin selection confirmed; light and dark checked |
+| 18 Oct | Pastel theme + cursor effects: lint, typecheck, `npm test` (202/202), `npm run test:e2e` (4/4, three clean cold runs in a row) | Pass |
+| 18 Oct | Cursor effects in the browser (by hand, production build) | Glow, ring, magnetic button and wiggle confirmed; light and dark checked |
+| 18 Oct | `npm run lint` (feature branch) | Pass |
+| 18 Oct | `npm run typecheck` | Pass |
+| 18 Oct | `npm test` | Pass: 13 files, 202 of 202 tests |
+| 18 Oct | `npm run test:e2e` | Pass: 4 of 4 (Nisha journey across all pages incl. refresh/back; partner example; theme toggle persistence; no horizontal overflow at 375 px on all five pages) |
+| 18 Oct | `npm run build` with no Qloo key and LLM off | Pass |
+| 18 Oct | Partner example, live Qloo, in the browser (by hand) | Completed; landing → discover → agents → recommendation → plan, refresh kept the run; light and dark checked |
 | 15 Oct | `npm run lint` | Pass (exit 0, no warnings) |
 | 15 Oct | `npm run typecheck` | Pass (exit 0) |
 | 15 Oct | `npm test` | Pass: 13 files, 201 of 201 tests, no network |

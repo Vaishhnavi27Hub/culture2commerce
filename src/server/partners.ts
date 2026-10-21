@@ -104,13 +104,24 @@ export function pickPartnerConcept(concepts: Concept[], profiles: Record<string,
 
 const ADMIN_WORDS = /\b(zone|urban|rural|district|division|taluk|tehsil|authority|metropolitan|region|corporation|municipal|state|province|county|circle|ward no)\b/i;
 
-/** True for heatmap rows that are cities, districts or administrative zones rather than neighbourhoods. */
+const COUNTRY_AND_STATE = new Set([
+  "india", "bharat",
+  "andhra pradesh", "arunachal pradesh", "assam", "bihar", "chhattisgarh",
+  "goa", "gujarat", "haryana", "himachal pradesh", "jharkhand", "karnataka",
+  "kerala", "madhya pradesh", "maharashtra", "manipur", "meghalaya", "mizoram",
+  "nagaland", "odisha", "punjab", "rajasthan", "sikkim", "tamil nadu",
+  "telangana", "tripura", "uttar pradesh", "uttarakhand", "west bengal",
+  "delhi", "chandigarh", "puducherry", "jammu and kashmir", "ladakh",
+  "andaman and nicobar", "dadra and nagar haveli", "daman and diu", "lakshadweep",
+]);
+
+/** True for heatmap rows that are countries, states, districts or administrative zones rather than neighbourhoods. */
 export function isAdministrativeArea(name: string, city: string, cityAliases: string[] = []): boolean {
   const n = name.trim().toLowerCase();
+  if (COUNTRY_AND_STATE.has(n)) return true;
   const names = [city.trim().toLowerCase(), ...cityAliases.map((a) => a.toLowerCase())];
   if (names.includes(n)) return true;
   if (ADMIN_WORDS.test(name)) return true;
-  // e.g. "Bangalore North", "Bengaluru East"
   return names.some((c) => new RegExp(`^${c}\\s+(north|south|east|west|central)$`).test(n)) || /^(bangalore|bengaluru)\s+(north|south|east|west|central)$/.test(n);
 }
 
