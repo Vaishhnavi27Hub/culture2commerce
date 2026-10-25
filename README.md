@@ -1,281 +1,160 @@
 <p align="center">
-  <img src="public/brand/logo-vky.svg" alt="Culture2Commerce logo with the VKY monogram" width="96" height="96">
+  <img src="public/brand/logo-vky.svg" alt="Culture2Commerce logo" width="96" height="96">
 </p>
 
 <h1 align="center">Culture2Commerce</h1>
 
 <p align="center"><strong>Find one small business bet worth testing.</strong><br>
-A micro-business opportunity discovery agent grounded in Qloo's taste graph.</p>
+An AI agent that uses Qloo's taste graph to tell first-time founders what to sell, where, and how to test it cheaply.</p>
 
-<p align="center">Built by <strong>Team VKY</strong> (Vaishhnavi, Khushi, Yashi) for the Qloo Agentic Hackathon.</p>
+<p align="center">Built by <strong>Team VKY</strong> (Vaishhnavi, Khushi, Yashi) for the Qloo Agentic Hackathon</p>
 
 ---
 
-## The problem
+## Why we built this
 
-A student or first-time entrepreneur with ₹10,000 to ₹20,000 wants to try a weekend stall,
-a pop-up or a paid workshop before committing to a shop. Ask a generic AI which idea to try
-and it lists pros and cons for every option and concludes "it depends".
+Lots of students and first-time founders have a small budget (₹10,000–₹20,000) and a few ideas: a weekend stall, a pop-up, a workshop. They don't know which idea to pick, which neighbourhood to try, or whether they can even afford it.
 
-## The solution
+Ask a chatbot and you get pros and cons for everything, ending in "it depends". We wanted a real answer instead.
 
-Culture2Commerce uses cultural and local evidence to recommend **one specific bet**:
+## What it does
 
-> **specific concept + suitable locality + target audience + pilot experiment**
+You tell Culture2Commerce your city, budget, time and ideas. It comes back with **one specific bet**:
 
-It does three things together:
+> **what to sell + where + for whom + a small pilot to test it**
 
-1. **Cultural fit.** Qloo taste relationships show which concepts resonate with the people who
-   already spend time in each locality.
-2. **Feasibility.** Budget, competition, logistics and venues are checked. Options that do not
-   fit are downgraded or rejected, with the reason shown.
-3. **Validation.** The winner becomes a low-cost real-world pilot with a measurable
-   continue / pivot / stop rule, and a form to compare predicted and actual results.
+To get there, it checks three things:
 
-### Start on your own, with an existing business, or compare both
+- **Cultural fit:** Qloo shows which ideas the people in each neighbourhood are likely to love.
+- **Feasibility:** costs, competition and logistics are checked against your budget. Ideas that don't fit are rejected, and you see why.
+- **Validation:** the winning idea becomes a low-cost pilot with a clear rule: continue, pivot or stop.
 
-Many people have a product but cannot afford a stall. The first question in the app is
-**"How do you want to start?"**
+### Can't afford a stall? Partner with a business
 
-- **On my own:** a stall, pop-up or workshop, as above.
-- **With an existing business:** Culture2Commerce finds businesses worth approaching and
-  plans a partnership pilot:
-  - **similar businesses** (for brownies: bakeries and dessert shops), flagged as possible competitors;
-  - **complementary businesses** (cafés, juice bars, bookshops) whose crowd may want the product;
-  - **potential high-visibility hosts** (food courts, malls, co-working spaces), labelled as
-    *potential* visibility because no visitor counts exist.
+The first question is **"How do you want to start?"**
 
-  It then costs four collaboration formats (consignment shelf, weekend counter, co-hosted
-  workshop, wholesale supply), lets you change the assumptions, recommends one, and writes an
-  email and a WhatsApp message to send yourself.
-- **Show me both:** a like-for-like comparison of the two approaches, with a recommendation
-  that follows the numbers (solo wins when it is cheaper and stronger; partnering wins when no
-  stall fits the budget).
+- **On my own:** a stall, pop-up or workshop.
+- **With an existing business:** the app finds bakeries, cafés, food courts and other places worth approaching. It compares partnership formats (consignment shelf, weekend counter, co-hosted workshop, wholesale supply) and writes an email and a WhatsApp message for you to send.
+- **Show me both:** a side-by-side comparison, and the numbers decide.
 
-Two optional fields sharpen the search: **"Describe your product"** (matched to Qloo tags such
-as *Brownie* or *Egg free*) and **"A business you admire"** (Qloo finds places with a similar crowd).
+You can also describe your product ("eggless brownies") and name a business you admire. Qloo uses both to find better matches.
 
-### Built-in examples
+## Try it in one click
 
-Nisha is a student in Bengaluru with ₹15,000 and two weekends. She is choosing between a
-thrift stall, art prints and a coffee pop-up, and prefers something creative and low-risk.
-Click **Try Nisha's example** to watch the four agents work through it.
-
-**The partner example:** homemade eggless brownies, ₹10,000, no stall. Click
-**Try the partner example** to see the solo-versus-partner comparison, partners found through
-Qloo (including places with a crowd like Lamara Patisserie, the "business you admire"), and
-ready-to-send outreach drafts.
+- **Try Nisha's example:** a student in Bengaluru with ₹15,000 and two weekends, choosing between a thrift stall, art prints and a coffee pop-up.
+- **Try the partner example:** homemade eggless brownies, ₹10,000, no stall. See the solo-vs-partner comparison, the partners Qloo finds, and ready-to-send outreach drafts.
 
 ## Screenshots
-
-These were captured by the end-to-end test in offline mode, so every venue is bundled sample
-data marked "(sample)". With a Qloo key the same screens show real Qloo places and affinities.
-
-The app is a short journey: **landing page → Your idea (`/discover`) → Your Agents at Work
-(`/agents`) → Recommendation (`/recommendation`) → Launch Plan (`/plan`)**. The step bar in
-the header lets you move back and forth; the finished run and your form inputs survive a refresh
-or the browser back button (kept in this browser tab only). The app opens in a dark "aurora" theme; a sun/moon button in the header switches to light mode
-and remembers the choice. With a mouse, a soft spotlight and glowing card edges follow the
-cursor (off on touch screens and when your system asks for reduced motion). The locality
-comparison uses a real street map (OpenStreetMap) with each area's 2 km catchment.
 
 | Landing | Your idea |
 |---|---|
 | ![Landing page](docs/screenshots/0-landing.png) | ![Input screen](docs/screenshots/1-input.png) |
 
-| Your Agents at Work | Dark mode and phone width |
+| Agents at work | Recommendation |
 |---|---|
-| ![Agent workflow](docs/screenshots/2-agents.png) | ![Dark mode](docs/screenshots/7-dark-discover.png) ![Phone](docs/screenshots/8-mobile-landing.png) |
+| ![Agent workflow](docs/screenshots/2-agents.png) | ![Recommendation](docs/screenshots/3-recommendation.png) |
 
-| Recommendation, scores and evidence | Pilot plan and results |
-|---|---|
-| ![Recommendation](docs/screenshots/3-recommendation.png) | ![Pilot plan](docs/screenshots/4-pilot-plan.png) |
-
-| Solo vs partnership and potential partners | Partner pilot with outreach drafts |
+| Partners | Launch plan |
 |---|---|
 | ![Partners](docs/screenshots/5-partners.png) | ![Partner plan](docs/screenshots/6-partner-plan.png) |
 
-## The four agents
+_Screenshots use the bundled sample data. With a Qloo key, you see real Qloo places and scores._
 
-| Agent | What it does | Qloo |
+## Four agents, one hand-off chain
+
+| Agent | Job | Uses Qloo |
 |---|---|---|
-| **Local Researcher** | Picks neighbourhoods with Qloo's heatmap (or uses yours), profiles each one's popular venues, vibe, competitors, stall fees and permits, and finds similar, complementary and host businesses, including places like the business you admire. | Yes |
-| **Cultural Opportunity Finder** | Tests each idea against each area's audience (affinity, locality lift, taste tags, brands, demographics), reads your product description into Qloo tags, and scores every potential partner. | Yes |
-| **Feasibility Critic** | Costs every solo option and every collaboration format against the budget, rejects what does not fit or break even, estimates a price range, and compares solo with partnering. | No |
-| **Pilot Planner** | Builds the solo pilot, the partner pilot (shortlist, format, budget, timeline, success rule, outreach drafts), or both. | No |
+| **Local Researcher** | Ranks neighbourhoods for your idea, then profiles each one's popular places, competitors, stall fees and possible partners. | ✅ |
+| **Cultural Opportunity Finder** | Scores how well each idea fits each area's audience, and how well each partner fits your product. | ✅ |
+| **Feasibility Critic** | Costs every option against your budget and rejects what doesn't fit or break even. | — |
+| **Pilot Planner** | Turns the winner into a step-by-step pilot: budget, timeline, success rule and outreach drafts. | — |
 
-An orchestrator runs them in order, streams every state change to the browser and keeps going
-with degraded output if one agent fails.
+Each agent hands its findings to the next, and you can watch every step live in the app.
 
-## How Qloo is used
+## How we use Qloo
 
-Qloo is the source of every cultural signal. The key design choice is the **anchor-venue
-method**: the most popular places in a locality stand in for "the people who spend time here",
-and are sent back to Qloo as the taste signal.
+Qloo is where every cultural signal comes from. Our key idea: **the most popular places in a neighbourhood represent the people who spend time there.** We send those places back to Qloo as the taste signal and ask how much that crowd would like each idea.
 
-| Step | Endpoint | Parameters | Why |
-|---|---|---|---|
-| Popular places in a locality | `GET /v2/insights` | `filter.type=urn:entity:place`, `filter.location.query` | Anchor venues and the area's vibe tags |
-| Existing competitors | `GET /v2/insights` | `filter.tags` (concept tags), `filter.location=POINT(...)`, `filter.location.radius` | Competition score and named competitors |
-| Concept fit | `GET /v2/insights` | `signal.interests.entities` (anchors), `filter.tags` (concept tags), city filter | Affinity of concept-type places to the local audience: the core of cultural fit |
-| Taste analysis | `GET /v2/insights` | `filter.type=urn:tag`, `signal.interests.entities` | Genres the audience over-indexes on |
-| Brand affinity | `GET /v2/insights` | `filter.type=urn:entity:brand`, `signal.interests.entities` | Cross-domain evidence |
-| Demographics | `GET /v2/insights` | `filter.type=urn:demographics`, `signal.interests.entities` | Target audience age and gender skew |
-| Neighbourhoods for an idea | `GET /v2/insights` | `filter.type=urn:heatmap`, `signal.interests.tags`, `output.heatmap.boundary=urn:entity:locality` | Ranks a city's neighbourhoods for the idea's audience (replaces any fixed list) |
-| Complementary partners and hosts | `GET /v2/insights` | `signal.interests.entities` (local similar businesses), `filter.location.query` (locality), optional host `filter.tags` | Cafés, food courts, malls and more ranked by affinity with the crowd of similar local businesses |
-| Places like an admired business | `GET /v2/insights` | `signal.interests.entities` (the admired place), concept `filter.tags`, city filter | Similar businesses with a comparable crowd |
-| Product words to tags | `GET /v2/tags` | `filter.query` | "eggless brownies" becomes *Brownie*, *Egg free* for product matching |
-| Entity lookup | `GET /search` | `query`, `types=urn:entity:place` | Resolving the admired business (results are filtered by city) |
+We use Qloo to:
 
-Nisha's scenario makes 30 Qloo calls; the partner example about 30 as well (one idea, more partner searches). Each run is capped by `QLOO_RUN_CALL_BUDGET` (default 70). What the API really returns for Bengaluru, what did not
-work and how the design adapted is documented in [docs/QLOO_FINDINGS.md](docs/QLOO_FINDINGS.md).
+- rank a city's neighbourhoods for an idea (heatmap)
+- find the popular places and existing competitors in each area
+- measure how well an idea fits the local crowd, plus the tastes, brands and age groups they lean towards
+- turn product words like "eggless brownies" into Qloo tags (*Brownie*, *Egg free*)
+- find businesses with a crowd similar to one you admire
 
-### Transparent scoring
+A typical run makes about 30 Qloo calls. What worked, what didn't, and how we adapted: [docs/QLOO_FINDINGS.md](docs/QLOO_FINDINGS.md).
 
-```
-final = w1 · cultural_fit + w2 · feasibility + w3 · risk_adjustment
-```
+## Does Qloo actually change the answer?
 
-Scores are deterministic and shown in the app with their weights and sub-scores. No language
-model takes part in any number, ranking or decision.
+We built the app to prove it.
 
-**Would it work the same without Qloo? No, and the app checks this on every run.** Cultural
-fit is built from Qloo affinities, including a *locality lift*: how much more one area's
-audience likes a concept than the other areas compared. Each run is also re-scored with Qloo's
-signals removed, and the app states whether the pick changed. In the live demo scenario Qloo
-moves the recommendation from Jayanagar (cheapest stall) to Koramangala (strongest pull for
-art). A dedicated test file fails if the recommendation stops following the cultural signals. The app never shows an "accuracy"
-figure; it shows a **confidence level** (High, Medium or Low) computed from data quality,
-with the reasons listed. Details: [docs/DECISIONS.md](docs/DECISIONS.md).
+- **Transparent scoring:** `final = w1 · cultural_fit + w2 · feasibility + w3 · risk_adjustment`. The weights depend on how much risk you're comfortable with, and every sub-score is shown. The same inputs and data always give the same score.
+- **No AI guesswork in the numbers:** no language model touches any score, ranking or decision.
+- **A with-vs-without-Qloo check on every run:** each result is re-scored with Qloo's signals removed, and the app tells you whether the pick changed. In our live run of Nisha's example (13 Oct 2026), Qloo moved the pick from Jayanagar (cheapest stall) to Koramangala (strongest pull for art). Live data changes, so your run may differ.
+- **A test that keeps us honest:** `tests/integration/qloo-matters.test.ts` fails if the recommendation stops following Qloo's signals.
+- **No fake accuracy:** you can't measure success before a pilot runs. Instead, the app shows a **confidence level** (High / Medium / Low) based on data quality, with the reasons listed.
 
-## Architecture
+More on our design choices: [docs/DECISIONS.md](docs/DECISIONS.md)
 
-![Architecture diagram](docs/architecture.svg)
+## Run it locally
 
-More detail, including a Mermaid diagram and the agent contracts:
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
-## Quick start
-
-You need Node.js 20 or later.
+You'll need Node.js 20 or later.
 
 ```bash
 npm install
-```
-
-Copy `.env.example` to `.env.local`, then open `.env.local` and paste your Qloo hackathon key
-after `QLOO_API_KEY=`.
-
-```bash
+cp .env.example .env.local   # then paste your Qloo key after QLOO_API_KEY=
 npm run dev
 ```
 
 Open http://localhost:3000 and click **Try Nisha's example**.
 
-The app also runs with no key at all: it falls back to bundled sample data and says so.
+**No key?** The app still runs on bundled sample data and clearly says so.
 
-## Live, recorded and sample data
+### Honest data labels
 
-Every Qloo-derived value carries a source label, and the app shows an honest badge.
+Every Qloo-based value is labelled:
 
-| Badge | Meaning | When |
-|---|---|---|
-| **Live Qloo data** | Fetched from the Qloo API during this run | `QLOO_API_KEY` is set and the API answers |
-| **Recorded Qloo snapshot (offline fallback)** | Real Qloo data saved earlier on your machine | Live call failed, and you have run `npm run qloo:record` |
-| **Sample data, not Qloo (offline fallback)** | Hand-written illustrative data bundled with the app | No key, no snapshot, or the API is down |
+- **Live Qloo data:** fetched during this run.
+- **Recorded Qloo snapshot:** real Qloo data saved earlier on your machine (`npm run qloo:record`), used if the live API fails.
+- **Sample data, not Qloo:** hand-written demo data, used with no key.
 
-Fallback happens per call, and the reason is recorded in the run trace. Recorded data can
-never produce High confidence, and sample data always gives Low.
+Qloo's hackathon rules don't allow storing their data in a public repo. So snapshots stay in a git-ignored folder, and the repo only ships invented sample venues marked "(sample)". Rent, stall fees and footfall are illustrative estimates and are always labelled as such.
 
-**Why sample data instead of committed Qloo fixtures?** Qloo's hackathon guide says response
-data must not be stored in a public repository. So `npm run qloo:record` writes real snapshots
-to `.qloo-cache/`, which is git-ignored, and this repository ships only a small hand-written
-dataset in `src/server/qloo/sample/` whose venue names are invented and marked "(sample)".
+### Optional: nicer explanations with Gemini
 
-Rent, stall fees, footfall, venue types and permit notes are **illustrative estimates** from
-`src/server/data/local-market/`, always labelled as estimates.
+The app works fully without an LLM, and it's off by default. To turn it on, add a free Google Gemini key to `.env.local`:
 
-| Setting | Effect |
-|---|---|
-| `QLOO_MODE=live` (default) | Live API, then recorded snapshot, then sample data |
-| `QLOO_MODE=recorded` | Never calls the API: recorded snapshot, then sample data |
-
-## Optional free LLM
-
-Off by default. The app is complete without it and uses deterministic templates for text.
-To have explanations polished by Google's Gemini free tier:
-
-1. Go to https://aistudio.google.com/apikey and sign in with a Google account.
-2. Click **Create API key** and copy it.
-3. In `.env.local` set `LLM_PROVIDER=gemini` and paste the key after `LLM_API_KEY=`.
-4. Restart `npm run dev`.
-
-The LLM only rephrases already-computed facts. Its reply is validated and discarded if it
-contains any number that is not in those facts. Only aggregate facts are sent, never personal
-data. Any OpenAI-compatible provider works with `LLM_PROVIDER=openai_compatible`,
-`LLM_BASE_URL` and `LLM_MODEL`.
-
-## Scripts and tests
-
-| Command | What it does | Calls Qloo? |
-|---|---|---|
-| `npm run dev` | Start the app | When you run a scenario |
-| `npm test` | Unit, contract and integration tests (202) | No |
-| `npm run test:e2e` | Playwright tests: Nisha journey across all pages, partner example, theme toggle, phone width | No |
-| `npm run test:live` | A handful of real API tests | Yes, about 6 calls |
-| `npm run qloo:check` | Three live calls with pass/fail and latency | Yes, 3 calls |
-| `npm run qloo:record` | Refresh the private snapshot | Yes, about 90 calls |
-| `npm run nisha` | Run Nisha's scenario in the terminal (`-- sample` for offline) | Yes, 30 calls |
-| `npm run lint` / `npm run typecheck` / `npm run build` | Quality checks | No |
-| `npm run icons` | Regenerate favicon and social images from the SVG logos | No |
-
-The API key is never printed by any script. `npx playwright install chromium` is needed once
-before the first `npm run test:e2e`.
-
-## Deploy (Vercel Hobby, free)
-
-1. Push this repository to GitHub.
-2. At https://vercel.com/new import the repository. The defaults for Next.js are correct.
-3. Under **Environment Variables** add `QLOO_API_KEY` (and optionally `LLM_PROVIDER` and
-   `LLM_API_KEY`). Enter them in the Vercel dashboard yourself; never commit them.
-4. Deploy, open the URL and run Nisha's example. The badge should read "Live Qloo data".
-
-The build needs no environment variables: without a key the deployed app runs on sample data.
-The run endpoint is rate-limited per visitor to protect the Qloo quota.
-
-## How this is different
-
-- **Placer.ai** analyses foot traffic for enterprise retail. Culture2Commerce serves
-  first-timers with small budgets and short pilots.
-- **Esri ArcGIS Business Analyst** provides demographic maps and analytics. Culture2Commerce
-  combines concept selection, cultural reasoning and pilot execution in one agent workflow.
-- **Google Maps** lists existing venues. Culture2Commerce generates evidence-backed new
-  concepts and a plan to test them.
-
-## Project layout
-
-```
-src/app/            routes (/, /discover, /agents, /recommendation, /plan), API routes, /dev page
-src/components/     pages, shared run state, header and theme toggle, form, agents, recommendation, plan
-src/server/agents/  the four agents
-src/server/         orchestrator, scoring, Qloo clients, market estimates, LLM layer
-src/lib/            shared Zod schemas and helpers
-tests/              unit, contract, integration, live and e2e tests
-docs/               architecture, Qloo findings, decisions, demo and video scripts
+```bash
+LLM_PROVIDER=gemini
+LLM_API_KEY=your-key-here
 ```
 
-Progress and real test results are tracked in [PROGRESS.md](PROGRESS.md).
+Gemini only rewrites the explanation text. Any reply containing a number that wasn't in the computed facts is thrown away, and the app falls back to templates if Gemini is unavailable. Outreach messages always use templates.
 
-## Disclaimer
+## Tests
 
-Estimates for planning only, not financial or legal advice. Verify costs and permits locally.
+```bash
+npm test            # unit, contract and integration tests (202)
+npm run test:e2e    # full user journeys in Playwright
+```
 
-## Team
+## Architecture
 
-**Team VKY: Vaishhnavi, Khushi, Yashi.**
+![Architecture diagram](docs/architecture.svg)
 
-## License
+Details and agent contracts: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
-[MIT](LICENSE)
+## Built with
 
+Next.js · TypeScript · Tailwind CSS · Qloo Insights API · Zod · Recharts · Leaflet / OpenStreetMap · Vitest · Playwright · Google Gemini (optional)
 
+## Team VKY
+
+**Vaishhnavi · Khushi · Yashi**
+
+---
+
+_Estimates are for planning only and are not financial or legal advice. Please verify costs and permits locally._
+
+Licensed under [MIT](LICENSE).
